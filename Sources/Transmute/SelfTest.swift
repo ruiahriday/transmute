@@ -301,6 +301,368 @@ enum SelfTest {
             print("SKIP  video editor: needs ffmpeg and the clip.mp4 / movie.mkv fixtures")
         }
 
+        // Audio editor. The waveform also works without ffmpeg (AVAssetReader), so it runs in both passes.
+        let audioTone = inputs.first { $0.lastPathComponent == "tone.wav" }
+        let audioSong = inputs.first { $0.lastPathComponent == "song.mp3" }
+        let audioClip = inputs.first { $0.lastPathComponent == "clip.mp4" }
+        if let audioTone {
+            await check("tone.wav waveform") {
+                let levels = try await AudioEditEngine.waveform(of: audioTone, buckets: 50)
+                // A steady 440 Hz tone at 1/8 of full scale: every bar about 0.125.
+                guard levels.count == 50, let low = levels.min(), let high = levels.max(), low > 0.08, high < 0.2 else {
+                    throw ConversionError("expected 50 even bars near 0.125, got \(levels.count) from \(levels.min() ?? 0) to \(levels.max() ?? 0)")
+                }
+                return []
+            }
+        } else {
+            skipped += 1
+            print("SKIP  waveform: no tone.wav fixture")
+        }
+        if let ffmpeg = Tools.ffmpeg, let audioTone, let audioSong, let audioClip {
+            /// Checks there's one output with the right extension, length (within `slack` s) and channel count.
+            func expectAudio(_ outputs: [URL], ext: String, seconds: Double, channels: Int,
+                             slack: Double = 0.1) async throws -> URL {
+                guard outputs.count == 1, let out = outputs.first else {
+                    throw ConversionError("expected 1 file, got \(outputs.count)")
+                }
+                guard out.pathExtension == ext else { throw ConversionError("\(out.lastPathComponent) isn't .\(ext)") }
+                let length = await MediaInfo.duration(of: out)
+                guard abs(length - seconds) <= slack else {
+                    throw ConversionError("\(out.lastPathComponent) is \(length) s long, expected \(seconds) s")
+                }
+                let found = await AudioEditEngine.soundTrack(of: out, ffmpeg: ffmpeg)?.channels
+                guard found == channels else {
+                    let count = found.map { String($0) } ?? "no"
+                    throw ConversionError("\(out.lastPathComponent) has \(count) channels, expected \(channels)")
+                }
+                return out
+            }
+            /// Peak level 0…1 of one channel (0 is left).
+            func channelPeak(_ url: URL, channel: Int) async throws -> Float {
+                let raw = outDir.appendingPathComponent("channel \(UUID().uuidString).pcm")
+                defer { try? FileManager.default.removeItem(at: raw) }
+                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-loglevel", "error", "-i", url.path,
+                                               "-af", "pan=mono|c0=c\(channel)", "-f", "s16le", "-"], stdoutFile: raw)
+                let data = try Data(contentsOf: raw)
+                return AudioEditEngine.peaks(ofPCM16: data, buckets: 1).first ?? 0
+            }
+            await check("tone.wav audio edit: trim, fade in and out, −6 dB") {
+                var edit = AudioEdit()
+                edit.trimStart = 0.5
+                edit.trimEnd = 2.5
+                edit.fadeIn = 0.5
+                edit.fadeOut = 0.5
+                edit.volumeDB = -6
+                let outputs = try await Engine.perform(.editAudio(edit), on: audioTone, options: options) { _ in }.outputs
+                let out = try await expectAudio(outputs, ext: "wav", seconds: 2, channels: 1)
+                // 0.1 s bars: quiet at both ends, half the original 1/8 level in the middle.
+                let levels = try await AudioEditEngine.waveform(of: out, buckets: 20)
+                guard levels.count == 20, levels[0] < 0.03, levels[19] < 0.03, levels[10] > 0.05, levels[10] < 0.075 else {
+                    throw ConversionError("unexpected levels \(levels)")
+                }
+                return outputs
+            }
+            await check("song.mp3 audio edit: two bleeps, stereo, FLAC") {
+                var edit = AudioEdit()
+                edit.bleeps = [AudioEdit.BleepRange(start: 0.5, end: 1), AudioEdit.BleepRange(start: 2, end: 2.5)]
+                edit.channels = .stereo
+                edit.outputFormat = .flac
+                let outputs = try await Engine.perform(.editAudio(edit), on: audioSong, options: options) { _ in }.outputs
+                let out = try await expectAudio(outputs, ext: "flac", seconds: 3, channels: 2, slack: 0.15)
+                // The bleeps are a tone at twice the song's level; everything else is untouched.
+                let levels = try await AudioEditEngine.waveform(of: out, buckets: 30)
+                guard levels.count == 30, levels[7] > 0.2, levels[22] > 0.2,
+                      levels[2] < 0.16, levels[15] < 0.16, levels[27] < 0.16 else {
+                    throw ConversionError("bleeps not where expected: \(levels)")
+                }
+                return outputs
+            }
+            await check("clip.mp4 audio edit: trim, bleep, stereo WAV") {
+                var edit = AudioEdit()
+                edit.trimStart = 0.5
+                edit.trimEnd = 2.5
+                edit.bleeps = [AudioEdit.BleepRange(start: 1, end: 1.5)]  // on the original timeline
+                edit.channels = .stereo
+                edit.outputFormat = .wav
+                let outputs = try await Engine.perform(.editAudio(edit), on: audioClip, options: options) { _ in }.outputs
+                let out = try await expectAudio(outputs, ext: "wav", seconds: 2, channels: 2)
+                // So the tone is 0.5–1.0 s into the trimmed result.
+                let levels = try await AudioEditEngine.waveform(of: out, buckets: 20)
+                guard levels.count == 20, levels[7] > 0.2, levels[2] < 0.16, levels[14] < 0.16 else {
+                    throw ConversionError("bleep not where expected: \(levels)")
+                }
+                return outputs
+            }
+            await check("clip.mp4 audio edit: normalize to −16 LUFS (M4A)") {
+                var edit = AudioEdit()
+                edit.normalize = true
+                let outputs = try await Engine.perform(.editAudio(edit), on: audioClip, options: options) { _ in }.outputs
+                let out = try await expectAudio(outputs, ext: "m4a", seconds: 3, channels: 1, slack: 0.15)
+                let report = try await Shell.run(ffmpeg, ["-hide_banner", "-nostdin", "-nostats", "-i", out.path,
+                                                          "-af", "ebur128", "-f", "null", "-"])
+                let summary = report.stderr.split(whereSeparator: \.isNewline)
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                    .last { $0.hasPrefix("I:") && $0.hasSuffix("LUFS") }
+                guard let summary, let lufs = Double(summary.dropFirst(2).dropLast(4).trimmingCharacters(in: .whitespaces)),
+                      abs(lufs + 16) < 1.5 else {
+                    throw ConversionError("integrated loudness \(summary ?? "unknown"), expected −16 LUFS")
+                }
+                return outputs
+            }
+            for format in AudioEditEngine.editableFormats {
+                await check("tone.wav audio edit → \(format.label)") {
+                    var edit = AudioEdit()
+                    edit.trimEnd = 1.5
+                    edit.outputFormat = format
+                    let outputs = try await Engine.perform(.editAudio(edit), on: audioTone, options: options) { _ in }.outputs
+                    _ = try await expectAudio(outputs, ext: format.fileExtension, seconds: 1.5, channels: 1)
+                    return outputs
+                }
+            }
+            await check("Audio edit: swap left and right, then mono") {
+                let rightOnly = outDir.appendingPathComponent("right only.wav")
+                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-f", "lavfi",
+                                               "-i", "aevalsrc=0|0.25*sin(2*PI*440*t):s=44100:d=2", rightOnly.path])
+                var edit = AudioEdit()
+                edit.channels = .swapLeftRight
+                let swapped = try await Engine.perform(.editAudio(edit), on: rightOnly, options: options) { _ in }.outputs
+                let a = try await expectAudio(swapped, ext: "wav", seconds: 2, channels: 2)
+                let left = try await channelPeak(a, channel: 0)
+                let right = try await channelPeak(a, channel: 1)
+                guard left > 0.2, right < 0.01 else { throw ConversionError("left \(left), right \(right) after swapping") }
+                edit.channels = .mono
+                let mono = try await Engine.perform(.editAudio(edit), on: rightOnly, options: options) { _ in }.outputs
+                let b = try await expectAudio(mono, ext: "wav", seconds: 2, channels: 1)
+                let level = try await channelPeak(b, channel: 0)
+                guard level > 0.1, level < 0.15 else { throw ConversionError("mono level \(level), expected about 0.125") }
+                return swapped + mono
+            }
+            await check("song.mp3 and clip.mp4 waveforms") {
+                for url in [audioSong, audioClip] {
+                    let levels = try await AudioEditEngine.waveform(of: url, buckets: 100)
+                    guard levels.count == 100, let high = levels.max(), high > 0.08, high < 0.2 else {
+                        throw ConversionError("\(url.lastPathComponent): unexpected waveform peak \(levels.max() ?? 0)")
+                    }
+                }
+                return []
+            }
+            await check("Audio edit rejects a start past the end") {
+                var edit = AudioEdit()
+                edit.trimStart = 10
+                do {
+                    _ = try await Engine.perform(.editAudio(edit), on: audioTone, options: options) { _ in }
+                } catch {
+                    return []
+                }
+                throw ConversionError("expected an error")
+            }
+            await check("Audio edit rejects a video without sound") {
+                let silent = outDir.appendingPathComponent("no sound.mp4")
+                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-f", "lavfi",
+                                               "-i", "testsrc=duration=1:size=160x120:rate=10",
+                                               "-c:v", "libx264", "-pix_fmt", "yuv420p", silent.path])
+                do {
+                    _ = try await Engine.perform(.editAudio(AudioEdit()), on: silent, options: options) { _ in }
+                } catch {
+                    return []
+                }
+                throw ConversionError("expected an error")
+            }
+        } else {
+            skipped += 1
+            print("SKIP  audio editor: needs ffmpeg and the tone.wav / song.mp3 / clip.mp4 fixtures")
+        }
+
+        // Metadata viewer and editor (MetadataEditor.swift).
+        let metaPhoto = inputs.first { $0.lastPathComponent == "photo.jpg" }
+        let metaPNG = inputs.first { $0.lastPathComponent == "sample.png" }
+        let metaWebP = inputs.first { $0.lastPathComponent == "web.webp" }
+        let metaSong = inputs.first { $0.lastPathComponent == "song.mp3" }
+        let metaClip = inputs.first { $0.lastPathComponent == "clip.mp4" }
+        let metaTone = inputs.first { $0.lastPathComponent == "tone.wav" }
+        let metaNote = inputs.first { $0.lastPathComponent == "note.txt" }
+
+        /// Reads `url` back and fails unless each key has exactly that value ("" means absent or empty).
+        func expectMetadata(_ url: URL, _ expected: [String: String]) async throws {
+            let fields = try await MetadataTool.read(url)
+            for key in expected.keys.sorted() {
+                let found = MetadataTool.value(of: key, in: fields) ?? ""
+                guard found == expected[key] else {
+                    throw ConversionError("\(url.lastPathComponent): \(key) reads “\(found)”, expected “\(expected[key] ?? "")”")
+                }
+            }
+        }
+
+        await check("Metadata: date taken parsing") {
+            let cases: [(String, String?)] = [
+                ("2024:05:31 14:30:00", "2024:05:31 14:30:00"), ("2024-05-31 14:30", "2024:05:31 14:30:00"),
+                ("2024-05-31", "2024:05:31 00:00:00"), ("2024-05-31T08:05:09Z", "2024:05:31 08:05:09"),
+                ("31/05/2024", nil), ("2024-13-01", nil), ("2024-05-31 2:30 PM", nil),
+            ]
+            for (text, expected) in cases where MetadataTool.exifDate(from: text) != expected {
+                throw ConversionError("“\(text)” parsed as \(MetadataTool.exifDate(from: text) ?? "nothing")")
+            }
+            return []
+        }
+
+        if let metaPhoto {
+            await check("photo.jpg metadata: write, read back, clear a field") {
+                var edit = MetadataEdit()
+                edit.changes = ["description": "Harbour at dawn", "artist": "Transmute Test",
+                                "copyright": "(c) 2024 Transmute", "dateTaken": "2024-05-31 14:30"]
+                let written = try await Engine.perform(.writeMetadata(edit), on: metaPhoto, options: options) { _ in }.outputs
+                guard let out = written.first, out.pathExtension == "jpg" else { throw ConversionError("expected a JPEG copy") }
+                try await expectMetadata(out, ["description": "Harbour at dawn", "artist": "Transmute Test",
+                                               "copyright": "(c) 2024 Transmute", "dateTaken": "2024:05:31 14:30:00"])
+                let before = try ImageConverter.loadCGImage(metaPhoto)
+                let after = try ImageConverter.loadCGImage(out)
+                guard before.width == after.width, before.height == after.height else {
+                    throw ConversionError("the picture changed size")
+                }
+                let cleared = try await Engine.perform(.writeMetadata(MetadataEdit(changes: ["artist": ""])), on: out,
+                                                       options: options) { _ in }.outputs
+                guard let clean = cleared.first else { throw ConversionError("no output") }
+                try await expectMetadata(clean, ["artist": "", "description": "Harbour at dawn"])
+                return written + cleared
+            }
+            await check("Photo metadata: GPS is shown and can be removed") {
+                let gpsPhoto = outDir.appendingPathComponent("gps-photo.jpg")
+                let pixels = try ImageConverter.loadCGImage(metaPhoto)
+                guard let destination = CGImageDestinationCreateWithURL(gpsPhoto as CFURL, "public.jpeg" as CFString, 1, nil) else {
+                    throw ConversionError("no JPEG encoder")
+                }
+                let gps: [CFString: Any] = [
+                    kCGImagePropertyGPSLatitude: 51.5007, kCGImagePropertyGPSLatitudeRef: "N",
+                    kCGImagePropertyGPSLongitude: 0.1246, kCGImagePropertyGPSLongitudeRef: "W",
+                ]
+                let tiff: [CFString: Any] = [kCGImagePropertyTIFFMake: "TestCam", kCGImagePropertyTIFFArtist: "Old Artist"]
+                let properties: [CFString: Any] = [kCGImagePropertyGPSDictionary: gps, kCGImagePropertyTIFFDictionary: tiff]
+                CGImageDestinationAddImage(destination, pixels, properties as CFDictionary)
+                guard CGImageDestinationFinalize(destination) else { throw ConversionError("couldn't write the GPS photo") }
+                let fields = try await MetadataTool.read(gpsPhoto)
+                guard MetadataTool.hasLocation(fields),
+                      MetadataTool.value(of: "gps.longitude", in: fields)?.hasSuffix("W") == true else {
+                    throw ConversionError("GPS not read:\n\(MetadataTool.plainText(fields, title: gpsPhoto.lastPathComponent))")
+                }
+                try await expectMetadata(gpsPhoto, ["artist": "Old Artist", "camera.make": "TestCam"])
+                let edit = MetadataEdit(changes: ["artist": "New Artist"], removeLocation: true)
+                let outputs = try await Engine.perform(.writeMetadata(edit), on: gpsPhoto, options: options) { _ in }.outputs
+                guard let out = outputs.first else { throw ConversionError("no output") }
+                let after = try await MetadataTool.read(out)
+                guard !MetadataTool.hasLocation(after) else { throw ConversionError("the location is still there") }
+                try await expectMetadata(out, ["artist": "New Artist", "camera.make": "TestCam"])
+                return outputs
+            }
+        }
+
+        if let metaPNG {
+            await check("sample.png metadata: description and artist") {
+                let edit = MetadataEdit(changes: ["description": "Test card", "artist": "Transmute Test"])
+                let outputs = try await Engine.perform(.writeMetadata(edit), on: metaPNG, options: options) { _ in }.outputs
+                guard let out = outputs.first, out.pathExtension == "png" else { throw ConversionError("expected a PNG copy") }
+                try await expectMetadata(out, ["description": "Test card", "artist": "Transmute Test"])
+                return outputs
+            }
+            await check("PDF metadata: title, author, subject, keywords") {
+                let pdf = outDir.appendingPathComponent("metadata-test.pdf")
+                let picture = try ImageConverter.loadCGImage(metaPNG)
+                try ImageConverter.writePDF(picture, to: pdf)
+                let edit = MetadataEdit(changes: ["title": "Quarterly Report", "author": "Transmute Test",
+                                                  "subject": "Self-test", "keywords": "alpha, beta"])
+                let outputs = try await Engine.perform(.writeMetadata(edit), on: pdf, options: options) { _ in }.outputs
+                guard let out = outputs.first, out.pathExtension == "pdf" else { throw ConversionError("expected a PDF copy") }
+                try await expectMetadata(out, ["title": "Quarterly Report", "author": "Transmute Test",
+                                               "subject": "Self-test", "pdf.pages": "1"])
+                let fields = try await MetadataTool.read(out)
+                let keywords = MetadataTool.value(of: "keywords", in: fields) ?? ""
+                guard keywords.contains("alpha"), keywords.contains("beta") else {
+                    throw ConversionError("keywords read back as “\(keywords)”")
+                }
+                return outputs
+            }
+        }
+
+        if let metaWebP {
+            await check("web.webp metadata: readable, writing refused with a clear error") {
+                let fields = try await MetadataTool.read(metaWebP)
+                guard MetadataTool.value(of: "image.size", in: fields) == "640 × 480 pixels" else {
+                    throw ConversionError("size reads “\(MetadataTool.value(of: "image.size", in: fields) ?? "nothing")”")
+                }
+                guard !fields.contains(where: \.editable) else { throw ConversionError("WebP fields shouldn't be editable") }
+                do {
+                    _ = try await Engine.perform(.writeMetadata(MetadataEdit(changes: ["artist": "x"])), on: metaWebP,
+                                                 options: options) { _ in }
+                } catch {
+                    guard error.localizedDescription.contains("WEBP") else { throw error }
+                    return []
+                }
+                throw ConversionError("expected an error")
+            }
+        }
+
+        if let metaNote {
+            await check("note.txt info: file facts only") {
+                let fields = try await MetadataTool.read(metaNote)
+                guard MetadataTool.value(of: "file.size", in: fields) != nil, !fields.contains(where: \.editable) else {
+                    throw ConversionError(MetadataTool.plainText(fields, title: "note.txt"))
+                }
+                return []
+            }
+        }
+
+        if let metaFFmpeg = Tools.ffmpeg, let metaSong, let metaClip, let metaTone {
+            await check("clip.mp4 info: codec, frame size, frame rate, sound") {
+                let fields = try await MetadataTool.read(metaClip)
+                try await expectMetadata(metaClip, ["video.resolution": "320 × 240", "video.fps": "25 fps",
+                                                    "audio.sampleRate": "44.1 kHz", "audio.channels": "Mono",
+                                                    "media.duration": "0:03.0", "media.container": "MPEG-4"])
+                guard MetadataTool.value(of: "video.codec", in: fields)?.hasPrefix("H.264") == true,
+                      MetadataTool.plainText(fields, title: "clip.mp4").contains("Resolution: 320 × 240") else {
+                    throw ConversionError(MetadataTool.plainText(fields, title: "clip.mp4"))
+                }
+                return []
+            }
+            await check("song.mp3 tags: write, read back, clear one") {
+                let edit = MetadataEdit(changes: ["title": "Test Tone", "artist": "Transmute", "album": "Fixtures",
+                                                  "track": "3/12", "comment": "Line one\nLine two"])
+                let written = try await Engine.perform(.writeMetadata(edit), on: metaSong, options: options) { _ in }.outputs
+                guard let out = written.first, out.pathExtension == "mp3" else { throw ConversionError("expected an MP3 copy") }
+                try await expectMetadata(out, ["title": "Test Tone", "artist": "Transmute", "album": "Fixtures",
+                                               "track": "3/12", "comment": "Line one\nLine two"])
+                let cleared = try await Engine.perform(.writeMetadata(MetadataEdit(changes: ["title": ""])), on: out,
+                                                       options: options) { _ in }.outputs
+                guard let clean = cleared.first else { throw ConversionError("no output") }
+                try await expectMetadata(clean, ["title": "", "artist": "Transmute"])
+                let length = await MediaInfo.duration(of: clean)
+                guard abs(length - 3) < 0.2 else { throw ConversionError("the song is \(length) s long after tagging") }
+                return written + cleared
+            }
+            await check("clip.mp4 tags: title, comment and year keep the video intact") {
+                let edit = MetadataEdit(changes: ["title": "Test Card", "comment": "Made by the self-test", "date": "2024"])
+                let outputs = try await Engine.perform(.writeMetadata(edit), on: metaClip, options: options) { _ in }.outputs
+                guard let out = outputs.first, out.pathExtension == "mp4" else { throw ConversionError("expected an MP4 copy") }
+                try await expectMetadata(out, ["title": "Test Card", "comment": "Made by the self-test", "date": "2024",
+                                               "video.resolution": "320 × 240"])
+                let length = await MediaInfo.duration(of: out)
+                guard abs(length - 3) < 0.2 else { throw ConversionError("the video is \(length) s long after tagging") }
+                return outputs
+            }
+            await check("Ogg tags (kept on the audio track): replace, remove, add") {
+                let ogg = outDir.appendingPathComponent("tag-me.ogg")
+                try await Shell.check(metaFFmpeg, ["-hide_banner", "-nostdin", "-y", "-i", metaTone.path, "-c:a", "libvorbis",
+                                                   "-metadata", "title=Old Title", "-metadata", "artist=Old Artist", ogg.path])
+                try await expectMetadata(ogg, ["title": "Old Title", "artist": "Old Artist"])
+                let edit = MetadataEdit(changes: ["title": "New Title", "artist": "", "genre": "Test"])
+                let outputs = try await Engine.perform(.writeMetadata(edit), on: ogg, options: options) { _ in }.outputs
+                guard let out = outputs.first, out.pathExtension == "ogg" else { throw ConversionError("expected an Ogg copy") }
+                try await expectMetadata(out, ["title": "New Title", "artist": "", "genre": "Test"])
+                return outputs
+            }
+        } else {
+            skipped += 1
+            print("SKIP  metadata tags: need ffmpeg and the song.mp3 / clip.mp4 / tone.wav fixtures")
+        }
+
         // QR round trip with a code we generate ourselves.
         await check("QR code read") {
             let qr = outDir.appendingPathComponent("qr-fixture.png")

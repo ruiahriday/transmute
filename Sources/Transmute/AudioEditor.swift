@@ -108,7 +108,8 @@ enum AudioEditEngine {
 
     /// The -filter_complex graph for an edit, and how many seconds long the result will be (0 when unknown).
     ///
-    /// Bleeps come first so their times are on the original timeline. Then the trim, loudness
+    /// Bleeps come first so their times are on the original timeline (ffmpeg starts the file's
+    /// clock at 0, as AVPlayer does). Then the trim, loudness
     /// (before the gain, so the volume slider still does something, and before the fades, so
     /// loudnorm can't lift them back up), gain, fades and finally the channel layout.
     static func filterGraph(for edit: AudioEdit, sourceLength: Double, track: SoundTrack) throws -> (graph: String, seconds: Double) {
@@ -134,7 +135,10 @@ enum AudioEditEngine {
         let rate = track.sampleRate ?? 48000
         if edit.normalize {
             // Single-pass EBU R128. loudnorm works at 192 kHz internally, so resample back afterwards.
-            chain += ["loudnorm=I=-16:TP=-1.5:LRA=11", "aresample=\(rate)"]
+            // Its output timestamps can jump ahead when the input frames don't fill its 100 ms blocks
+            // (seen with ffmpeg 6.1), which would start the fade-out early and make an M4A claim to
+            // be longer than its sound, so the samples are numbered again from the first one.
+            chain += ["loudnorm=I=-16:TP=-1.5:LRA=11", "aresample=\(rate)", "asetpts=STARTPTS+N/SR/TB"]
         }
         // A plain factor: the filter would read "-6dB" as minus (6 dB), which flips the phase.
         let gain = edit.volumeDB.isFinite ? min(20, max(-20, edit.volumeDB)) : 0
@@ -155,23 +159,19 @@ enum AudioEditEngine {
 
         let tail = chain.isEmpty ? "anull" : chain.joined(separator: ",")
         let ranges = bleepRanges(edit.bleeps)
-        var graph: [String] = []
         if ranges.isEmpty {
-            graph.append("[0:a:0]\(tail)[\(outputLabel)]")
-        } else {
-            // Mute the ranges, and mix in a 1 kHz tone that only sounds inside them. Small frames keep
-            // the switch-over within a few milliseconds; the quotes stop the commas in between()
-            // from splitting the chain. amix ends with the file (duration=first) and doesn't halve
-            // the level (normalize=0). The file's chain comes first in the graph so its channel
-            // layout wins and the mono tone is the one that gets converted.
-            let inside = ranges.map { "between(t,\(decimal($0.start)),\(decimal($0.end)))" }.joined(separator: "+")
-            graph.append("[0:a:0]asetnsamples=n=256:p=0,volume=0:enable='\(inside)'[bleepmain]")
-            graph.append("sine=frequency=1000:sample_rate=\(rate):samples_per_frame=256,volume=2,"
-                + "volume=0:enable='not(\(inside))'[bleeptone]")
-            graph.append("[bleepmain][bleeptone]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,"
-                + "\(tail)[\(outputLabel)]")
+            return ("[0:a:0]\(tail)[\(outputLabel)]", seconds)
         }
-        return (graph.joined(separator: ";"), seconds)
+        // Every sample inside a range becomes a 1 kHz tone at -12 dBFS, on every channel. aeval's t is
+        // the sample's own timestamp, so the tone lands exactly on the muted stretch even when the
+        // sound track starts after 0 (a separate sine source mixed in with amix would be offset by
+        // that gap). aeval only runs on frames that start up to 0.1 s before a range (the 256-sample
+        // frames are shorter than that), so the rest of the file isn't evaluated sample by sample.
+        // The quotes stop the commas in between() from splitting the chain.
+        let inside = ranges.map { "between(t,\(decimal($0.start)),\(decimal($0.end)))" }.joined(separator: "+")
+        let near = ranges.map { "between(t,\(decimal(max(0, $0.start - 0.1))),\(decimal($0.end)))" }.joined(separator: "+")
+        let bleep = "aeval=exprs='if(\(inside),0.25*sin(2*PI*1000*t),val(ch))':c=same:enable='\(near)'"
+        return ("[0:a:0]asetnsamples=n=256:p=0,\(bleep),\(tail)[\(outputLabel)]", seconds)
     }
 
     /// Valid bleeps, in order. Overlaps are fine: the enable expressions just add up.
@@ -279,11 +279,14 @@ enum AudioEditEngine {
             return try await appleWaveform(of: url, buckets: count)
         }
         // Mono 8 kHz 16-bit is plenty for a picture and small enough for long files (about 1 MB a minute).
+        // aresample pads with silence when the sound starts after the video, so the bars line up
+        // with the player's clock and the times bleeps and trims use.
         let raw = OutputPaths.temporaryURL(ext: "pcm")
         defer { try? FileManager.default.removeItem(at: raw) }
         do {
             try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
                                            "-i", url.path, "-map", "0:a:0", "-vn",
+                                           "-af", "aresample=async=1:first_pts=0",
                                            "-f", "s16le", "-ac", "1", "-ar", "8000", "-"],
                                   stdoutFile: raw)
         } catch {
@@ -463,7 +466,7 @@ struct AudioEditorView: View {
             let barsSpan = duration > 0 ? CGFloat(min(1, duration / total)) : 1
             let keptFrom = fraction(edit.trimStart, of: total)
             let keptTo = max(keptFrom, fraction(edit.trimEnd ?? total, of: total))
-            let marks = bleeps.map { fraction(min($0.start, $0.end), of: total)...fraction(max($0.start, $0.end), of: total) }
+            let marks = bleeps.map { bleepSpan($0, of: total) }
             let head = fraction(playhead, of: total)
             Canvas { context, size in
                 let w = size.width, h = size.height
@@ -730,7 +733,7 @@ struct AudioEditorView: View {
         if !start.isFinite || start < 0 { return "The start can't be before 0:00." }
         if duration > 0 && start >= duration { return "The start is past the end of the audio." }
         if !(end > start + 0.05) { return "The end has to come after the start." }
-        if bleeps.contains(where: { !($0.start >= 0 && $0.end > $0.start + 0.01) }) {
+        if bleeps.contains(where: { !($0.start >= 0 && $0.end.isFinite && $0.end > $0.start + 0.01) }) {
             return "Each bleep has to end after it starts."
         }
         return nil
@@ -757,13 +760,24 @@ struct AudioEditorView: View {
         .number.precision(.fractionLength(0...2))
     }
 
+    /// Long enough for the file, a typed end and every bleep. Ignores impossible values, which
+    /// would otherwise squash everything to the left edge.
     private var timelineLength: Double {
-        max(duration, edit.trimEnd ?? 0, playhead, bleeps.map(\.end).max() ?? 0, 1)
+        let ends = [duration, edit.trimEnd ?? 0, playhead] + bleeps.map(\.end)
+        let finite = ends.filter { $0.isFinite }
+        return max(1, finite.max() ?? 0)
     }
 
     private func fraction(_ seconds: Double, of total: Double) -> CGFloat {
         guard total > 0, seconds.isFinite else { return 0 }
         return CGFloat(min(max(seconds / total, 0), 1))
+    }
+
+    /// Where a bleep sits on the waveform, ordered so a half-typed (backwards) one can't make an invalid range.
+    private func bleepSpan(_ item: BleepItem, of total: Double) -> ClosedRange<CGFloat> {
+        let a = fraction(item.start, of: total)
+        let b = fraction(item.end, of: total)
+        return min(a, b)...max(a, b)
     }
 
     private func clock(_ seconds: Double) -> String {
