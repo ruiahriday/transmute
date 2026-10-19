@@ -11,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -39,7 +42,10 @@ jobs:
           echo "FFMPEG_BIN=$PWD/ffmpeg" >> "$GITHUB_ENV"
 
       - name: Build app (universal)
-        run: UNIVERSAL=1 ./build-app.sh
+        id: build
+        run: |
+          mkdir -p logs
+          UNIVERSAL=1 bash build-app.sh 2>&1 | tee logs/build.log
 
       - name: Check the bundle
         run: |
@@ -49,28 +55,42 @@ jobs:
           codesign --verify --deep --strict --verbose=2 build/Transmute.app
 
       - name: Launch test (app must stay running)
+        id: launch
         run: |
-          ./build/Transmute.app/Contents/MacOS/Transmute > launch.log 2>&1 &
+          ./build/Transmute.app/Contents/MacOS/Transmute > logs/launch.log 2>&1 &
           PID=$!
           sleep 10
           if kill -0 "$PID" 2>/dev/null; then
             echo "App launched and is still running"
             kill "$PID"
           else
-            echo "::error::The app quit or crashed at launch"
-            cat launch.log
+            echo "The app quit or crashed at launch" >> logs/launch.log
+            cat logs/launch.log
             exit 1
           fi
 
       - name: Conversion self-test (with bundled ffmpeg)
+        id: selftest
         run: |
-          scripts/make-fixtures.sh "$RUNNER_TEMP/fixtures" "$FFMPEG_BIN"
-          ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures"
+          bash scripts/make-fixtures.sh "$RUNNER_TEMP/fixtures" "$FFMPEG_BIN" 2>&1 | tee logs/fixtures.log
+          ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest.log
 
       - name: Conversion self-test (no ffmpeg, Apple-only fallbacks; informational)
+        id: selftest_noff
         continue-on-error: true
         run: |
-          TRANSMUTE_NO_FFMPEG=1 ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures"
+          TRANSMUTE_NO_FFMPEG=1 ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest-noffmpeg.log
+
+      # Raw logs need a download; annotations can be read straight from the API.
+      - name: Report results as annotations
+        if: always()
+        run: |
+          level() { if [[ "$1" == "failure" ]]; then echo error; else echo notice; fi; }
+          bash scripts/ci-report.sh "$(level '${{ steps.build.outcome }}')" "Build" logs/build.log
+          bash scripts/ci-report.sh "$(level '${{ steps.launch.outcome }}')" "Launch test" logs/launch.log 40
+          bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "Fixtures" logs/fixtures.log 40
+          bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "Self-test" logs/selftest.log 400
+          bash scripts/ci-report.sh warning "Self-test without ffmpeg" logs/selftest-noffmpeg.log 400
 
       - name: Package zip and disk image
         run: |
