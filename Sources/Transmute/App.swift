@@ -68,13 +68,21 @@ struct MenuContent: View {
         Button("Show Floating Files") { FloatingShelf.shared.toggle() }
         Divider()
         ForEach(WheelKind.allCases, id: \.self) { kind in
-            if let key = key(for: kind), key != .off {
+            if let key = wheelKey(for: kind), key != .off {
                 Text("Hold \(key.label) while dragging for \(kind.hint)")
             }
         }
         Divider()
         Button("Quit Transmute") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    private func wheelKey(for kind: WheelKind) -> WheelKey? {
+        switch kind {
+        case .convert: WheelKey(rawValue: convertKey)
+        case .tools: WheelKey(rawValue: toolsKey)
+        case .actions: WheelKey(rawValue: actionsKey)
+        }
     }
 }
 
