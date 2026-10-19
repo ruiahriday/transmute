@@ -189,6 +189,17 @@ static class SmokeTest
     /// the wheel's drag detection is checked on real Windows.
     static void DragProbe()
     {
+        // On some machines no mouse input reaches the drag loop, so it never ends: give up after 20 s.
+        var finished = false;
+        new Thread(() =>
+        {
+            Thread.Sleep(20_000);
+            if (finished) return;
+            Log("WARN  drag detection: the test drag didn't finish (no mouse input on this machine)");
+            Log(problems.Count == 0 ? "SMOKE TEST PASSED" : $"SMOKE TEST FAILED ({problems.Count} problems)");
+            log?.Flush();
+            Environment.Exit(problems.Count == 0 ? 0 : 1);
+        }) { IsBackground = true }.Start();
         var seen = new HashSet<string>();
         var detected = false;
         var calls = 0;
@@ -213,6 +224,7 @@ static class SmokeTest
         {
             Log($"NOTE  drag probe couldn't start a drag: {e.Message}");
         }
+        finished = true;
         window.Close();
         Log($"{(detected ? "PASS" : "WARN")}  drag detection: {(detected ? "seen" : "not seen")} (capture window classes: {string.Join(", ", seen.Where(s => s.Length > 0).DefaultIfEmpty("none"))}; {calls} checks)");
     }

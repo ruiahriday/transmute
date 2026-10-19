@@ -434,7 +434,7 @@ public static class VideoEditEngine
         List<string> args;
         if (format == OutputFormat.Webm)
         {
-            args = ["-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p"];
+            args = [.. Tools.WebmVideo(30, null), "-pix_fmt", "yuv420p"];
             if (audio) args.AddRange(["-c:a", "libopus", "-b:a", "128k"]);
         }
         else

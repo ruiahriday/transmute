@@ -36,6 +36,52 @@ public static class Tools
         return candidates.FirstOrDefault(File.Exists);
     }
 
+    static HashSet<string>? encoders;
+
+    /// Whether the bundled ffmpeg has this encoder (builds differ: the ARM one has no libvpx).
+    public static bool HasEncoder(string name)
+    {
+        if (encoders is null)
+        {
+            var found = new HashSet<string>();
+            try
+            {
+                if (Ffmpeg is { } ffmpeg)
+                {
+                    using var process = Process.Start(new ProcessStartInfo(ffmpeg, "-hide_banner -encoders")
+                        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true })!;
+                    process.ErrorDataReceived += (_, _) => { };
+                    process.BeginErrorReadLine();
+                    var text = process.StandardOutput.ReadToEnd();
+                    process.WaitForExit(10_000);
+                    foreach (var line in text.Split('\n'))
+                    {
+                        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length >= 2 && parts[0].Length == 6) found.Add(parts[1]);
+                    }
+                }
+            }
+            catch { }
+            encoders = found;
+        }
+        // Unknown list (ffmpeg didn't answer): assume the usual encoders are there.
+        return encoders.Count == 0 || encoders.Contains(name);
+    }
+
+    /// Video codec arguments for WebM: VP9, or AV1 when this ffmpeg has no VP9 encoder.
+    /// Either `quality` (a CRF on VP9's 0–63 scale) or `bitrate` (bits per second) is given.
+    public static string[] WebmVideo(int? quality, string? bitrate)
+    {
+        string[] rate(string crf) => bitrate is null ? ["-crf", crf, "-b:v", "0"] : ["-b:v", bitrate];
+        var q = (quality ?? 32).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        if (HasEncoder("libvpx-vp9")) return ["-c:v", "libvpx-vp9", .. rate(q), "-row-mt", "1"];
+        string[] plain = bitrate is null ? ["-crf", q] : ["-b:v", bitrate];
+        if (HasEncoder("libsvtav1")) return ["-c:v", "libsvtav1", "-preset", "8", .. plain];
+        if (HasEncoder("libaom-av1")) return ["-c:v", "libaom-av1", "-cpu-used", "8", "-row-mt", "1", .. rate(q)];
+        string[] vp8 = bitrate is null ? ["-crf", "10", "-b:v", "2M"] : ["-b:v", bitrate];
+        return ["-c:v", "libvpx", .. vp8];
+    }
+
     public static string RequireFfmpeg(string what) =>
         Ffmpeg ?? throw new ConversionException($"{what} needs ffmpeg, which comes with Transmute. Reinstall Transmute to put it back.");
 }

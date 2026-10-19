@@ -37,7 +37,7 @@ public static class MediaConverter
             OutputFormat.Mkv => [.. h264, "-c:a", "aac", "-b:a", "160k"],
             OutputFormat.Avi => ["-c:v", "mpeg4", "-q:v", "4", "-c:a", "libmp3lame", "-q:a", "4"],
             OutputFormat.Wmv => ["-c:v", "wmv2", "-b:v", "2M", "-c:a", "wmav2", "-b:a", "160k"],
-            OutputFormat.Webm => ["-c:v", "libvpx-vp9", "-crf", "32", "-b:v", "0", "-row-mt", "1", "-c:a", "libopus", "-b:a", "128k"],
+            OutputFormat.Webm => [.. Tools.WebmVideo(32, null), "-c:a", "libopus", "-b:a", "128k"],
             OutputFormat.Gif => ["-an", "-vf", "fps=12,scale=480:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse", "-loop", "0"],
             OutputFormat.Mp3 => ["-vn", "-c:a", "libmp3lame", "-q:a", "2"],
             OutputFormat.M4a => ["-vn", "-c:a", "aac", "-b:a", "192k"],
@@ -84,7 +84,7 @@ public static class MediaConverter
             var v = ((long)video).ToString(CultureInfo.InvariantCulture);
             if (outExt == "webm")
             {
-                args = ["-c:v", "libvpx-vp9", "-b:v", v, "-row-mt", "1", "-vf", filters, "-c:a", "libopus", "-b:a", "96k"];
+                args = [.. Tools.WebmVideo(null, v), "-vf", filters, "-c:a", "libopus", "-b:a", "96k"];
             }
             else
             {
