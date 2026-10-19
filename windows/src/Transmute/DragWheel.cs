@@ -281,8 +281,6 @@ sealed class WheelWindow : Window
     const double Size = 380, Radius = 132, Bubble = 70;
 
     readonly Canvas canvas = new() { Width = Size, Height = Size };
-    readonly TextBlock title = new() { FontSize = 15, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
-    readonly TextBlock subtitle = new() { FontSize = 11, Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center, Text = "Drop on a bubble" };
     WheelKind kind;
     string[]? paths;
     readonly DispatcherTimer hideTimer = new() { Interval = TimeSpan.FromMilliseconds(350) };
@@ -377,7 +375,8 @@ sealed class WheelWindow : Window
         Canvas.SetTop(ring, (Size - ringSize) / 2);
         canvas.Children.Add(ring);
 
-        title.Text = kind.Title();
+        var title = new TextBlock { Text = kind.Title(), FontSize = 15, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
+        var subtitle = new TextBlock { FontSize = 11, Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center };
         var items = paths is null ? [] : WheelItems.For(kind, paths);
         subtitle.Text = paths is null ? "Move onto the wheel" : items.Count == 0 ? "Nothing for these files" : "Drop on a bubble";
         var caption = new StackPanel { Width = 140 };

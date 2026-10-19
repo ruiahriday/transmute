@@ -141,7 +141,7 @@ sealed class ShelfWindow : Window
         Closing += (_, e) => { e.Cancel = true; Hide(); };
         LocationChanged += (_, _) => SaveBounds();
         SizeChanged += (_, _) => SaveBounds();
-        RestoreBounds();
+        LoadBounds();
         Refresh();
     }
 
@@ -228,7 +228,7 @@ sealed class ShelfWindow : Window
         Top = Math.Clamp(y, area.Top + 4, Math.Max(area.Top + 4, area.Bottom - Height - 8));
     }
 
-    void RestoreBounds()
+    void LoadBounds()
     {
         var area = SystemParameters.WorkArea;
         if (Settings.Current.ShelfBounds is [var l, var t, var w, var h] && w >= MinWidth && h >= MinHeight

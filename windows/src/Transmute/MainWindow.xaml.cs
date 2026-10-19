@@ -200,6 +200,7 @@ public partial class MainWindow : Window
 
     void OnQuality(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
+        if (QualityLabel is null) return; // still loading
         QualityLabel.Text = $"{(int)Math.Round(e.NewValue * 100)}%";
         if (!IsLoaded) return;
         Prefs.ImageQuality = Math.Round(e.NewValue, 2);
