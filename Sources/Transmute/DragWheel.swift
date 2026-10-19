@@ -256,23 +256,38 @@ struct WheelView: View {
     private let radius: CGFloat = 128
     private let bubble: CGFloat = 66
 
+    // Split into small pieces: one big expression mixing CGFloat and Double maths is too
+    // slow for the type checker.
     var body: some View {
         ZStack {
-            Circle()
-                .fill(.ultraThinMaterial)
-                .overlay(Circle().strokeBorder(Color.primary.opacity(0.1)))
-                .frame(width: (radius + bubble / 2 + 10) * 2, height: (radius + bubble / 2 + 10) * 2)
-            VStack(spacing: 2) {
-                Text(kind.title).font(.headline)
-                Text("Drop on a bubble").font(.caption).foregroundStyle(.secondary)
-            }
+            ring
+            caption
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                let angle = Double(index) / Double(items.count) * 2 * .pi - .pi / 2
-                bubbleView(item)
-                    .offset(x: cos(angle) * radius, y: sin(angle) * radius)
+                bubbleView(item).offset(position(of: index))
             }
         }
         .frame(width: Self.size, height: Self.size)
+    }
+
+    private var ring: some View {
+        let diameter: CGFloat = (radius + bubble / 2 + 10) * 2
+        return Circle()
+            .fill(.ultraThinMaterial)
+            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1)))
+            .frame(width: diameter, height: diameter)
+    }
+
+    private var caption: some View {
+        VStack(spacing: 2) {
+            Text(kind.title).font(.headline)
+            Text("Drop on a bubble").font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func position(of index: Int) -> CGSize {
+        let count = Double(max(items.count, 1))
+        let angle: Double = Double(index) / count * 2 * Double.pi - Double.pi / 2
+        return CGSize(width: CGFloat(cos(angle)) * radius, height: CGFloat(sin(angle)) * radius)
     }
 
     private func bubbleView(_ item: WheelItem) -> some View {
