@@ -2,7 +2,8 @@ name: Build Transmute
 
 on:
   push:
-    branches: [main]
+    # dev is for trying changes on the Mac build server; only main publishes the download.
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -11,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: macos-15
+    # Trial runs on dev report problems as annotations without sending failure emails.
+    continue-on-error: ${{ github.ref != 'refs/heads/main' }}
     defaults:
       run:
         shell: bash
