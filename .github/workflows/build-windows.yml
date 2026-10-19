@@ -1,0 +1,258 @@
+name: Build Transmute for Windows
+
+on:
+  push:
+    branches: [windows]
+    paths: ["windows/**", ".github/workflows/build-windows.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  VERSION: "1.0.${{ github.run_number }}"
+
+jobs:
+  build:
+    name: Build, test and package
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Download ffmpeg (Intel/AMD and ARM)
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force ffmpeg-dl | Out-Null
+          foreach ($arch in "win64", "winarm64") {
+            $urls = @(
+              "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-$arch-gpl-7.1.zip",
+              "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-$arch-gpl.zip"
+            )
+            $zip = "ffmpeg-dl\$arch.zip"
+            $ok = $false
+            foreach ($url in $urls) {
+              try { Invoke-WebRequest -Uri $url -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5; $ok = $true; Write-Host "Downloaded $url"; break } catch { Write-Host "Not available: $url" }
+            }
+            if (-not $ok) { throw "No ffmpeg build found for $arch" }
+            Expand-Archive $zip -DestinationPath "ffmpeg-dl\$arch" -Force
+            $exe = Get-ChildItem "ffmpeg-dl\$arch" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+            Copy-Item $exe.FullName "ffmpeg-dl\ffmpeg-$arch.exe"
+            $license = Get-ChildItem "ffmpeg-dl\$arch" -Recurse -Filter LICENSE.txt | Select-Object -First 1
+            if ($license) { Copy-Item $license.FullName "ffmpeg-dl\LICENSE-$arch.txt" }
+          }
+          & .\ffmpeg-dl\ffmpeg-win64.exe -hide_banner -version | Select-Object -First 1
+          $encoders = & .\ffmpeg-dl\ffmpeg-win64.exe -hide_banner -encoders 2>$null
+          foreach ($enc in "libx264", "libvpx-vp9", "libopus", "libvorbis", "libmp3lame", "libwebp", "aac", "flac", "wmv2", "wmav2", "mpeg4", "gif", "pcm_s16le") {
+            if ($encoders -match " $enc ") { Write-Host "ok      $enc" } else { Write-Host "::warning::bundled ffmpeg has no $enc encoder" }
+          }
+
+      - name: Build
+        run: dotnet build src/Transmute/Transmute.csproj -c Release
+
+      - name: Publish (x64 and ARM64)
+        run: |
+          $ErrorActionPreference = "Stop"
+          foreach ($pair in @(@("x64", "win64"), @("arm64", "winarm64"))) {
+            $arch = $pair[0]; $ff = $pair[1]
+            $out = "out\publish\$arch"
+            dotnet publish src/Transmute/Transmute.csproj -c Release -r "win-$arch" --self-contained true -p:Version=$env:VERSION -o $out
+            if ($LASTEXITCODE -ne 0) { throw "publish $arch failed" }
+            New-Item -ItemType Directory -Force "$out\ffmpeg" | Out-Null
+            Copy-Item "ffmpeg-dl\ffmpeg-$ff.exe" "$out\ffmpeg\ffmpeg.exe"
+            if (Test-Path "ffmpeg-dl\LICENSE-$ff.txt") { Copy-Item "ffmpeg-dl\LICENSE-$ff.txt" "$out\ffmpeg\LICENSE.txt" }
+            dotnet publish src/Transmute.SelfTest/Transmute.SelfTest.csproj -c Release -r "win-$arch" --self-contained true -o "out\selftest\$arch"
+            if ($LASTEXITCODE -ne 0) { throw "publish self-test $arch failed" }
+            $size = (Get-ChildItem $out -Recurse | Measure-Object Length -Sum).Sum / 1MB
+            Write-Host ("{0}: {1:N0} MB" -f $arch, $size)
+          }
+
+      - name: Self-test every conversion (x64)
+        id: selftest
+        run: |
+          $env:TRANSMUTE_FFMPEG = "$PWD\out\publish\x64\ffmpeg\ffmpeg.exe"
+          New-Item -ItemType Directory -Force out\logs | Out-Null
+          & .\out\selftest\x64\Transmute.SelfTest.exe --make-fixtures out\fixtures 2>&1 | Tee-Object out\logs\fixtures.log
+          Copy-Item -Recurse out\fixtures out\selftest-run
+          & .\out\selftest\x64\Transmute.SelfTest.exe out\selftest-run 2>&1 | Tee-Object out\logs\selftest-x64.log
+          $code = $LASTEXITCODE
+          Get-Content out\logs\selftest-x64.log | Where-Object { $_ -match "^FAIL" } | ForEach-Object { Write-Host "::error title=Self-test (x64)::$_" }
+          $summary = Get-Content out\logs\selftest-x64.log | Select-Object -Last 1
+          Write-Host "::notice title=Self-test (x64)::$summary"
+          exit $code
+
+      - name: Smoke test the app (x64)
+        if: always() && steps.selftest.outcome != 'skipped'
+        run: |
+          $p = Start-Process -FilePath ".\out\publish\x64\Transmute.exe" -ArgumentList "--smoke-test", "`"$PWD\out\fixtures`"", "`"$PWD\out\smoke-x64`"" -PassThru
+          if (-not $p.WaitForExit(240000)) { $p.Kill(); Write-Host "::error title=Smoke test (x64)::the app didn't finish within 4 minutes" }
+          $log = Get-Content out\smoke-x64\smoke-test.log -ErrorAction SilentlyContinue
+          $log | ForEach-Object { Write-Host $_ }
+          $log | Where-Object { $_ -match "^(FAIL|WARN|NOTE)" } | ForEach-Object { Write-Host "::warning title=Smoke test (x64)::$_" }
+          if (-not ($log -match "SMOKE TEST PASSED")) { Write-Host "::error title=Smoke test (x64)::$($log | Select-Object -Last 1)"; exit 1 }
+          Write-Host "::notice title=Smoke test (x64)::passed"
+
+      - name: Install Inno Setup if missing
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+
+      - name: Build installers
+        run: |
+          $ErrorActionPreference = "Stop"
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          foreach ($arch in "universal", "x64", "arm64") {
+            $name = if ($arch -eq "universal") { "Transmute-Setup" } else { "Transmute-Setup-$arch" }
+            & $iscc /Q "/DArch=$arch" "/DVersion=$env:VERSION" "/DSourceRoot=$PWD\out\publish" "/DOutputName=$name" installer\Transmute.iss
+            if ($LASTEXITCODE -ne 0) { throw "installer $arch failed" }
+          }
+          Get-ChildItem out\installers | ForEach-Object { Write-Host ("{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)); Write-Host ("::notice title=Installer::{0} {1:N1} MB" -f $_.Name, ($_.Length / 1MB)) }
+
+      - name: Install with the installer and launch (x64)
+        run: |
+          $p = Start-Process -FilePath ".\out\installers\Transmute-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/TASKS=contextmenu", "/LOG=`"$PWD\out\logs\install-x64.log`"" -PassThru -Wait
+          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
+          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (x64)::Transmute.exe not found after installing"; exit 1 }
+          if (-not (Test-Path "$env:LOCALAPPDATA\Programs\Transmute\ffmpeg\ffmpeg.exe")) { Write-Host "::error title=Install (x64)::ffmpeg missing after installing"; exit 1 }
+          $app = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($app.HasExited) { Write-Host "::error title=Launch (x64)::Transmute quit by itself (exit code $($app.ExitCode))"; exit 1 }
+          Stop-Process -Id $app.Id -Force
+          Write-Host "::notice title=Install (x64)::installed and kept running"
+
+      - name: Keep pictures and logs on the windows-ci branch
+        if: always()
+        run: |
+          $dest = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force "$dest\x64" | Out-Null
+          Copy-Item out\smoke-x64\*.png, out\smoke-x64\*.log "$dest\x64" -ErrorAction SilentlyContinue
+          Copy-Item out\logs\* "$dest\x64" -ErrorAction SilentlyContinue
+          Set-Location $dest
+          git init -q -b windows-ci
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Windows build ${{ github.run_number }} (x64)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" windows-ci:windows-ci-x64
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installers
+          path: windows/out/installers/*.exe
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arm64-test-kit
+          path: |
+            windows/out/selftest/arm64
+            windows/out/fixtures
+          if-no-files-found: ignore
+
+  test-arm:
+    name: Test on Windows on ARM
+    needs: build
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installers
+          path: installers
+      - uses: actions/download-artifact@v4
+        with:
+          name: arm64-test-kit
+          path: kit
+
+      - name: Install (the universal installer should pick ARM64)
+        run: |
+          New-Item -ItemType Directory -Force logs | Out-Null
+          Start-Process -FilePath ".\installers\Transmute-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\logs\install-arm64.log`"" -Wait
+          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
+          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (ARM64)::Transmute.exe not found after installing"; exit 1 }
+          [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exe)
+          $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+          $type = [BitConverter]::ToUInt16($bytes, $pe + 4)
+          Write-Host ("Installed Transmute.exe machine type: 0x{0:X4} (0xAA64 is ARM64)" -f $type)
+          if ($type -ne 0xAA64) { Write-Host ("::error title=Install (ARM64)::installed the wrong build (machine 0x{0:X4})" -f $type); exit 1 }
+
+      - name: Self-test every conversion (ARM64)
+        id: selftest
+        run: |
+          $env:TRANSMUTE_FFMPEG = "$env:LOCALAPPDATA\Programs\Transmute\ffmpeg\ffmpeg.exe"
+          Copy-Item -Recurse kit\fixtures run
+          & .\kit\selftest\arm64\Transmute.SelfTest.exe run 2>&1 | Tee-Object logs\selftest-arm64.log
+          $code = $LASTEXITCODE
+          Get-Content logs\selftest-arm64.log | Where-Object { $_ -match "^FAIL" } | ForEach-Object { Write-Host "::error title=Self-test (ARM64)::$_" }
+          $summary = Get-Content logs\selftest-arm64.log | Select-Object -Last 1
+          Write-Host "::notice title=Self-test (ARM64)::$summary"
+          exit $code
+
+      - name: Smoke test the installed app (ARM64)
+        if: always() && steps.selftest.outcome != 'skipped'
+        run: |
+          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
+          $p = Start-Process -FilePath $exe -ArgumentList "--smoke-test", "`"$PWD\kit\fixtures`"", "`"$PWD\smoke-arm64`"" -PassThru
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "::error title=Smoke test (ARM64)::the app didn't finish within 5 minutes" }
+          $log = Get-Content smoke-arm64\smoke-test.log -ErrorAction SilentlyContinue
+          $log | ForEach-Object { Write-Host $_ }
+          $log | Where-Object { $_ -match "^(FAIL|WARN|NOTE)" } | ForEach-Object { Write-Host "::warning title=Smoke test (ARM64)::$_" }
+          if (-not ($log -match "SMOKE TEST PASSED")) { Write-Host "::error title=Smoke test (ARM64)::$($log | Select-Object -Last 1)"; exit 1 }
+          Write-Host "::notice title=Smoke test (ARM64)::passed"
+
+      - name: Keep pictures and logs on the windows-ci branch
+        if: always()
+        run: |
+          $dest = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force "$dest\arm64" | Out-Null
+          Copy-Item smoke-arm64\*.png, smoke-arm64\*.log, logs\* "$dest\arm64" -ErrorAction SilentlyContinue
+          Set-Location $dest
+          git init -q -b windows-ci
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Windows build ${{ github.run_number }} (ARM64)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" windows-ci:windows-ci-arm64
+
+  release:
+    name: Publish the download
+    needs: [build, test-arm]
+    if: github.ref == 'refs/heads/windows'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installers
+          path: installers
+      - name: Update the Windows beta release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cat > notes.md <<'EOF'
+          **Transmute for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs.
+
+          **Download [Transmute-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Transmute-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
+
+          Windows may say "Windows protected your PC" because this beta isn't signed yet: click **More info**, then **Run anyway**.
+
+          The smaller `-x64` and `-arm64` installers are the same app for one kind of PC each.
+          EOF
+          # Same tag and file names every time, so the download link never changes.
+          gh release delete windows-beta --cleanup-tag --yes >/dev/null 2>&1 || true
+          gh release create windows-beta --title "Transmute for Windows (beta)" --notes-file notes.md --prerelease --target "${{ github.sha }}"
+          gh release upload windows-beta installers/*.exe --clobber
+          echo "::notice title=Download::https://github.com/${GH_REPO}/releases/download/windows-beta/Transmute-Setup.exe"
