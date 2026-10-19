@@ -8,6 +8,11 @@ namespace Transmute;
 /// PSD, SVG and camera RAW files.
 public static class ImageConverter
 {
+    /// Some ImageMagick builds read HEIC but can't write it; the HEIC choice is hidden then.
+    public static bool CanWriteHeic => canWriteHeic.Value;
+    static readonly Lazy<bool> canWriteHeic = new(() =>
+        MagickNET.SupportedFormats.Any(f => f.Format == MagickFormat.Heic && f.SupportsWriting));
+
     public static bool IsAnimatedFormat(OutputFormat f) => f is OutputFormat.Gif or OutputFormat.Webp;
 
     public static MagickFormat MagickFormatFor(OutputFormat format) => format switch

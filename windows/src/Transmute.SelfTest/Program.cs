@@ -33,6 +33,7 @@ static class Tests
         Console.WriteLine($"ffmpeg: {Tools.Ffmpeg ?? "not available"}");
         Console.WriteLine($"Machine: {System.Runtime.InteropServices.RuntimeInformation.OSDescription} ({System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture})");
         Console.WriteLine($"ImageMagick: {MagickNET.Version}");
+        Console.WriteLine($"HEIC writing: {(ImageConverter.CanWriteHeic ? "yes" : "no")}");
         Console.WriteLine($"output: {outDir}\n");
 
         var inputs = Directory.GetFiles(inputDir).Where(f => !Path.GetFileName(f).StartsWith('.')).OrderBy(f => f, StringComparer.Ordinal).ToList();

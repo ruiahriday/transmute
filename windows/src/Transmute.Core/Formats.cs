@@ -63,7 +63,10 @@ public static class Kinds
     };
 
     /// Formats this kind of file can be converted to, most useful first.
-    public static OutputFormat[] ConvertTargets(this FileKind kind) => kind switch
+    public static OutputFormat[] ConvertTargets(this FileKind kind) =>
+        AllTargets(kind).Where(f => f != OutputFormat.Heic || ImageConverter.CanWriteHeic).ToArray();
+
+    static OutputFormat[] AllTargets(FileKind kind) => kind switch
     {
         FileKind.Image => [OutputFormat.Jpeg, OutputFormat.Png, OutputFormat.Webp, OutputFormat.Heic, OutputFormat.Avif,
             OutputFormat.Tiff, OutputFormat.Bmp, OutputFormat.Gif, OutputFormat.Ico, OutputFormat.Pdf, OutputFormat.Svg],
