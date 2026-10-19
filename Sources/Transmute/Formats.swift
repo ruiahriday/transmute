@@ -2,7 +2,7 @@ import Foundation
 
 /// What kind of file something is, decided by its extension.
 enum FileKind: String, CaseIterable, Identifiable, Sendable {
-    case image, video, audio, pdf, document, subtitle, archive, other
+    case image, video, audio, pdf, document, ebook, presentation, spreadsheet, subtitle, archive, other
 
     var id: String { rawValue }
 
@@ -13,6 +13,9 @@ enum FileKind: String, CaseIterable, Identifiable, Sendable {
         case .audio: "Audio"
         case .pdf: "PDFs"
         case .document: "Documents"
+        case .ebook: "E-books"
+        case .presentation: "Presentations"
+        case .spreadsheet: "Spreadsheets"
         case .subtitle: "Subtitles"
         case .archive: "Archives"
         case .other: "Other files"
@@ -26,6 +29,9 @@ enum FileKind: String, CaseIterable, Identifiable, Sendable {
         case .audio: "waveform"
         case .pdf: "doc.richtext"
         case .document: "doc.text"
+        case .ebook: "book"
+        case .presentation: "rectangle.on.rectangle"
+        case .spreadsheet: "tablecells"
         case .subtitle: "captions.bubble"
         case .archive: "archivebox"
         case .other: "doc"
@@ -47,8 +53,14 @@ enum FileKind: String, CaseIterable, Identifiable, Sendable {
             return .audio
         case "pdf":
             return .pdf
-        case "txt", "md", "markdown", "rtf", "rtfd", "doc", "docx", "odt", "html", "htm", "webarchive":
+        case "txt", "md", "markdown", "rtf", "rtfd", "doc", "docx", "odt", "html", "htm", "webarchive", "pages":
             return .document
+        case "epub":
+            return .ebook
+        case "pptx", "ppt", "key", "odp":
+            return .presentation
+        case "xlsx", "xls", "numbers", "csv", "tsv", "ods":
+            return .spreadsheet
         case "srt", "vtt":
             return .subtitle
         case "zip", "tar", "gz", "tgz", "bz2", "xz", "rar", "7z":
@@ -65,7 +77,10 @@ enum FileKind: String, CaseIterable, Identifiable, Sendable {
         case .video: [.mp4, .mov, .mkv, .webm, .avi, .wmv, .gif, .mp3, .m4a, .wav]
         case .audio: [.mp3, .m4a, .wav, .flac, .ogg, .opus, .aiff]
         case .pdf: [.png, .jpeg, .txt, .rtf, .docx, .html]
-        case .document: [.pdf, .docx, .rtf, .txt, .html, .odt]
+        case .document: [.pdf, .docx, .rtf, .txt, .html, .odt, .epub, .pages]
+        case .ebook: [.pdf, .txt, .html, .docx, .rtf]
+        case .presentation: [.pdf, .pptx, .key, .png, .jpeg]
+        case .spreadsheet: [.csv, .xlsx, .numbers, .pdf, .html]
         case .subtitle: [.srt, .vtt]
         case .archive: [.extract, .zip, .tgz]
         case .other: [.zip, .tgz]
@@ -80,7 +95,9 @@ enum OutputFormat: String, CaseIterable, Identifiable, Sendable {
     case jpeg, png, heic, webp, tiff, bmp, gif, svg, pdf
     case mp4, mov, mkv, avi, wmv, webm
     case mp3, m4a, wav, flac, ogg, opus, aiff
-    case txt, rtf, docx, html, odt
+    case txt, rtf, docx, html, odt, epub, pages
+    case pptx, key
+    case xlsx, numbers, csv
     case srt, vtt
     case zip, tar, tgz, extract
 
@@ -109,7 +126,10 @@ enum OutputFormat: String, CaseIterable, Identifiable, Sendable {
         case .pdf: "doc.richtext"
         case .mp4, .mov, .mkv, .avi, .wmv, .webm: "film"
         case .mp3, .m4a, .wav, .flac, .ogg, .opus, .aiff: "music.note"
-        case .txt, .rtf, .docx, .html, .odt: "doc.text"
+        case .txt, .rtf, .docx, .html, .odt, .pages: "doc.text"
+        case .epub: "book"
+        case .pptx, .key: "rectangle.on.rectangle"
+        case .xlsx, .numbers, .csv: "tablecells"
         case .srt, .vtt: "captions.bubble"
         case .zip, .tar, .tgz: "archivebox"
         case .extract: "arrow.up.bin"
@@ -136,6 +156,12 @@ enum JobOperation: Equatable, Sendable {
     case stripMetadata
     case splitPDF
     case readQR
+    // Editors (types defined in ImageEditor.swift, VideoEditor.swift, AudioEditor.swift, MetadataEditor.swift)
+    case editImage(ImageEdit)
+    case editVideo(VideoEdit)
+    case editAudio(AudioEdit)
+    case writeMetadata(MetadataEdit)
+    case snapshot(seconds: Double)
 }
 
 /// Tools that take several files and produce one output.
@@ -143,6 +169,7 @@ enum BatchTool: Sendable {
     case mergePDFs
     case imagesToPDF
     case archive(OutputFormat)
+    case joinVideos
 }
 
 struct JobResult: Equatable, Sendable {

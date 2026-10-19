@@ -36,6 +36,25 @@ enum Engine {
         case .readQR:
             guard kind == .image else { throw ConversionError("QR codes can only be read from images.") }
             return JobResult(message: try ImageConverter.readQR(input))
+
+        case .editImage(let edit):
+            guard kind == .image else { throw ConversionError("The photo editor only works on images.") }
+            return try await ImageEditEngine.apply(edit, to: input, options: options)
+
+        case .editVideo(let edit):
+            guard kind == .video else { throw ConversionError("The video editor only works on videos.") }
+            return try await VideoEditEngine.apply(edit, to: input, options: options, progress: progress)
+
+        case .editAudio(let edit):
+            guard kind == .audio || kind == .video else { throw ConversionError("The audio editor needs an audio or video file.") }
+            return try await AudioEditEngine.apply(edit, to: input, options: options, progress: progress)
+
+        case .writeMetadata(let edit):
+            return JobResult(outputs: [try await MetadataTool.write(edit, to: input, options: options)])
+
+        case .snapshot(let seconds):
+            guard kind == .video else { throw ConversionError("Snapshots can only be taken from videos.") }
+            return JobResult(outputs: [try await VideoEditEngine.snapshot(of: input, at: seconds, options: options)])
         }
     }
 
@@ -48,6 +67,10 @@ enum Engine {
             return [try await ArchiveTool.compress([input], to: format, name: nil, options: options)]
         case (.archive, .extract):
             return [try await ArchiveTool.extract(input, options: options)]
+        case (.ebook, _), (.presentation, _), (.spreadsheet, _), (.document, .epub), (.document, .pages):
+            return try await OfficeConverter.convert(input, kind: kind, to: format, options: options)
+        case (.document, _) where input.pathExtension.lowercased() == "pages":
+            return try await OfficeConverter.convert(input, kind: kind, to: format, options: options)
         case (.image, _):
             return [try await ImageConverter.convert(input, to: format, options: options)]
         case (.video, _), (.audio, _):
@@ -69,6 +92,8 @@ enum Engine {
         case .imagesToPDF: return try PDFTools.imagesToPDF(urls, options: options)
         case .archive(let format):
             return try await ArchiveTool.compress(urls, to: format, name: urls.count == 1 ? nil : "Archive", options: options)
+        case .joinVideos:
+            return try await VideoEditEngine.join(urls, options: options, progress: { _ in })
         }
     }
 }

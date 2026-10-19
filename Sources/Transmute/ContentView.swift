@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var dropTargeted = false
     @State private var showSettings = false
     @State private var showImporter = false
+    @State private var editing: EditRequest?
 
     enum Mode: String, CaseIterable, Identifiable {
         case convert = "Convert", compress = "Compress", tools = "Tools"
@@ -50,6 +51,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(item: $editing) { request in editor(for: request) }
         .frame(minWidth: 600, minHeight: 460)
     }
 
@@ -62,14 +64,17 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
             Text("Drop files or folders here")
                 .font(.title2.weight(.semibold))
-            Text("Images, video, audio, PDFs, documents, subtitles and archives")
+            Text("Images, video, audio, PDFs, documents, e-books, spreadsheets, presentations, subtitles and archives")
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
             Button("Choose Files…") { showImporter = true }
                 .controlSize(.large)
-            Text("Tip: hold ⇧ Shift while dragging a file anywhere to convert it on the spot.")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .padding(.top, 8)
+            if WheelKind.convert.key != .off {
+                Text("Tip: hold \(WheelKind.convert.key.label) while dragging a file anywhere to convert it on the spot.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -84,7 +89,12 @@ struct ContentView: View {
     private var fileList: some View {
         List {
             ForEach(queue.jobs) { job in
-                JobRow(job: job) { queue.remove(job.id) }
+                JobRow(
+                    job: job,
+                    onEdit: editAction(for: job),
+                    onInfo: infoAction(for: job),
+                    onRemove: { queue.remove(job.id) }
+                )
             }
         }
         .overlay {
@@ -104,6 +114,52 @@ struct ContentView: View {
                 DispatchQueue.main.async { queue.add([url]) }
             }
         }
+    }
+
+    // MARK: Editors
+
+    @ViewBuilder
+    private func editor(for request: EditRequest) -> some View {
+        let id = request.jobID
+        let close = { editing = nil }
+        switch request.mode {
+        case .image:
+            ImageEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editImage(edit))
+            }, onCancel: close)
+        case .video:
+            VideoEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editVideo(edit))
+            }, onSnapshot: { seconds in
+                run(id, .snapshot(seconds: seconds))
+            }, onCancel: close)
+        case .audio:
+            AudioEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editAudio(edit))
+            }, onCancel: close)
+        case .info:
+            MetadataEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .writeMetadata(edit))
+            }, onCancel: close)
+        }
+    }
+
+    private func editAction(for job: Job) -> (() -> Void)? {
+        guard let mode = EditRequest.editMode(for: job.kind) else { return nil }
+        return { editing = EditRequest(job: job, mode: mode) }
+    }
+
+    private func infoAction(for job: Job) -> (() -> Void)? {
+        guard EditRequest.hasInfo(job.kind) else { return nil }
+        return { editing = EditRequest(job: job, mode: .info) }
+    }
+
+    private func run(_ id: UUID, _ operation: JobOperation) {
+        queue.start([(id, operation)], options: .fromDefaults(), reveal: revealWhenDone)
     }
 
     // MARK: Controls
@@ -197,6 +253,7 @@ struct ContentView: View {
         let pdfs = queue.jobs.filter { $0.kind == .pdf }.map(\.id)
         let images = queue.jobs.filter { $0.kind == .image }.map(\.id)
         let cleanable = queue.jobs.filter { $0.kind.canStripMetadata }.map(\.id)
+        let videos = queue.jobs.filter { $0.kind == .video }.map(\.id)
         let all = queue.jobs.map(\.id)
         let busy = queue.isRunning
         return VStack(alignment: .leading, spacing: 8) {
@@ -209,6 +266,9 @@ struct ContentView: View {
                     queue.start(pdfs.map { ($0, JobOperation.splitPDF) }, options: .fromDefaults(), reveal: revealWhenDone)
                 }
                 .disabled(pdfs.isEmpty || busy)
+                Button("Join Videos") { queue.runBatch(.joinVideos, ids: videos, options: .fromDefaults(), reveal: revealWhenDone) }
+                    .disabled(videos.count < 2 || busy)
+                    .help("Joins the videos in list order into one MP4")
             }
             HStack {
                 Button("Zip All") { queue.runBatch(.archive(.zip), ids: all, options: .fromDefaults(), reveal: revealWhenDone) }
@@ -221,6 +281,9 @@ struct ContentView: View {
                     queue.start(images.map { ($0, JobOperation.readQR) }, options: .fromDefaults(), reveal: false)
                 }
                 .disabled(images.isEmpty || busy)
+                Button("Float Files") { FloatingShelf.shared.add(queue.jobs.map(\.url)) }
+                    .disabled(all.isEmpty)
+                    .help("Keeps the files on a small always-on-top shelf you can drag them out of")
                 Spacer()
                 if busy { Button("Cancel") { queue.cancelAll() } }
             }
@@ -241,8 +304,39 @@ struct ContentView: View {
     }
 }
 
+/// Which editor sheet is open, and for which file.
+struct EditRequest: Identifiable {
+    enum Mode { case image, video, audio, info }
+
+    let id = UUID()
+    let jobID: UUID
+    let url: URL
+    let mode: Mode
+
+    init(job: Job, mode: Mode) {
+        jobID = job.id
+        url = job.url
+        self.mode = mode
+    }
+
+    static func editMode(for kind: FileKind) -> Mode? {
+        switch kind {
+        case .image: .image
+        case .video: .video
+        case .audio: .audio
+        default: nil
+        }
+    }
+
+    static func hasInfo(_ kind: FileKind) -> Bool {
+        [.image, .video, .audio, .pdf].contains(kind)
+    }
+}
+
 struct JobRow: View {
     let job: Job
+    var onEdit: (() -> Void)?
+    var onInfo: (() -> Void)?
     let onRemove: () -> Void
 
     var body: some View {
@@ -264,12 +358,28 @@ struct JobRow: View {
             }
             Spacer()
             status
+            if let onEdit {
+                Button("Edit…", action: onEdit)
+                    .disabled(isRunning)
+                    .help("Open in the editor; the result is saved as a copy")
+            }
+            if let onInfo {
+                Button(action: onInfo) { Image(systemName: "info.circle") }
+                    .buttonStyle(.borderless)
+                    .disabled(isRunning)
+                    .help("View and edit metadata")
+            }
             Button(action: onRemove) { Image(systemName: "xmark.circle.fill") }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
                 .help("Remove from list")
         }
         .padding(.vertical, 2)
+    }
+
+    private var isRunning: Bool {
+        if case .running = job.state { return true }
+        return false
     }
 
     @ViewBuilder

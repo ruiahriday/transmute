@@ -55,15 +55,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct MenuContent: View {
     @Environment(\.openWindow) private var openWindow
+    // Observed so the key hints refresh when they change in Settings.
+    @AppStorage(WheelKind.convert.prefKey) private var convertKey = WheelKind.convert.defaultKey.rawValue
+    @AppStorage(WheelKind.tools.prefKey) private var toolsKey = WheelKind.tools.defaultKey.rawValue
+    @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
 
     var body: some View {
         Button("Open Transmute") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
+        Button("Show Floating Files") { FloatingShelf.shared.toggle() }
         Divider()
-        Text("Hold ⇧ while dragging files to convert")
-        Text("Hold ⌘ for tools, ⌃ for actions")
+        ForEach(WheelKind.allCases, id: \.self) { kind in
+            if let key = key(for: kind), key != .off {
+                Text("Hold \(key.label) while dragging for \(kind.hint)")
+            }
+        }
         Divider()
         Button("Quit Transmute") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
@@ -171,6 +179,9 @@ struct SettingsView: View {
     @AppStorage(Prefs.revealWhenDone) private var revealWhenDone = true
     @AppStorage(Prefs.wheelEnabled) private var wheelEnabled = true
     @AppStorage(Prefs.showInDock) private var showInDock = true
+    @AppStorage(WheelKind.convert.prefKey) private var convertKey = WheelKind.convert.defaultKey.rawValue
+    @AppStorage(WheelKind.tools.prefKey) private var toolsKey = WheelKind.tools.defaultKey.rawValue
+    @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -195,9 +206,19 @@ struct SettingsView: View {
                 }
                 Section("Drag wheel") {
                     Toggle("Show the wheel when I hold a key while dragging files", isOn: $wheelEnabled)
-                    Text("⇧ Shift for formats, ⌘ Command or ⌥ Option for tools, ⌃ Control for actions.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    keyPicker("Formats wheel", selection: $convertKey)
+                    keyPicker("Tools wheel", selection: $toolsKey)
+                    keyPicker("Actions wheel", selection: $actionsKey)
+                    if hasKeyClash {
+                        Label("Two wheels use the same key. The actions wheel wins, then tools.",
+                              systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    } else {
+                        Text("Some apps use ⌘ or ⌥ while dragging to copy or make an alias. If that gets in the way, pick another key.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Section("General") {
                     Toggle("Show Transmute in the Dock", isOn: Binding(
@@ -248,5 +269,16 @@ struct SettingsView: View {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         if panel.runModal() == .OK, let url = panel.url { outputFolderPath = url.path }
+    }
+
+    private func keyPicker(_ title: String, selection: Binding<String>) -> some View {
+        Picker(title, selection: selection) {
+            ForEach(WheelKey.allCases) { Text($0.label).tag($0.rawValue) }
+        }
+    }
+
+    private var hasKeyClash: Bool {
+        let keys = [convertKey, toolsKey, actionsKey].filter { $0 != WheelKey.off.rawValue }
+        return Set(keys).count != keys.count
     }
 }

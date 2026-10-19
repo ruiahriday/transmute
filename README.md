@@ -39,22 +39,38 @@ files in a folder and prints PASS or FAIL for each one. `scripts/make-fixtures.s
 
 ## Using it
 
-- **Main window:** click the menu bar icon (two circling arrows) and choose *Open Transmute*.
-  Drop in files or whole folders, pick an output format for each kind of file, and click
+- **Main window:** opens when you start Transmute, or click its Dock icon or the menu bar
+  icon (two circling arrows) and choose *Open Transmute*. Drop in files or whole folders, pick an output format for each kind of file, and click
   **Convert**. The **Compress** tab shrinks files by a percentage or to a target size. The
-  **Tools** tab merges PDFs, turns images into a PDF, splits PDFs into pages, zips
-  everything, removes metadata and reads QR codes.
+  **Tools** tab merges PDFs, turns images into a PDF, splits PDFs into pages, joins videos,
+  zips everything, removes metadata, reads QR codes and puts files on the floating shelf.
+- **Editors:** each image, video or audio file in the list has an **Edit…** button.
+  - *Photos:* crop (free or 1:1, 4:3, 3:2, 16:9, 9:16), rotate, flip, black out, pixelate
+    or blur areas, add text, boxes, arrows and highlights, and adjust brightness,
+    contrast, saturation and exposure.
+  - *Video:* trim, split in two, change speed, crop to square, portrait or widescreen,
+    rotate, flip, mute or change the volume, and save a still frame.
+  - *Audio:* trim, normalize loudness, change volume, fade in and out, bleep out parts,
+    and switch between mono and stereo.
+- **Info (ⓘ):** see a file's metadata (camera, location, codecs, tags, PDF properties) and
+  edit the title, artist, description, copyright and similar fields, or remove a photo's
+  location.
+- **Floating files:** a small always-on-top shelf. Drop files on it, switch to another
+  app, then drag them out again. Open it from the menu bar icon, the Tools tab, or the
+  *Float* bubble on the actions wheel.
 - **Drag wheel:** start dragging files anywhere (Finder, the Desktop, Mail…) and hold a key:
   - **⇧ Shift** shows a ring of output formats,
-  - **⌘ Command** or **⌥ Option** shows tools (half size, quarter size, clean metadata,
-    split or merge PDFs, images to PDF, QR, zip),
-  - **⌃ Control** shows actions (AirDrop, Copy, Copy Path, open in Terminal, Move…).
+  - **⌘ Command** shows tools (half size, quarter size, clean metadata, split or merge
+    PDFs, images to PDF, QR, zip),
+  - **⌃ Control** shows actions (AirDrop, Float, Copy, Copy Path, open in Terminal, Move…).
+
+  You can change these keys, or turn a wheel off, in Settings.
 
   Once the wheel is open you can let go of the key. Drop the files on a bubble, and the result
   is saved next to the original and shown in Finder. A small progress card appears in the
   top-right corner while it works.
 - **Settings** (gear button in the main window): choose where results are saved, whether
-  Finder opens afterwards, the drag wheel, and open at login.
+  Finder opens afterwards, the drag wheel and its keys, the Dock icon, and open at login.
 
 Your original files are never changed. Results get a new name, such as `photo.jpg`,
 `photo (compressed).jpg` or `photo (clean).jpg`.
@@ -67,7 +83,10 @@ Your original files are never changed. Results get a new name, such as `photo.jp
 | Video: MP4, MOV, MKV, AVI, WMV, WebM, FLV, MPG… | MP4, MOV, MKV, WebM, AVI, WMV, GIF, MP3, M4A, WAV | ffmpeg, or AVFoundation for MP4/MOV/M4A/WAV without it |
 | Audio: MP3, M4A, WAV, FLAC, OGG, Opus, AIFF, AAC… | MP3, M4A, WAV, FLAC, OGG, Opus, AIFF | ffmpeg, or `afconvert` for M4A/WAV/AIFF/FLAC without it |
 | PDF | PNG/JPEG (one per page), TXT, RTF, DOCX, HTML | PDFKit |
-| Documents: TXT, MD, RTF, DOC, DOCX, ODT, HTML | PDF, DOCX, RTF, TXT, HTML, ODT | macOS text system |
+| Documents: TXT, MD, RTF, DOC, DOCX, ODT, HTML, Pages | PDF, DOCX, RTF, TXT, HTML, ODT, EPUB, Pages | macOS text system; Pages for .pages files |
+| E-books: EPUB | PDF, TXT, HTML, DOCX, RTF | built in |
+| Presentations: PPTX, PPT, Key, ODP | PDF, PPTX, Key, PNG, JPEG | Keynote (free); PNG/JPEG of the first slide without it |
+| Spreadsheets: XLSX, XLS, Numbers, CSV, TSV, ODS | CSV, XLSX, Numbers, PDF, HTML | built in for XLSX and CSV; Numbers (free) for the rest |
 | Subtitles: SRT, VTT | SRT, VTT | built in |
 | Archives: ZIP, TAR, TAR.GZ, GZ, BZ2, XZ, RAR, 7Z | Extract, ZIP, TAR.GZ | `ditto`, `tar` (libarchive) |
 | Anything | ZIP, TAR.GZ | `ditto`, `tar` |
@@ -79,9 +98,13 @@ Your original files are never changed. Results get a new name, such as `photo.jp
 - DOCX → PDF keeps text and basic formatting, but not images or complex layouts.
 - PDF compression recompresses embedded images. Text-only PDFs barely shrink, and target sizes
   are best effort for PDFs.
-- Not built yet, compared with Tangerine: photo editing (crop, annotate, redact), video
-  editing (trim, split, join, speed), audio normalize and trim, metadata editing, EPUB,
-  Pages, PowerPoint and spreadsheet conversion, and floating files.
+- Pages, Keynote and Numbers files, and converting to them, need Apple's free Pages,
+  Keynote or Numbers app from the App Store. The first time, macOS asks whether Transmute
+  may control that app; click OK. Without Keynote, PowerPoint files can still be turned
+  into a picture of the first slide.
+- XLSX reading takes the first sheet's values. Formulas show their last saved results,
+  and formatting isn't kept.
+- EPUB output keeps headings, paragraphs, bold and italic, but not images.
 
 ## Code map
 
@@ -97,6 +120,12 @@ Sources/Transmute/
   ImageConverter.swift  Image conversion, compression, metadata removal, QR reading
   MediaConverter.swift  Video and audio through ffmpeg, with AVFoundation fallback
   DocumentTools.swift   PDF tools, document conversion, subtitles, archives
+  OfficeConverter.swift EPUB, Pages, Keynote, Numbers, Word, PowerPoint and Excel files
+  ImageEditor.swift     Photo editor: crop, rotate, redact, annotate, adjust
+  VideoEditor.swift     Video editor: trim, split, speed, crop, rotate, volume, join, snapshot
+  AudioEditor.swift     Audio editor: trim, normalize, volume, fades, bleeps, channels
+  MetadataEditor.swift  Metadata viewer and editor for photos, media and PDFs
+  FloatingShelf.swift   The always-on-top shelf for parking files
   Shell.swift           Runs ffmpeg, tar and other command-line tools
 scripts/make-fixtures.sh  Sample files for the self-test
 .github/workflows/build.yml  Mac build server: build, test, package, publish

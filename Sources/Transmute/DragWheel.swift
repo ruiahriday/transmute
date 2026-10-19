@@ -3,9 +3,10 @@ import SwiftUI
 
 /// The drag wheel: while you drag files anywhere (Finder, Desktop, another app) and hold
 ///   ⇧ Shift      → a ring of output formats,
-///   ⌘ or ⌥       → tools (compress, clean metadata, zip…),
-///   ⌃ Control    → file actions (AirDrop, copy, copy path, Terminal, move).
-/// Drop the files on a bubble to run it. The converted copy lands next to the original.
+///   ⌘ Command    → tools (compress, clean metadata, zip…),
+///   ⌃ Control    → file actions (AirDrop, float, copy, copy path, Terminal, move).
+/// The keys can be changed in Settings. Drop the files on a bubble to run it.
+/// The converted copy lands next to the original.
 ///
 /// It polls the system drag pasteboard instead of using event taps, so it needs no
 /// Accessibility permission.
@@ -45,12 +46,12 @@ final class DragWheelController {
         guard pasteboard.changeCount != baseline,
               UserDefaults.standard.bool(forKey: Prefs.wheelEnabled) else { return }
 
+        // Actions and tools win over convert when several keys are held.
         let flags = NSEvent.modifierFlags
-        let wanted: WheelKind? =
-            flags.contains(.control) ? .actions
-            : (flags.contains(.command) || flags.contains(.option)) ? .tools
-            : flags.contains(.shift) ? .convert
-            : nil
+        let wanted = [WheelKind.actions, .tools, .convert].first { kind in
+            guard let flag = kind.key.flag else { return false }
+            return flags.contains(flag)
+        }
         // Once open, the wheel stays until the drop; pressing another key switches wheels.
         guard let wanted, wanted != currentWheel || !shownThisDrag else { return }
 
@@ -165,7 +166,7 @@ final class DragWheelController {
     }
 }
 
-enum WheelKind {
+enum WheelKind: CaseIterable {
     case convert, tools, actions
 
     var title: String {
@@ -173,6 +174,62 @@ enum WheelKind {
         case .convert: "Convert to"
         case .tools: "Tools"
         case .actions: "Actions"
+        }
+    }
+
+    /// Short phrase for menus: "Hold ⇧ Shift while dragging for formats".
+    var hint: String {
+        switch self {
+        case .convert: "formats"
+        case .tools: "tools"
+        case .actions: "actions"
+        }
+    }
+
+    var prefKey: String {
+        switch self {
+        case .convert: "wheelKeyConvert"
+        case .tools: "wheelKeyTools"
+        case .actions: "wheelKeyActions"
+        }
+    }
+
+    var defaultKey: WheelKey {
+        switch self {
+        case .convert: .shift
+        case .tools: .command
+        case .actions: .control
+        }
+    }
+
+    /// The modifier that opens this wheel, from Settings.
+    var key: WheelKey {
+        UserDefaults.standard.string(forKey: prefKey).flatMap(WheelKey.init(rawValue:)) ?? defaultKey
+    }
+}
+
+enum WheelKey: String, CaseIterable, Identifiable {
+    case shift, command, option, control, off
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .shift: "⇧ Shift"
+        case .command: "⌘ Command"
+        case .option: "⌥ Option"
+        case .control: "⌃ Control"
+        case .off: "Off"
+        }
+    }
+
+    var flag: NSEvent.ModifierFlags? {
+        switch self {
+        case .shift: .shift
+        case .command: .command
+        case .option: .option
+        case .control: .control
+        case .off: nil
         }
     }
 }
@@ -191,11 +248,12 @@ struct WheelItem: Identifiable {
 }
 
 enum FileAction: CaseIterable {
-    case airDrop, copy, copyPath, terminal, move
+    case airDrop, float, copy, copyPath, terminal, move
 
     var label: String {
         switch self {
         case .airDrop: "AirDrop"
+        case .float: "Float"
         case .copy: "Copy"
         case .copyPath: "Copy Path"
         case .terminal: "Terminal"
@@ -206,6 +264,7 @@ enum FileAction: CaseIterable {
     var symbol: String {
         switch self {
         case .airDrop: "airplayaudio"
+        case .float: "pin"
         case .copy: "doc.on.clipboard"
         case .copyPath: "link"
         case .terminal: "terminal"
@@ -218,6 +277,8 @@ enum FileAction: CaseIterable {
         switch self {
         case .airDrop:
             NSSharingService(named: .sendViaAirDrop)?.perform(withItems: urls)
+        case .float:
+            FloatingShelf.shared.add(urls)
         case .copy:
             NSPasteboard.general.clearContents()
             NSPasteboard.general.writeObjects(urls as [NSURL])
