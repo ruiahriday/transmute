@@ -335,6 +335,21 @@ public static class Fonts
     public const string Sans = "Transmute Sans";
     public const string Mono = "Transmute Mono";
 
+    /// A regular sans-serif font file for drawing text on pictures, or null to let ImageMagick choose.
+    public static string? SansFile()
+    {
+        foreach (var name in new[] { "segoeui.ttf", "arial.ttf", "LiberationSans-Regular.ttf", "DejaVuSans.ttf" })
+            if (Resolver.FilePath(name) is { } path) return path;
+        return null;
+    }
+
+    public static string? BoldSansFile()
+    {
+        foreach (var name in new[] { "segoeuib.ttf", "arialbd.ttf", "LiberationSans-Bold.ttf", "DejaVuSans-Bold.ttf" })
+            if (Resolver.FilePath(name) is { } path) return path;
+        return SansFile();
+    }
+
     public static void Install()
     {
         lock (Gate)
@@ -409,6 +424,8 @@ public static class Fonts
             var any = files.Keys.FirstOrDefault(k => k.EndsWith(".ttf", StringComparison.OrdinalIgnoreCase));
             return any is null ? null : new FontResolverInfo(any, isBold, isItalic);
         }
+
+        public static string? FilePath(string file) => Index().TryGetValue(file, out var path) ? path : null;
 
         public byte[]? GetFont(string faceName) =>
             Index().TryGetValue(faceName, out var path) ? File.ReadAllBytes(path) : null;

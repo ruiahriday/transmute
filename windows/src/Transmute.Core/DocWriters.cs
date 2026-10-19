@@ -638,7 +638,8 @@ public static class DocWriters
 
     // PDF
 
-    public static void WritePdf(Doc doc, string output)
+    /// `slides` makes widescreen pages with bigger type, one slide per page.
+    public static void WritePdf(Doc doc, string output, bool slides = false)
     {
         Fonts.Install();
         var document = new Document();
@@ -646,7 +647,7 @@ public static class DocWriters
         if (doc.Author is { } author) document.Info.Author = author;
         var normal = document.Styles[StyleNames.Normal]!;
         normal.Font.Name = Fonts.Sans;
-        normal.Font.Size = 11;
+        normal.Font.Size = slides ? 18 : 11;
         normal.ParagraphFormat.SpaceAfter = Unit.FromPoint(6);
         normal.ParagraphFormat.LineSpacingRule = MigraDoc.DocumentObjectModel.LineSpacingRule.Multiple;
         normal.ParagraphFormat.LineSpacing = 1.15;
@@ -654,7 +655,7 @@ public static class DocWriters
         for (var level = 1; level <= 6; level++)
         {
             var style = document.Styles[$"Heading{level}"]!;
-            style.Font.Size = sizes[level - 1];
+            style.Font.Size = slides ? 30 : sizes[level - 1];
             style.Font.Bold = true;
             style.ParagraphFormat.SpaceBefore = Unit.FromPoint(level == 1 ? 14 : 10);
             style.ParagraphFormat.SpaceAfter = Unit.FromPoint(6);
@@ -667,11 +668,12 @@ public static class DocWriters
         var section = document.AddSection();
         section.PageSetup = document.DefaultPageSetup.Clone();
         section.PageSetup.PageFormat = PageFormat.A4;
-        section.PageSetup.PageWidth = Unit.FromCentimeter(21);
-        section.PageSetup.PageHeight = Unit.FromCentimeter(29.7);
+        section.PageSetup.PageWidth = Unit.FromCentimeter(slides ? 33.867 : 21);
+        section.PageSetup.PageHeight = Unit.FromCentimeter(slides ? 19.05 : 29.7);
         section.PageSetup.LeftMargin = section.PageSetup.RightMargin = Unit.FromCentimeter(2);
-        section.PageSetup.TopMargin = section.PageSetup.BottomMargin = Unit.FromCentimeter(2);
-        var usable = 17.0; // cm
+        section.PageSetup.TopMargin = section.PageSetup.BottomMargin = Unit.FromCentimeter(slides ? 1.5 : 2);
+        var usable = slides ? 29.867 : 17.0; // cm
+        var maxPictureHeight = slides ? 11.0 : 24.0;
 
         var temp = new List<string>();
         try
@@ -734,6 +736,8 @@ public static class DocWriters
                             image.Write(path, image.HasAlpha ? MagickFormat.Png : MagickFormat.Jpeg);
                             temp.Add(path);
                             var width = Math.Min(usable, image.Width / 96.0 * 2.54);
+                            // Tall pictures are limited by height instead.
+                            width = Math.Min(width, maxPictureHeight * image.Width / Math.Max(1.0, image.Height));
                             var picture = section.AddParagraph().AddImage(path);
                             picture.Width = Unit.FromCentimeter(width);
                             picture.LockAspectRatio = true;
