@@ -772,6 +772,25 @@ enum SelfTest {
             print("SKIP  metadata tags: need ffmpeg and the song.mp3 / clip.mp4 / tone.wav fixtures")
         }
 
+        // Floating files open on a shake while dragging, but not on a slow drag.
+        await check("Shake detection") {
+            func shakes(_ xs: [CGFloat], every step: TimeInterval) -> Bool {
+                var detector = ShakeDetector()
+                var shaken = false
+                for (index, x) in xs.enumerated() where detector.add(x: x, at: Double(index) * step) { shaken = true }
+                return shaken
+            }
+            var quick: [CGFloat] = []
+            for turn in 0..<6 { for step in 0...4 { quick.append(CGFloat(turn % 2 == 0 ? step : 4 - step) * 20) } }
+            guard shakes(quick, every: 1.0 / 60) else { throw ConversionError("a quick shake wasn't noticed") }
+            guard !shakes(quick, every: 0.2) else { throw ConversionError("a slow back and forth counted as a shake") }
+            let straight = (0..<60).map { CGFloat($0) * 10 }
+            guard !shakes(straight, every: 1.0 / 60) else { throw ConversionError("a straight drag counted as a shake") }
+            let wobble = (0..<60).map { CGFloat($0 % 2) * 15 }
+            guard !shakes(wobble, every: 1.0 / 60) else { throw ConversionError("a small wobble counted as a shake") }
+            return []
+        }
+
         // QR round trip with a code we generate ourselves.
         await check("QR code read") {
             let qr = outDir.appendingPathComponent("qr-fixture.png")

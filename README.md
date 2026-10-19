@@ -56,8 +56,10 @@ files in a folder and prints PASS or FAIL for each one. `scripts/make-fixtures.s
   edit the title, artist, description, copyright and similar fields, or remove a photo's
   location.
 - **Floating files:** a small always-on-top shelf. Drop files on it, switch to another
-  app, then drag them out again. Open it from the menu bar icon, the Tools tab, or the
-  *Float* bubble on the actions wheel.
+  app, then drag them out again. While dragging files, shake them or drag them up into
+  the notch (the middle of the top edge on screens without one) and it opens under them.
+  It also opens from the menu bar icon, the Tools tab, or the *Float* bubble on the
+  actions wheel. Shake and notch can be turned off in Settings.
 - **Drag wheel:** start dragging files anywhere (Finder, the Desktop, Mail…) and hold a key:
   - **⇧ Shift** shows a ring of output formats,
   - **⌘ Command** shows tools (half size, quarter size, clean metadata, split or merge

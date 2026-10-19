@@ -33,6 +33,7 @@ struct TransmuteApp: App {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var wheel: DragWheelController?
+    private let summoner = ShelfSummoner()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Prefs.registerDefaults()
@@ -48,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = DragWheelController()
         controller.start()
         wheel = controller
+        summoner.start()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -187,6 +189,8 @@ struct SettingsView: View {
     @AppStorage(Prefs.revealWhenDone) private var revealWhenDone = true
     @AppStorage(Prefs.wheelEnabled) private var wheelEnabled = true
     @AppStorage(Prefs.showInDock) private var showInDock = true
+    @AppStorage(Prefs.shakeToShelf) private var shakeToShelf = true
+    @AppStorage(Prefs.notchToShelf) private var notchToShelf = true
     @AppStorage(WheelKind.convert.prefKey) private var convertKey = WheelKind.convert.defaultKey.rawValue
     @AppStorage(WheelKind.tools.prefKey) private var toolsKey = WheelKind.tools.defaultKey.rawValue
     @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
@@ -228,6 +232,13 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                Section("Floating files") {
+                    Toggle("Open when I shake files while dragging them", isOn: $shakeToShelf)
+                    Toggle("Open when I drag files up to the notch", isOn: $notchToShelf)
+                    Text("On a screen without a notch, drag to the middle of the top edge instead.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Section("General") {
                     Toggle("Show Transmute in the Dock", isOn: Binding(
                         get: { showInDock },
@@ -268,7 +279,7 @@ struct SettingsView: View {
             }
             .padding()
         }
-        .frame(width: 480, height: 520)
+        .frame(width: 480, height: 600)
     }
 
     private func chooseFolder() {

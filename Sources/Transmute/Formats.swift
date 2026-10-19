@@ -210,6 +210,8 @@ enum Prefs {
     static let revealWhenDone = "revealWhenDone"
     static let wheelEnabled = "dragWheelEnabled"
     static let showInDock = "showInDock"
+    static let shakeToShelf = "shakeToOpenFloatingFiles"
+    static let notchToShelf = "notchOpensFloatingFiles"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -217,6 +219,8 @@ enum Prefs {
             revealWhenDone: true,
             wheelEnabled: true,
             showInDock: true,
+            shakeToShelf: true,
+            notchToShelf: true,
             outputMode: OutputMode.besideOriginal.rawValue,
         ])
     }

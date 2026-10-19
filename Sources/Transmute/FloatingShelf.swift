@@ -42,9 +42,12 @@ final class FloatingShelf: ObservableObject {
         }
     }
 
-    func show() {
+    /// Shows the shelf. With `point`, the shelf is moved so its top centre sits there
+    /// (kept on screen), which puts it under the files being dragged.
+    func show(at point: NSPoint? = nil) {
         let panel = self.panel ?? makePanel()
         self.panel = panel
+        if let point { place(panel, topCentre: point) }
         // Drop files that were moved or deleted since they were added.
         let existing = files.filter { FileManager.default.fileExists(atPath: $0.path) }
         if existing.count != files.count {
@@ -52,6 +55,16 @@ final class FloatingShelf: ObservableObject {
             save()
         }
         panel.orderFrontRegardless()
+    }
+
+    private func place(_ panel: NSPanel, topCentre point: NSPoint) {
+        let screen = NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main
+        guard let visible = screen?.visibleFrame else { return }
+        let size = panel.frame.size
+        var origin = NSPoint(x: point.x - size.width / 2, y: point.y - size.height)
+        origin.x = min(max(origin.x, visible.minX + 8), visible.maxX - size.width - 8)
+        origin.y = min(max(origin.y, visible.minY + 8), visible.maxY - size.height)
+        panel.setFrameOrigin(origin)
     }
 
     private func save() {
@@ -74,6 +87,113 @@ final class FloatingShelf: ObservableObject {
         }
         panel.setFrameAutosaveName("FloatingShelf")
         return panel
+    }
+}
+
+/// Opens the shelf when files are shaken while being dragged, or dragged up into the
+/// notch (on a Mac without one, the middle of the top edge of the screen).
+/// Like the drag wheel, it watches the drag pasteboard and the mouse, so it needs no
+/// Accessibility permission.
+@MainActor
+final class ShelfSummoner {
+    private var timer: Timer?
+    private var baseline = NSPasteboard(name: .drag).changeCount
+    private var isFileDrag: Bool?
+    private var openedThisDrag = false
+    private var shake = ShakeDetector()
+
+    func start() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in self.tick() }
+        }
+    }
+
+    private func tick() {
+        let pasteboard = NSPasteboard(name: .drag)
+        guard (NSEvent.pressedMouseButtons & 1) != 0 else {
+            reset(baseline: pasteboard.changeCount)
+            return
+        }
+        guard pasteboard.changeCount != baseline, !openedThisDrag else { return }
+        if isFileDrag == nil {
+            let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+            isFileDrag = !(urls ?? []).isEmpty
+        }
+        guard isFileDrag == true else { return }
+
+        let defaults = UserDefaults.standard
+        let point = NSEvent.mouseLocation
+        if defaults.bool(forKey: Prefs.notchToShelf), let below = Self.notchBottom(containing: point) {
+            open(at: below)
+        } else if defaults.bool(forKey: Prefs.shakeToShelf),
+                  shake.add(x: point.x, at: ProcessInfo.processInfo.systemUptime) {
+            open(at: NSPoint(x: point.x, y: point.y + 60))
+        }
+    }
+
+    private func open(at point: NSPoint) {
+        openedThisDrag = true
+        FloatingShelf.shared.show(at: point)
+    }
+
+    private func reset(baseline: Int) {
+        self.baseline = baseline
+        isFileDrag = nil
+        openedThisDrag = false
+        shake = ShakeDetector()
+    }
+
+    /// When `point` is in the notch, the point just below the notch's middle.
+    static func notchBottom(containing point: NSPoint) -> NSPoint? {
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) else { return nil }
+        let frame = screen.frame
+        var zone = NSRect(x: frame.midX - 120, y: frame.maxY - 4, width: 240, height: 4)
+        if #available(macOS 12.0, *), screen.safeAreaInsets.top > 0,
+           let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            let top = screen.safeAreaInsets.top
+            zone = NSRect(x: left.maxX, y: frame.maxY - top, width: right.minX - left.maxX, height: top)
+        }
+        guard NSMouseInRect(point, zone, false) else { return nil }
+        return NSPoint(x: zone.midX, y: zone.minY - 6)
+    }
+}
+
+/// Spots a quick left-right shake in a stream of pointer positions.
+struct ShakeDetector {
+    /// How far the pointer must travel back the other way to count as a turn, in points.
+    var distance: CGFloat = 40
+    /// Turns needed within `window` seconds.
+    var turnsNeeded = 4
+    var window: TimeInterval = 0.9
+
+    // Where the pointer last turned round (or its furthest point so far), which way it is
+    // heading, and when each recent turn happened.
+    private var turnX: CGFloat?
+    private var heading: CGFloat = 0
+    private var turns: [TimeInterval] = []
+
+    /// Records the pointer's x position at `time` and says whether it has just been shaken.
+    mutating func add(x: CGFloat, at time: TimeInterval) -> Bool {
+        guard let start = turnX else {
+            turnX = x
+            return false
+        }
+        let moved = x - start
+        if heading == 0 {
+            if abs(moved) >= distance {
+                heading = moved > 0 ? 1 : -1
+                turnX = x
+            }
+        } else if moved * heading > 0 {
+            turnX = x  // still going the same way: follow the furthest point
+        } else if abs(moved) >= distance {
+            heading = -heading
+            turnX = x
+            turns.append(time)
+        }
+        turns.removeAll { time - $0 > window }
+        return turns.count >= turnsNeeded
     }
 }
 
