@@ -85,6 +85,115 @@ enum SelfTest {
             record("EPUB inputs", nil, "no EPUB was produced in pass 1")
         }
 
+        // Office / e-book content checks (OfficeConverter.swift).
+        let officeDir = outDir.appendingPathComponent("office-content")
+        try? FileManager.default.createDirectory(at: officeDir, withIntermediateDirectories: true)
+        var officeOptions = options
+        officeOptions.outputFolder = officeDir
+        func officeConvert(_ url: URL, _ f: OutputFormat) async throws -> [URL] {
+            try await Engine.perform(.convert(f), on: url, options: officeOptions) { _ in }.outputs
+        }
+        func officeText(_ url: URL) throws -> String {
+            try String(contentsOf: url, encoding: .utf8).replacingOccurrences(of: "\r\n", with: "\n")
+        }
+        func officeFixture(_ name: String) throws -> URL {
+            guard let u = inputs.first(where: { $0.lastPathComponent == name }) else { throw ConversionError("fixture \(name) missing") }
+            return u
+        }
+        func unzipMember(_ zip: URL, _ member: String) throws -> String {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+            p.arguments = ["-p", zip.path, member]
+            let pipe = Pipe()
+            p.standardOutput = pipe
+            try p.run()
+            let d = pipe.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            return String(decoding: d, as: UTF8.self)
+        }
+
+        await check("office: budget.xlsx → csv content") {
+            let out = try await officeConvert(try officeFixture("budget.xlsx"), .csv)
+            guard let f = out.first else { throw ConversionError("no output") }
+            let got = try officeText(f)
+            guard got == "Item,Cost,\nRent,1200,\nFood & drink,,310.5\n" else { throw ConversionError("CSV was \(got.debugDescription)") }
+            return out
+        }
+        await check("office: table.csv → xlsx → csv keeps quoted comma") {
+            let xlsx = try await officeConvert(try officeFixture("table.csv"), .xlsx)
+            let sheet = try unzipMember(xlsx[0], "xl/worksheets/sheet1.xml")
+            guard sheet.contains("<v>12</v>"), sheet.contains("Pears, green") else { throw ConversionError("sheet XML: \(sheet.prefix(300))") }
+            let back = try await officeConvert(xlsx[0], .csv)
+            guard try officeText(back[0]).contains("\"Pears, green\",12,0.8") else { throw ConversionError("round trip lost the quoted comma") }
+            return xlsx + back
+        }
+        await check("office: note.txt → epub → txt") {
+            let epub = try await officeConvert(try officeFixture("note.txt"), .epub)
+            let bytes = try Data(contentsOf: epub[0])
+            guard bytes.count > 58,
+                  String(decoding: bytes[30..<38], as: UTF8.self) == "mimetype",
+                  String(decoding: bytes[38..<58], as: UTF8.self) == "application/epub+zip" else { throw ConversionError("bad OCF header") }
+            let txt = try await officeConvert(epub[0], .txt)
+            let s = try officeText(txt[0])
+            guard s.contains("Hello from Transmute"), s.contains("Second paragraph.") else { throw ConversionError("text was: \(s.prefix(200))") }
+            return epub + txt
+        }
+        await check("office: html → epub markup") {
+            let html = officeDir.appendingPathComponent("styled.html")
+            try "<html><body><h1>Title</h1><p>Some <b>bold</b> and <i>italic</i> &amp; more.</p></body></html>"
+                .write(to: html, atomically: true, encoding: .utf8)
+            let epub = try await officeConvert(html, .epub)
+            let chapter = try unzipMember(epub[0], "OEBPS/chapter1.xhtml")
+            for needle in ["<h1", "<strong>bold</strong>", "<em>italic</em>", "&amp;"] where !chapter.contains(needle) {
+                throw ConversionError("chapter1.xhtml lacks \(needle)")
+            }
+            for member in ["META-INF/container.xml", "OEBPS/content.opf", "OEBPS/nav.xhtml", "OEBPS/chapter1.xhtml"] {
+                let parser = XMLParser(data: Data(try unzipMember(epub[0], member).utf8))
+                guard parser.parse() else { throw ConversionError("\(member) is not well-formed") }
+            }
+            return epub
+        }
+        await check("office: book.epub → txt/html") {
+            let book = try officeFixture("book.epub")
+            let txt = try await officeConvert(book, .txt)
+            let html = try await officeConvert(book, .html)
+            let s = try officeText(txt[0])
+            let h = try officeText(html[0])
+            guard let a = s.range(of: "First chapter text."), let b = s.range(of: "Second chapter text."),
+                  a.lowerBound < b.lowerBound else { throw ConversionError("chapters out of order") }
+            guard h.contains("data:image/png;base64,"), h.contains("href=\"#end\"") else { throw ConversionError("HTML missing image/link") }
+            return txt + html
+        }
+        await check("office: tsv → csv/xlsx") {
+            let tsv = officeDir.appendingPathComponent("tabs.tsv")
+            try "A\tB\n1\tx, y\n".write(to: tsv, atomically: true, encoding: .utf8)
+            let csv = try await officeConvert(tsv, .csv)
+            let got = try officeText(csv[0])
+            guard got == "A,B\n1,\"x, y\"\n" else { throw ConversionError("TSV→CSV: \(got.debugDescription)") }
+            let xlsx = try await officeConvert(tsv, .xlsx)
+            return csv + xlsx
+        }
+        await check("office: .pages preview → txt (no Pages needed)") {
+            let pdf = try await officeConvert(try officeFixture("note.txt"), .pdf)
+            let pkg = officeDir.appendingPathComponent("preview.pages")
+            try FileManager.default.createDirectory(at: pkg.appendingPathComponent("QuickLook"), withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: pdf[0], to: pkg.appendingPathComponent("QuickLook/Preview.pdf"))
+            let txt = try await officeConvert(pkg, .txt)
+            guard try officeText(txt[0]).contains("Hello from Transmute") else { throw ConversionError("preview text missing") }
+            return txt
+        }
+        await check("office: missing iWork app gives a clear error") {
+            let note = try officeFixture("note.txt")
+            guard OfficeConverter.requiredApp(for: note, to: .pages) != nil else { return [] } // Pages installed: nothing to test
+            do {
+                _ = try await officeConvert(note, .pages)
+            } catch {
+                guard error.localizedDescription.contains("Pages") else { throw error }
+                return []
+            }
+            throw ConversionError("expected an error without Pages")
+        }
+
         // Multi-file tools.
         let images = inputs.filter { FileKind.of($0) == .image }
         await check("Merge PDFs") {

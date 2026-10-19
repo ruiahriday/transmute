@@ -6,6 +6,10 @@ enum Engine {
                         progress: @escaping ProgressHandler) async throws -> JobResult {
         let kind = FileKind.of(input)
         switch operation {
+        // Office and e-book conversions can add a note, for example when only the first slide was used.
+        case .convert(let format) where isOffice(input, kind: kind, to: format):
+            return try await OfficeConverter.run(input, kind: kind, to: format, options: options)
+
         case .convert(let format):
             return JobResult(outputs: try await convert(input, kind: kind, to: format, options: options, progress: progress))
 
@@ -84,6 +88,13 @@ enum Engine {
         default:
             throw ConversionError("Can't convert \(input.lastPathComponent) to \(format.label).")
         }
+    }
+
+    private static func isOffice(_ input: URL, kind: FileKind, to format: OutputFormat) -> Bool {
+        let officeKinds: [FileKind] = [.ebook, .presentation, .spreadsheet]
+        if officeKinds.contains(kind) { return true }
+        if input.pathExtension.lowercased() == "pages" { return true }
+        return kind == .document && (format == .epub || format == .pages)
     }
 
     static func batch(_ tool: BatchTool, urls: [URL], options: ConversionOptions) async throws -> URL {

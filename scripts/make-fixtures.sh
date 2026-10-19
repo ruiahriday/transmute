@@ -59,6 +59,24 @@ with zipfile.ZipFile("budget.xlsx", "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr(name, text)
 PY
 
+# An EPUB with two chapters (listed out of order), a stylesheet, an image and a link
+python3 - <<'PY'
+import zipfile
+png = open("sample.png", "rb").read()
+def ch(title, body):
+    return ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>%s</title>'
+            '<link rel="stylesheet" type="text/css" href="../Styles/book.css"/></head><body>%s</body></html>' % (title, body))
+with zipfile.ZipFile("book.epub", "w") as z:
+    z.writestr(zipfile.ZipInfo("mimetype"), "application/epub+zip", compress_type=zipfile.ZIP_STORED)
+    d = zipfile.ZIP_DEFLATED
+    z.writestr("META-INF/container.xml", '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OPS/book.opf" media-type="application/oebps-package+xml"/></rootfiles></container>', d)
+    z.writestr("OPS/book.opf", '<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:12345678-1234-1234-1234-123456789abc</dc:identifier><dc:title>Fixture Book</dc:title><dc:language>en</dc:language></metadata><manifest><item id="c2" href="Text/chapter%20two.xhtml" media-type="application/xhtml+xml"/><item id="c1" href="Text/chapter%20one.xhtml" media-type="application/xhtml+xml"/><item id="css" href="Styles/book.css" media-type="text/css"/><item id="img" href="Images/dot.png" media-type="image/png"/></manifest><spine><itemref idref="c1"/><itemref idref="c2"/></spine></package>', d)
+    z.writestr("OPS/Text/chapter one.xhtml", ch("One", '<h1>Chapter One</h1><p><a id="p1"/>First chapter text. <a href="chapter%20two.xhtml#end">Jump</a></p><p><img src="../Images/dot.png" alt="dot"/></p>'), d)
+    z.writestr("OPS/Text/chapter two.xhtml", ch("Two", '<h1>Chapter Two</h1><p id="end">Second chapter text.</p>'), d)
+    z.writestr("OPS/Styles/book.css", "h1 { color: #333; }", d)
+    z.writestr("OPS/Images/dot.png", png, d)
+PY
+
 # Subtitles
 cat > subs.srt <<'SRT'
 1
