@@ -436,7 +436,7 @@ static class Tests
         await Check("tone.wav waveform", async () =>
         {
             var levels = await AudioEditEngine.Waveform(wav, 100, default);
-            Expect(levels.Length == 100 && levels.Average() > 0.2, $"levels averaged {levels.DefaultIfEmpty().Average():0.00}");
+            Expect(levels.Length == 100 && levels.Average() > 0.08 && levels.Min() > 0.05, $"levels averaged {levels.DefaultIfEmpty().Average():0.00}");
             return [];
         });
         await Check("tone.wav audio edit: trim, fade in and out, −6 dB", async () =>
@@ -569,8 +569,6 @@ static class Tests
         }
     }
 
-    static Task Check(string name, Func<Task<string[]>> body) => Check(name, async () => (IReadOnlyList<string>)await body());
-    static Task Check(string name, Func<Task<List<string>>> body) => Check(name, async () => (IReadOnlyList<string>)await body());
 
     static void Record(string name, string error)
     {

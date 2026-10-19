@@ -85,9 +85,9 @@ public static class Archives
         try
         {
             await Task.Run(() => ExtractTo(input, folder, token), token);
-            // One folder inside with the same name: lift its contents up a level.
+            // Everything inside one folder: lift its contents up a level instead of nesting folders.
             var items = Directory.GetFileSystemEntries(folder);
-            if (items.Length == 1 && Directory.Exists(items[0]) && Path.GetFileName(items[0]) == Path.GetFileName(folder))
+            if (items.Length == 1 && Directory.Exists(items[0]))
             {
                 var temp = folder + "-" + Guid.NewGuid().ToString("N")[..6];
                 Directory.Move(items[0], temp);
@@ -122,6 +122,12 @@ public static class Archives
             stream.CopyTo(target);
             return;
         }
+        var tar = Regex.Match(name, @"\.(tar|tar\.gz|tgz|tar\.bz2|tbz2?|tar\.xz|txz)$");
+        if (tar.Success)
+        {
+            ExtractTar(input, tar.Groups[1].Value, folder, token);
+            return;
+        }
         IArchive archive;
         try { archive = ArchiveFactory.OpenArchive(input, new SharpCompress.Readers.ReaderOptions()); }
         catch (Exception e) { throw new ConversionException($"Couldn't open {Path.GetFileName(input)} as an archive: {e.Message}"); }
@@ -143,6 +149,45 @@ public static class Archives
                 source.CopyTo(file);
                 if (entry.LastModifiedTime is { } time) { file.Close(); File.SetLastWriteTime(target, time); }
             }
+        }
+    }
+
+    static void ExtractTar(string input, string kind, string folder, CancellationToken token)
+    {
+        using var source = File.OpenRead(input);
+        using Stream stream = kind switch
+        {
+            "tar" => source,
+            "tar.gz" or "tgz" => new GZipStream(source, CompressionMode.Decompress),
+            "tar.xz" or "txz" => new XZStream(source),
+            _ => BZip2Stream.Create(source, SharpCompress.Compressors.CompressionMode.Decompress, true, false, false),
+        };
+        var root = Path.GetFullPath(folder) + Path.DirectorySeparatorChar;
+        try
+        {
+            using var reader = new TarReader(stream);
+            while (reader.GetNextEntry() is { } entry)
+            {
+                token.ThrowIfCancellationRequested();
+                var target = Path.GetFullPath(Path.Combine(folder, entry.Name.Replace('\\', '/').TrimStart('/')));
+                // Never write outside the folder ("../" tricks).
+                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase)) continue;
+                switch (entry.EntryType)
+                {
+                    case TarEntryType.Directory:
+                        Directory.CreateDirectory(target);
+                        break;
+                    case TarEntryType.RegularFile or TarEntryType.V7RegularFile or TarEntryType.ContiguousFile:
+                        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                        using (var file = File.Create(target)) entry.DataStream?.CopyTo(file);
+                        File.SetLastWriteTime(target, entry.ModificationTime.LocalDateTime);
+                        break;
+                }
+            }
+        }
+        catch (Exception e) when (e is InvalidDataException or FormatException or EndOfStreamException)
+        {
+            throw new ConversionException($"Couldn't open {Path.GetFileName(input)} as an archive: {e.Message}");
         }
     }
 

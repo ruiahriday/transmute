@@ -332,14 +332,14 @@ public static class Sheets
     {
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n");
-        sb.Append($"<title>{WebUtility.HtmlEncode(table.Name)}</title>\n");
+        sb.Append($"<title>{DocWriters.Escape(table.Name)}</title>\n");
         sb.Append("<style>body{font-family:\"Segoe UI\",Arial,sans-serif;margin:2em}table{border-collapse:collapse}td{border:1px solid #bbb;padding:4px 8px}td.n{text-align:right}tr:first-child td{font-weight:600;background:#f2f2f2}</style>\n");
         sb.Append("</head>\n<body>\n<table>\n");
         foreach (var row in table.Rows)
         {
             sb.Append("<tr>");
             foreach (var cell in row)
-                sb.Append(IsPlainNumber(cell, out _) ? "<td class=\"n\">" : "<td>").Append(WebUtility.HtmlEncode(cell).Replace("\n", "<br>")).Append("</td>");
+                sb.Append(IsPlainNumber(cell, out _) ? "<td class=\"n\">" : "<td>").Append(DocWriters.Escape(cell).Replace("\n", "<br>")).Append("</td>");
             sb.Append("</tr>\n");
         }
         sb.Append("</table>\n</body>\n</html>\n");

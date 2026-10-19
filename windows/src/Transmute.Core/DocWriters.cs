@@ -13,6 +13,10 @@ namespace Transmute;
 /// Writes a Doc as text, Markdown, HTML, RTF, Word, OpenDocument, EPUB or PDF.
 public static class DocWriters
 {
+    /// Escapes only what HTML and XML need, so accented letters stay readable in the file.
+    public static string Escape(string text) =>
+        text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;");
+
     public static void Write(Doc doc, OutputFormat format, string output)
     {
         switch (format)
@@ -116,7 +120,7 @@ public static class DocWriters
 
     public static string ToHtml(Doc doc)
     {
-        var title = WebUtility.HtmlEncode(doc.GuessTitle("Document"));
+        var title = DocWriters.Escape(doc.GuessTitle("Document"));
         var sb = new StringBuilder();
         sb.Append("<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
         sb.Append($"<title>{title}</title>\n");
@@ -157,15 +161,15 @@ public static class DocWriters
             {
                 case Block.Heading h: sb.Append($"<h{h.Level}>").Append(HtmlRuns(h.Runs, br)).Append($"</h{h.Level}>\n"); break;
                 case Block.Paragraph p: sb.Append("<p>").Append(HtmlRuns(p.Runs, br)).Append("</p>\n"); break;
-                case Block.Code c: sb.Append("<pre>").Append(WebUtility.HtmlEncode(c.Text)).Append("</pre>\n"); break;
+                case Block.Code c: sb.Append("<pre>").Append(DocWriters.Escape(c.Text)).Append("</pre>\n"); break;
                 case Block.Table t:
                     sb.Append("<table>\n");
                     foreach (var row in t.Rows)
-                        sb.Append("<tr>").Append(string.Concat(row.Select(c => $"<td>{WebUtility.HtmlEncode(c)}</td>"))).Append("</tr>\n");
+                        sb.Append("<tr>").Append(string.Concat(row.Select(c => $"<td>{DocWriters.Escape(c)}</td>"))).Append("</tr>\n");
                     sb.Append("</table>\n");
                     break;
                 case Block.Picture pic:
-                    var alt = WebUtility.HtmlEncode(pic.Alt ?? "");
+                    var alt = DocWriters.Escape(pic.Alt ?? "");
                     sb.Append($"<p><img src=\"{pictureSource(pic)}\" alt=\"{alt}\"{(xhtml ? "/" : "")}></p>\n");
                     break;
                 case Block.PageBreak: sb.Append(xhtml ? "<hr/>\n" : "<hr>\n"); break;
@@ -180,11 +184,11 @@ public static class DocWriters
         var sb = new StringBuilder();
         foreach (var r in runs)
         {
-            var text = WebUtility.HtmlEncode(r.Text).Replace("\n", br).Replace("\t", "&#160;&#160;&#160;&#160;");
+            var text = DocWriters.Escape(r.Text).Replace("\n", br).Replace("\t", "&#160;&#160;&#160;&#160;");
             if (r.Bold) text = $"<strong>{text}</strong>";
             if (r.Italic) text = $"<em>{text}</em>";
             if (r.Underline) text = $"<u>{text}</u>";
-            if (r.Link is not null) text = $"<a href=\"{WebUtility.HtmlEncode(r.Link)}\">{text}</a>";
+            if (r.Link is not null) text = $"<a href=\"{DocWriters.Escape(r.Link)}\">{text}</a>";
             sb.Append(text);
         }
         return sb.ToString();
@@ -354,7 +358,7 @@ public static class DocWriters
         const long maxWidth = 5760000;
         if (cx > maxWidth) { cy = cy * maxWidth / cx; cx = maxWidth; }
         var xml = $"""
-            <w:drawing xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{cx}" cy="{cy}"/><wp:docPr id="{id}" name="Picture {id}" descr="{WebUtility.HtmlEncode(pic.Alt ?? "")}"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="{id}" name="Picture {id}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>
+            <w:drawing xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="{cx}" cy="{cy}"/><wp:docPr id="{id}" name="Picture {id}" descr="{DocWriters.Escape(pic.Alt ?? "")}"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="{id}" name="Picture {id}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing>
             """;
         return new W.Paragraph(new W.Run(new W.Drawing(xml)));
     }
@@ -500,7 +504,7 @@ public static class DocWriters
             <?xml version="1.0" encoding="UTF-8"?>
             <office:document-content {ns}><office:automatic-styles><style:style style:name="TB" style:family="text"><style:text-properties fo:font-weight="bold"/></style:style><style:style style:name="TI" style:family="text"><style:text-properties fo:font-style="italic"/></style:style><style:style style:name="TBI" style:family="text"><style:text-properties fo:font-weight="bold" fo:font-style="italic"/></style:style><style:style style:name="TU" style:family="text"><style:text-properties style:text-underline-style="solid" style:text-underline-width="auto" style:text-underline-color="font-color"/></style:style><style:style style:name="PageBreak" style:family="paragraph" style:parent-style-name="Standard"><style:paragraph-properties fo:break-after="page"/></style:style><style:style style:name="Tbl" style:family="table"><style:table-properties style:width="17cm" table:align="margins"/></style:style><style:style style:name="Cell" style:family="table-cell"><style:table-cell-properties fo:padding="0.1cm" fo:border="0.5pt solid #000000"/></style:style><text:list-style style:name="LBullet"><text:list-level-style-bullet text:level="1" text:bullet-char="•"><style:list-level-properties text:list-level-position-and-space-mode="label-alignment"><style:list-level-label-alignment text:label-followed-by="listtab" fo:text-indent="-0.6cm" fo:margin-left="1.2cm"/></style:list-level-properties></text:list-level-style-bullet><text:list-level-style-bullet text:level="2" text:bullet-char="◦"><style:list-level-properties text:list-level-position-and-space-mode="label-alignment"><style:list-level-label-alignment text:label-followed-by="listtab" fo:text-indent="-0.6cm" fo:margin-left="1.8cm"/></style:list-level-properties></text:list-level-style-bullet></text:list-style><text:list-style style:name="LNum"><text:list-level-style-number text:level="1" style:num-suffix="." style:num-format="1"><style:list-level-properties text:list-level-position-and-space-mode="label-alignment"><style:list-level-label-alignment text:label-followed-by="listtab" fo:text-indent="-0.6cm" fo:margin-left="1.2cm"/></style:list-level-properties></text:list-level-style-number><text:list-level-style-number text:level="2" style:num-suffix="." style:num-format="a"><style:list-level-properties text:list-level-position-and-space-mode="label-alignment"><style:list-level-label-alignment text:label-followed-by="listtab" fo:text-indent="-0.6cm" fo:margin-left="1.8cm"/></style:list-level-properties></text:list-level-style-number></text:list-style></office:automatic-styles><office:body><office:text>{body}</office:text></office:body></office:document-content>
             """;
-        var title = WebUtility.HtmlEncode(doc.GuessTitle(""));
+        var title = DocWriters.Escape(doc.GuessTitle(""));
         var meta = $"""
             <?xml version="1.0" encoding="UTF-8"?>
             <office:document-meta {ns}><office:meta><meta:generator>Transmute</meta:generator><dc:title>{title}</dc:title></office:meta></office:document-meta>
@@ -530,7 +534,7 @@ public static class DocWriters
     static string OdtText(string text)
     {
         var sb = new StringBuilder();
-        var escaped = WebUtility.HtmlEncode(text);
+        var escaped = DocWriters.Escape(text);
         foreach (var c in escaped)
         {
             if (c == '\n') sb.Append("<text:line-break/>");
@@ -546,7 +550,7 @@ public static class DocWriters
         var text = OdtText(r.Text);
         var style = r.Bold && r.Italic ? "TBI" : r.Bold ? "TB" : r.Italic ? "TI" : r.Underline ? "TU" : null;
         if (style is not null) text = $"<text:span text:style-name=\"{style}\">{text}</text:span>";
-        if (r.Link is not null) text = $"<text:a xlink:type=\"simple\" xlink:href=\"{WebUtility.HtmlEncode(r.Link)}\">{text}</text:a>";
+        if (r.Link is not null) text = $"<text:a xlink:type=\"simple\" xlink:href=\"{DocWriters.Escape(r.Link)}\">{text}</text:a>";
         return text;
     }));
 
@@ -605,7 +609,7 @@ public static class DocWriters
                 return name;
             }, true);
             Entry(zip, $"OEBPS/chapter{i + 1}.xhtml",
-                $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><meta charset=\"UTF-8\"/><title>{WebUtility.HtmlEncode(chapterTitle)}</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head><body>\n{html}</body></html>");
+                $"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><meta charset=\"UTF-8\"/><title>{DocWriters.Escape(chapterTitle)}</title><link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/></head><body>\n{html}</body></html>");
         }
         foreach (var (name, data) in pictures)
         {
@@ -614,18 +618,18 @@ public static class DocWriters
             s.Write(data);
         }
         var nav = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\"><head><meta charset=\"UTF-8\"/><title>Contents</title></head><body><nav epub:type=\"toc\" id=\"toc\"><h1>Contents</h1><ol>");
-        var ncx = new StringBuilder($"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\"><head><meta name=\"dtb:uid\" content=\"{id}\"/></head><docTitle><text>{WebUtility.HtmlEncode(title)}</text></docTitle><navMap>");
+        var ncx = new StringBuilder($"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\"><head><meta name=\"dtb:uid\" content=\"{id}\"/></head><docTitle><text>{DocWriters.Escape(title)}</text></docTitle><navMap>");
         for (var i = 0; i < chapters.Count; i++)
         {
-            nav.Append($"<li><a href=\"chapter{i + 1}.xhtml\">{WebUtility.HtmlEncode(titles[i])}</a></li>");
-            ncx.Append($"<navPoint id=\"np{i + 1}\" playOrder=\"{i + 1}\"><navLabel><text>{WebUtility.HtmlEncode(titles[i])}</text></navLabel><content src=\"chapter{i + 1}.xhtml\"/></navPoint>");
+            nav.Append($"<li><a href=\"chapter{i + 1}.xhtml\">{DocWriters.Escape(titles[i])}</a></li>");
+            ncx.Append($"<navPoint id=\"np{i + 1}\" playOrder=\"{i + 1}\"><navLabel><text>{DocWriters.Escape(titles[i])}</text></navLabel><content src=\"chapter{i + 1}.xhtml\"/></navPoint>");
         }
         nav.Append("</ol></nav></body></html>");
         ncx.Append("</navMap></ncx>");
         Entry(zip, "OEBPS/nav.xhtml", nav.ToString());
         Entry(zip, "OEBPS/toc.ncx", ncx.ToString());
-        var opf = new StringBuilder($"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"bookid\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"bookid\">{id}</dc:identifier><dc:title>{WebUtility.HtmlEncode(title)}</dc:title><dc:language>en</dc:language>");
-        if (doc.Author is { } author) opf.Append($"<dc:creator>{WebUtility.HtmlEncode(author)}</dc:creator>");
+        var opf = new StringBuilder($"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<package xmlns=\"http://www.idpf.org/2007/opf\" version=\"3.0\" unique-identifier=\"bookid\"><metadata xmlns:dc=\"http://purl.org/dc/elements/1.1/\"><dc:identifier id=\"bookid\">{id}</dc:identifier><dc:title>{DocWriters.Escape(title)}</dc:title><dc:language>en</dc:language>");
+        if (doc.Author is { } author) opf.Append($"<dc:creator>{DocWriters.Escape(author)}</dc:creator>");
         opf.Append($"<meta property=\"dcterms:modified\">{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}</meta></metadata><manifest>");
         opf.Append("<item id=\"nav\" href=\"nav.xhtml\" media-type=\"application/xhtml+xml\" properties=\"nav\"/><item id=\"ncx\" href=\"toc.ncx\" media-type=\"application/x-dtbncx+xml\"/><item id=\"css\" href=\"style.css\" media-type=\"text/css\"/>");
         for (var i = 0; i < chapters.Count; i++) opf.Append($"<item id=\"c{i + 1}\" href=\"chapter{i + 1}.xhtml\" media-type=\"application/xhtml+xml\"/>");
