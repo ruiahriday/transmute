@@ -21,6 +21,19 @@ self-test of every conversion, and publish `Transmute.dmg` under **Releases → 
 It runs on Apple Silicon and Intel Macs with macOS 13 Ventura or newer. Nothing else needs
 installing.
 
+## Beta testers
+
+1. Download https://github.com/ruiahriday/transmute/releases/download/latest/Transmute.dmg
+2. Open it and drag Transmute into Applications.
+3. Open Transmute. macOS will block it the first time, because it isn't signed with a paid
+   Apple developer certificate yet: go to **System Settings → Privacy & Security**, scroll
+   down and click **Open Anyway**.
+4. To send feedback, click the Transmute icon in the menu bar and choose **Send Feedback…**
+   (a short form on GitHub, needs a free account). Or use **Settings → Beta → Copy Mac
+   Details** and paste them into a message with what you found.
+
+Needs a Mac with macOS 13 or newer (Apple Silicon or Intel). It doesn't run on Windows.
+
 ## Build it yourself instead
 
 1. Install Apple's developer tools (skip this if you have Xcode): `xcode-select --install`

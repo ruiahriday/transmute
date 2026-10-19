@@ -23,6 +23,11 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/Transmute" "$APP/Contents/MacOS/Transmute"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+# CI passes its run number so each download has its own build number (shown in Settings
+# and in feedback).
+if [[ -n "${BUILD_NUMBER:-}" ]]; then
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
+fi
 
 # App icon from a 1024x1024 PNG.
 if [[ -f Resources/icon.png ]]; then

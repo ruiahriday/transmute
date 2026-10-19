@@ -23,6 +23,12 @@ struct TransmuteApp: App {
             ContentView().environmentObject(JobQueue.shared)
         }
         .defaultSize(width: 700, height: 560)
+        .commands {
+            CommandGroup(replacing: .help) {
+                Button("Send Feedback…") { Feedback.openForm() }
+                Button("Copy Mac Details") { Feedback.copyDetails() }
+            }
+        }
 
         MenuBarExtra("Transmute", systemImage: "arrow.triangle.2.circlepath.circle") {
             MenuContent()
@@ -68,6 +74,8 @@ struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
         }
         Button("Show Floating Files") { FloatingShelf.shared.toggle() }
+        Divider()
+        Button("Send Feedback…") { Feedback.openForm() }
         Divider()
         ForEach(WheelKind.allCases, id: \.self) { kind in
             if let key = wheelKey(for: kind), key != .off {
@@ -260,6 +268,16 @@ struct SettingsView: View {
                             }
                         }
                     ))
+                }
+                Section("Beta") {
+                    LabeledContent("Version", value: Feedback.version)
+                    HStack {
+                        Button("Send Feedback…") { Feedback.openForm() }
+                        Button("Copy Mac Details") { Feedback.copyDetails() }
+                    }
+                    Text("Send Feedback opens a short form on GitHub (it needs a free GitHub account). Or copy your Mac's details and paste them into a message to whoever sent you Transmute.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 Section("ffmpeg") {
                     if let path = Tools.ffmpeg {

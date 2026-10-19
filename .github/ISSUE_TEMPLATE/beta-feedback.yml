@@ -1,0 +1,38 @@
+name: Beta feedback
+description: Tell us what worked, what didn't, or what you'd like Transmute to do.
+title: "Feedback: "
+labels: ["beta feedback"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of feedback is this?
+      options:
+        - Something didn't work
+        - An idea or request
+        - It works well
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you were doing (for example, converting a HEIC photo to JPEG) and what you expected. Screenshots help, and you can paste them here.
+    validations:
+      required: true
+  - type: dropdown
+    id: rating
+    attributes:
+      label: How would you rate Transmute so far?
+      options:
+        - "5 - Love it"
+        - "4 - Good"
+        - "3 - OK"
+        - "2 - Needs work"
+        - "1 - Not useful"
+  - type: textarea
+    id: mac
+    attributes:
+      label: Your Mac
+      description: Filled in for you when you use Send Feedback in the app.
+      render: text
