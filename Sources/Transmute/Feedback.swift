@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 /// Beta feedback: opens a prefilled feedback form on GitHub, or copies the Mac's details
 /// for testers who'd rather send them in a message.
@@ -52,5 +53,38 @@ enum Feedback {
         var buffer = [CChar](repeating: 0, count: size)
         guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
         return String(cString: buffer)
+    }
+}
+
+/// Licences of bundled third-party software (Contents/Resources/ThirdPartyNotices.txt),
+/// shown from Settings in the App Store build.
+struct ThirdPartyNoticesView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private var text: String {
+        guard let url = Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else {
+            return "The notices file is missing from this copy of \(AppInfo.name)."
+        }
+        return text
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                Text(text)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            Divider()
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+            }
+            .padding()
+        }
+        .frame(width: 520, height: 480)
     }
 }

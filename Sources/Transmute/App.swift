@@ -48,10 +48,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !UserDefaults.standard.bool(forKey: Prefs.showInDock) {
             NSApp.setActivationPolicy(.accessory)
         }
+        #if APPSTORE
+        // Folders the user allowed earlier (output folders, floating files) are bookmarks.
+        FolderAccess.startAccessingSavedFolders()
+        #else
         // A downloaded app's bundled ffmpeg carries the quarantine flag; clear it so it can run.
         if let ffmpeg = Bundle.main.path(forAuxiliaryExecutable: "ffmpeg") {
             removexattr(ffmpeg, "com.apple.quarantine", 0)
         }
+        #endif
         let controller = DragWheelController()
         controller.start()
         wheel = controller
@@ -203,6 +208,7 @@ struct SettingsView: View {
     @AppStorage(WheelKind.tools.prefKey) private var toolsKey = WheelKind.tools.defaultKey.rawValue
     @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var showNotices = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -221,6 +227,11 @@ struct SettingsView: View {
                             Spacer()
                             Button("Choose…", action: chooseFolder)
                         }
+                    }
+                    if AppInfo.isAppStoreBuild && outputMode == OutputMode.besideOriginal.rawValue {
+                        Text("The first time you convert files from a folder, \(AppInfo.name) asks to save in it. If you don't allow it, results go to Downloads.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                     Toggle("Show results in Finder when done", isOn: $revealWhenDone)
                 }
@@ -279,18 +290,10 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Section("ffmpeg") {
-                    if let path = Tools.ffmpeg {
-                        Label("Installed at \(path)", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
-                    } else {
-                        Label("Not installed", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-                        Text("Needed for MP3, MKV, WebM, AVI, WMV, OGG, Opus, GIF from video and WebP. Install it with Homebrew: brew install ffmpeg")
-                            .font(.caption)
-                            .textSelection(.enabled)
-                    }
-                }
+                ffmpegSection
             }
             .formStyle(.grouped)
+            .sheet(isPresented: $showNotices) { ThirdPartyNoticesView() }
             HStack {
                 Spacer()
                 Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
@@ -300,12 +303,45 @@ struct SettingsView: View {
         .frame(width: 480, height: 600)
     }
 
+    @ViewBuilder
+    private var ffmpegSection: some View {
+        #if APPSTORE
+        Section("About") {
+            if Tools.ffmpeg == nil {
+                Label("The included ffmpeg is missing. Reinstall \(AppInfo.name) to convert MP3, MKV, WebM, AVI, WMV, OGG, Opus, GIF from video and WebP.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+            }
+            Button("Third-Party Notices…") { showNotices = true }
+            Text("\(AppInfo.name) includes FFmpeg, used under the GNU LGPL.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        #else
+        Section("ffmpeg") {
+            if let path = Tools.ffmpeg {
+                Label("Installed at \(path)", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+            } else {
+                Label("Not installed", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                Text("Needed for MP3, MKV, WebM, AVI, WMV, OGG, Opus, GIF from video and WebP. Install it with Homebrew: brew install ffmpeg")
+                    .font(.caption)
+                    .textSelection(.enabled)
+            }
+        }
+        #endif
+    }
+
     private func chooseFolder() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
-        if panel.runModal() == .OK, let url = panel.url { outputFolderPath = url.path }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        #if APPSTORE
+        // A sandboxed app can only reopen the folder later through a security-scoped bookmark.
+        guard FolderAccess.saveOutputFolder(url) else { NSSound.beep(); return }
+        #endif
+        outputFolderPath = url.path
     }
 
     private func keyPicker(_ title: String, selection: Binding<String>) -> some View {

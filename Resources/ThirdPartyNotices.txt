@@ -1,0 +1,41 @@
+THIRD-PARTY NOTICES
+
+This app includes a copy of the FFmpeg program (Contents/MacOS/ffmpeg), which it runs
+as a separate program to convert audio and video.
+
+FFmpeg
+  https://ffmpeg.org
+  Licensed under the GNU Lesser General Public License, version 2.1 or later (LGPL).
+  This copy was built WITHOUT the GPL and non-free parts of FFmpeg
+  (no --enable-gpl, no --enable-nonfree). FFmpeg is a trademark of Fabrice Bellard.
+
+  Source code: the exact source code this copy was built from is the FFmpeg release
+  tarball named below, unmodified, built with the script scripts/build-ffmpeg-lgpl.sh
+  in this app's source repository, which lists every version, download address and
+  configure option:
+    https://github.com/ruiahriday/transmute/blob/appstore/scripts/build-ffmpeg-lgpl.sh
+  On request we will also send you a copy of this source code; contact us through the
+  support address on the App Store page.
+
+  You may replace the bundled ffmpeg with your own build of the same or a modified
+  FFmpeg: it is a separate file inside the app (Contents/MacOS/ffmpeg).
+
+FFmpeg in this app is linked with these libraries:
+
+  LAME (MP3 encoder)                 https://lame.sourceforge.io
+    GNU Lesser General Public License, version 2 or later.
+  libogg and libvorbis (Ogg Vorbis)  https://xiph.org
+    BSD-style licence. Copyright (c) the Xiph.Org Foundation.
+  Opus                               https://opus-codec.org
+    BSD-style licence. Copyright (c) Xiph.Org, Skype Limited, Octasic,
+    Jean-Marc Valin, Timothy B. Terriberry, CSIRO, Gregory Maxwell,
+    Mark Borgerding, Erik de Castro Lopo, and others.
+  libvpx (VP8/VP9)                   https://www.webmproject.org
+    BSD-style licence. Copyright (c) the WebM project authors.
+  libwebp (WebP)                     https://developers.google.com/speed/webp
+    BSD-style licence. Copyright (c) Google Inc.
+
+H.264, HEVC and AAC encoding use Apple's VideoToolbox and AudioToolbox, part of macOS.
+
+The full licence texts of FFmpeg and of each library follow (copied from their source
+code when this copy of the app was built).

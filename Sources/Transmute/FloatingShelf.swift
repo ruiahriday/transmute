@@ -11,9 +11,18 @@ final class FloatingShelf: ObservableObject {
     private var panel: NSPanel?
     private let storeKey = "floatingShelfFiles"
 
+    /// The App Store build keeps security-scoped bookmarks instead of paths, so the files can
+    /// still be opened from the sandbox after a relaunch.
+    private let bookmarkKey = "floatingShelfBookmarks"
+
     private init() {
+        #if APPSTORE
+        let saved = UserDefaults.standard.array(forKey: bookmarkKey) as? [Data] ?? []
+        files = saved.compactMap { FolderAccess.resolve($0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
+        #else
         let paths = UserDefaults.standard.stringArray(forKey: storeKey) ?? []
         files = paths.map { URL(fileURLWithPath: $0) }.filter { FileManager.default.fileExists(atPath: $0.path) }
+        #endif
     }
 
     func add(_ urls: [URL]) {
@@ -68,7 +77,11 @@ final class FloatingShelf: ObservableObject {
     }
 
     private func save() {
+        #if APPSTORE
+        UserDefaults.standard.set(files.compactMap { FolderAccess.bookmark(for: $0) }, forKey: bookmarkKey)
+        #else
         UserDefaults.standard.set(files.map(\.path), forKey: storeKey)
+        #endif
     }
 
     private func makePanel() -> NSPanel {

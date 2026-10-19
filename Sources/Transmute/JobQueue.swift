@@ -132,11 +132,17 @@ final class JobQueue: ObservableObject {
     func start(_ plan: [(UUID, JobOperation)], options: ConversionOptions, reveal: Bool,
                onFinish: (@MainActor () -> Void)? = nil) {
         guard !plan.isEmpty else { onFinish?(); return }
+        // Decide every output folder now, on the main actor (the App Store build may ask).
+        let optionsFor = FolderAccess.prepare(plan.compactMap { job($0.0)?.url }, options: options)
+        let work: [(UUID, JobOperation, ConversionOptions)] = plan.map { entry in
+            let jobOptions: ConversionOptions = job(entry.0).map { optionsFor($0.url) } ?? options
+            return (entry.0, entry.1, jobOptions)
+        }
         for (id, _) in plan { setState(id, .queued) }
         activeBatches += 1
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.process(plan, options: options)
+            await self.process(work)
             self.activeBatches -= 1
             if reveal { self.reveal(ids: plan.map(\.0)) }
             onFinish?()
@@ -147,11 +153,13 @@ final class JobQueue: ObservableObject {
     func runBatch(_ tool: BatchTool, ids: [UUID], options: ConversionOptions, reveal: Bool) {
         let urls = ids.compactMap { job($0)?.url }
         guard !urls.isEmpty else { return }
+        // A batch makes one file, next to the first input unless a folder is set.
+        let batchOptions = FolderAccess.prepare([urls[0]], options: options)(urls[0])
         ids.forEach { setState($0, .running(0)) }
         activeBatches += 1
         let task = Task { [weak self] in
             do {
-                let output = try await Engine.batch(tool, urls: urls, options: options)
+                let output = try await Engine.batch(tool, urls: urls, options: batchOptions)
                 ids.forEach { self?.setState($0, .done(JobResult(outputs: [output]))) }
                 if reveal { NSWorkspace.shared.activateFileViewerSelecting([output]) }
             } catch {
@@ -162,17 +170,17 @@ final class JobQueue: ObservableObject {
         tasks.append(task)
     }
 
-    private func process(_ plan: [(UUID, JobOperation)], options: ConversionOptions) async {
+    private func process(_ plan: [(UUID, JobOperation, ConversionOptions)]) async {
         var next = 0
         await withTaskGroup(of: Void.self) { group in
             while next < min(concurrency, plan.count) {
-                let (id, op) = plan[next]
+                let (id, op, options) = plan[next]
                 next += 1
                 group.addTask { await self.runOne(id, op, options) }
             }
             while await group.next() != nil {
                 if next < plan.count {
-                    let (id, op) = plan[next]
+                    let (id, op, options) = plan[next]
                     next += 1
                     group.addTask { await self.runOne(id, op, options) }
                 }

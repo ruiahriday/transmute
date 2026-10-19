@@ -233,7 +233,7 @@ enum VideoEditEngine {
             args = ["-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p"]
             if audio { args += ["-c:a", "libopus", "-b:a", "128k"] }
         } else {
-            args = ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p"]
+            args = Encoders.h264(crf: 20) + ["-pix_fmt", "yuv420p"]
             if audio { args += ["-c:a", "aac", "-b:a", "192k"] }
             if format != .mkv { args += ["-movflags", "+faststart"] }
         }
@@ -287,7 +287,8 @@ enum VideoEditEngine {
 
         args += ["-filter_complex", graph.joined(separator: ";"), "-map", "[outv]"]
         if withAudio { args += ["-map", "[outa]"] }
-        args += ["-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p"]
+        args += Encoders.h264(crf: 20)
+        args += ["-pix_fmt", "yuv420p"]
         if withAudio { args += ["-c:a", "aac", "-b:a", "192k"] }
         args += ["-movflags", "+faststart"]
         if options.stripMetadata { args += ["-map_metadata", "-1"] }
