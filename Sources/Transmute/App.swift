@@ -36,6 +36,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Prefs.registerDefaults()
+        // The Dock icon is on by default: on a crowded menu bar the menu bar icon can end up
+        // hidden behind the camera notch.
+        if !UserDefaults.standard.bool(forKey: Prefs.showInDock) {
+            NSApp.setActivationPolicy(.accessory)
+        }
         // A downloaded app's bundled ffmpeg carries the quarantine flag; clear it so it can run.
         if let ffmpeg = Bundle.main.path(forAuxiliaryExecutable: "ffmpeg") {
             removexattr(ffmpeg, "com.apple.quarantine", 0)
@@ -165,6 +170,7 @@ struct SettingsView: View {
     @AppStorage(Prefs.outputFolderPath) private var outputFolderPath = ""
     @AppStorage(Prefs.revealWhenDone) private var revealWhenDone = true
     @AppStorage(Prefs.wheelEnabled) private var wheelEnabled = true
+    @AppStorage(Prefs.showInDock) private var showInDock = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     var body: some View {
@@ -194,6 +200,15 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Section("General") {
+                    Toggle("Show Transmute in the Dock", isOn: Binding(
+                        get: { showInDock },
+                        set: { show in
+                            showInDock = show
+                            NSApp.setActivationPolicy(show ? .regular : .accessory)
+                            // Leaving the Dock deactivates the app; keep Settings in front.
+                            NSApp.activate(ignoringOtherApps: true)
+                        }
+                    ))
                     Toggle("Open at login", isOn: Binding(
                         get: { launchAtLogin },
                         set: { enable in

@@ -182,12 +182,14 @@ enum Prefs {
     static let outputFolderPath = "outputFolderPath"
     static let revealWhenDone = "revealWhenDone"
     static let wheelEnabled = "dragWheelEnabled"
+    static let showInDock = "showInDock"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
             imageQuality: 0.85,
             revealWhenDone: true,
             wheelEnabled: true,
+            showInDock: true,
             outputMode: OutputMode.besideOriginal.rawValue,
         ])
     }
