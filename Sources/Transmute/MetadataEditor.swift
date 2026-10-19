@@ -796,9 +796,15 @@ enum MetadataTool {
         let mappings = [["-map", "0"], ["-map", "0:v?", "-map", "0:a?", "-map", "0:s?"]]
         var failure: Error?
         for mapping in mappings {
+            // Built step by step: one long concatenation is too much for the type checker.
+            var args: [String] = ["-hide_banner", "-nostdin", "-y", "-i", input.path]
+            args += mapping
+            args += ["-c", "copy", "-map_metadata", "0"]
+            args += formatArgs
+            args += tagArgs
+            args.append(out.path)
             do {
-                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-i", input.path] + mapping
-                                      + ["-c", "copy", "-map_metadata", "0"] + formatArgs + tagArgs + [out.path])
+                try await Shell.check(ffmpeg, args)
                 failure = nil
                 break
             } catch is CancellationError {
