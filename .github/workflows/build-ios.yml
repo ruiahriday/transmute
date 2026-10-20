@@ -97,7 +97,7 @@ jobs:
           DATA=$(xcrun simctl get_app_container "$PHONE" "$BUNDLE_ID" data)
           rm -f "$DATA/Documents/selftest.log"
           # The app prints as it goes and quits when done; the log file is the full record.
-          perl -e 'alarm shift; exec @ARGV' 1500 xcrun simctl launch --console-pty --terminate-running-process "$PHONE" "$BUNDLE_ID" --selftest fixtures > logs/selftest-console.log 2>&1 || true
+          perl -e 'alarm shift; exec @ARGV' 2400 xcrun simctl launch --console-pty --terminate-running-process "$PHONE" "$BUNDLE_ID" --selftest fixtures > logs/selftest-console.log 2>&1 || true
           cp "$DATA/Documents/selftest.log" logs/selftest.log 2>/dev/null || cp logs/selftest-console.log logs/selftest.log
           grep -E "^(PASS|FAIL|SKIP|RESULT)" logs/selftest.log | tail -n 400
           grep -qE "^RESULT: [0-9]+ passed, 0 failed" logs/selftest.log

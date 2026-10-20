@@ -286,15 +286,17 @@ enum IOSSelfTest {
         }
     }
 
-    private static func check(_ name: String, _ body: () async throws -> [URL]) async {
+    private static func check(_ name: String, _ body: @escaping () async throws -> [URL]) async {
+        let started = Date()
+        func timed() -> String { "\(name) [\(String(format: "%.1f", Date().timeIntervalSince(started))) s]" }
         do {
-            let outputs = try await body()
+            let outputs = try await withTimeout(180, body)
             for url in outputs {
                 if let problem = problem(with: url) { throw ConversionError(problem) }
             }
-            record(name, outputs, nil)
+            record(timed(), outputs, nil)
         } catch {
-            record(name, nil, error.localizedDescription)
+            record(timed(), nil, error.localizedDescription)
         }
     }
 
@@ -312,6 +314,44 @@ enum IOSSelfTest {
     private static func say(_ line: String) {
         print(line)
         log += line + "\n"
+        // Saved after every line, so a run that hangs or crashes still leaves its record.
+        try? log.write(to: logFile, atomically: true, encoding: .utf8)
+    }
+
+    private static let logFile = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("selftest.log")
+
+    /// Runs `body`, failing it if it takes longer than `seconds` so one stuck check can't stall the rest.
+    private static func withTimeout(_ seconds: Double, _ body: @escaping () async throws -> [URL]) async throws -> [URL] {
+        let once = Once()
+        return try await withCheckedThrowingContinuation { (done: CheckedContinuation<[URL], Error>) in
+            let work = Task {
+                do {
+                    let result = try await body()
+                    if once.claim() { done.resume(returning: result) }
+                } catch {
+                    if once.claim() { done.resume(throwing: error) }
+                }
+            }
+            Task.detached {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                if once.claim() {
+                    work.cancel()
+                    done.resume(throwing: ConversionError("still running after \(Int(seconds)) s"))
+                }
+            }
+        }
+    }
+
+    private final class Once: @unchecked Sendable {
+        private let lock = NSLock()
+        private var claimed = false
+        func claim() -> Bool {
+            lock.lock(); defer { lock.unlock() }
+            if claimed { return false }
+            claimed = true
+            return true
+        }
     }
 
     private static func problem(with url: URL) -> String? {
