@@ -52,6 +52,8 @@ enum SelfTest {
             .filter { !$0.lastPathComponent.hasPrefix(".") }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
+        wheelLayoutChecks()
+
         // Pass 1: every input through every operation it supports.
         for input in inputs {
             await exercise(input, options: options)
@@ -829,6 +831,34 @@ enum SelfTest {
         #endif
         print("fixtures: can't read \(dir.path)")
         return dir
+    }
+
+    private static func wheelLayoutChecks() {
+        func same(_ name: String, _ got: [String], _ want: [String]) {
+            record("Drag wheel: \(name)", [], got == want ? nil : "got \(got), expected \(want)")
+        }
+        same("documents default to PDF first", WheelLayout.resolve(.convert, [.document], custom: nil),
+             WheelLayout.defaultLayout(.convert, .document))
+        same("default document wheel starts with PDF", Array(WheelLayout.resolve(.convert, [.document], custom: nil).prefix(1)), ["convert:pdf"])
+        same("one PDF has no Merge", WheelLayout.resolve(.tools, [.pdf], custom: nil),
+             ["tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:zip"])
+        same("two PDFs get Merge", WheelLayout.resolve(.tools, [.pdf, .pdf], custom: nil),
+             ["tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:merge", "tool:zip"])
+        same("mixed files share formats", WheelLayout.resolve(.convert, [.image, .video], custom: nil), ["convert:gif"])
+        var custom = ["convert.document": ["gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip"]]
+        same("customized order, spaces and mixed-in items", WheelLayout.resolve(.convert, [.document], custom: custom),
+             ["gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip"])
+        same("other kinds keep the default", WheelLayout.resolve(.convert, [.pdf], custom: custom),
+             WheelLayout.defaultLayout(.convert, .pdf))
+        same("items that don't suit every file leave a space", WheelLayout.resolve(.convert, [.document, .audio], custom: custom),
+             ["gap", "gap", "gap", "gap", "action:float", "tool:zip"])
+        custom["tools.pdf"] = ["tool:merge"]
+        same("nothing usable means no wheel", WheelLayout.resolve(.tools, [.pdf], custom: custom), [])
+        let many = ["convert:pdf"] + Array(repeating: "gap", count: 20) + ["tool:qr", "convert:pdf", "nonsense"]
+        let cleaned = WheelLayout.clean(many, .document)
+        same("saved layouts are cleaned up", [String(cleaned.count), cleaned[0]], [String(WheelLayout.maxSlots), "convert:pdf"])
+        same("unknown ids have no bubble", ["tool:zip", "action:airdrop", "convert:pdf", "gap", "nope"].map { WheelItem(id: $0) == nil ? "-" : "ok" },
+             ["ok", "ok", "ok", "-", "-"])
     }
 
     private static func exercise(_ input: URL, options: ConversionOptions) async {
