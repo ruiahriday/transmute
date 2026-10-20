@@ -26,18 +26,44 @@ enum AppleMetadata {
         }
     }
 
-    /// The identifier written for a tag: iTunes-style in MP4 and M4A, QuickTime-style in MOV.
-    private static func writeIdentifier(_ key: String, quickTime: Bool) -> AVMetadataIdentifier? {
-        switch key {
-        case "title": quickTime ? .quickTimeMetadataTitle : .iTunesMetadataSongName
-        case "artist": quickTime ? .quickTimeMetadataArtist : .iTunesMetadataArtist
-        case "album": quickTime ? .quickTimeMetadataAlbum : .iTunesMetadataAlbum
-        case "album_artist": quickTime ? nil : .iTunesMetadataAlbumArtist
-        case "genre": quickTime ? .quickTimeMetadataGenre : .iTunesMetadataUserGenre
-        case "date": quickTime ? .quickTimeMetadataCreationDate : .iTunesMetadataReleaseDate
-        case "comment": quickTime ? .quickTimeMetadataComment : .iTunesMetadataUserComment
-        case "copyright": quickTime ? .quickTimeMetadataCopyright : .iTunesMetadataCopyright
-        default: nil
+    /// How tags are written: iTunes-style for MP4 and M4A, QuickTime-style for MOV, or AVFoundation's
+    /// container-neutral "common" keys, which it translates for the file it saves.
+    private enum TagStyle { case iTunes, quickTime, common }
+
+    private static func writeIdentifier(_ key: String, style: TagStyle) -> AVMetadataIdentifier? {
+        switch style {
+        case .iTunes:
+            switch key {
+            case "title": .iTunesMetadataSongName
+            case "artist": .iTunesMetadataArtist
+            case "album": .iTunesMetadataAlbum
+            case "album_artist": .iTunesMetadataAlbumArtist
+            case "genre": .iTunesMetadataUserGenre
+            case "date": .iTunesMetadataReleaseDate
+            case "comment": .iTunesMetadataUserComment
+            case "copyright": .iTunesMetadataCopyright
+            default: nil
+            }
+        case .quickTime:
+            switch key {
+            case "title": .quickTimeMetadataTitle
+            case "artist": .quickTimeMetadataArtist
+            case "album": .quickTimeMetadataAlbum
+            case "genre": .quickTimeMetadataGenre
+            case "date": .quickTimeMetadataCreationDate
+            case "comment": .quickTimeMetadataComment
+            case "copyright": .quickTimeMetadataCopyright
+            default: nil
+            }
+        case .common:
+            switch key {
+            case "title": .commonIdentifierTitle
+            case "artist": .commonIdentifierArtist
+            case "album": .commonIdentifierAlbumName
+            case "date": .commonIdentifierCreationDate
+            case "copyright": .commonIdentifierCopyrights
+            default: writeIdentifier(key, style: .iTunes)
+            }
         }
     }
 
@@ -110,23 +136,26 @@ enum AppleMetadata {
         }
         // MOV takes QuickTime-style tags and M4A iTunes-style ones. MP4 and M4V take either,
         // but some tags only stick in one style, so try iTunes-style first and fall back.
-        let styles: [Bool] = switch ext {
-        case "mov": [true]
-        case "m4a": [false]
-        default: [false, true]
+        let styles: [TagStyle] = switch ext {
+        case "mov": [.quickTime]
+        case "m4a": [.iTunes, .common]
+        default: [.iTunes, .common, .quickTime]
         }
-        var lastError: Error = ConversionError("Couldn't save the tags.")
-        for quickTime in styles {
+        var firstError: Error?
+        for style in styles {
             do {
-                return try await write(changes, removeLocation: removeLocation, to: input, quickTime: quickTime, options: options)
+                return try await write(changes, removeLocation: removeLocation, to: input, style: style, options: options)
             } catch {
-                lastError = error
+                firstError = firstError ?? error
+                #if DEBUG
+                print("tags in \(style) style: \(error.localizedDescription)")
+                #endif
             }
         }
-        throw lastError
+        throw firstError ?? ConversionError("Couldn't save the tags.")
     }
 
-    private static func write(_ changes: [String: String], removeLocation: Bool, to input: URL, quickTime: Bool,
+    private static func write(_ changes: [String: String], removeLocation: Bool, to input: URL, style: TagStyle,
                               options: ConversionOptions) async throws -> URL {
         let ext = input.pathExtension.lowercased()
         let asset = AVURLAsset(url: input)
@@ -134,7 +163,7 @@ enum AppleMetadata {
 
         var replaced = Set<AVMetadataIdentifier>()
         for key in changes.keys {
-            guard keys.contains(key), writeIdentifier(key, quickTime: quickTime) != nil else {
+            guard keys.contains(key), writeIdentifier(key, style: style) != nil else {
                 throw ConversionError("\(ext.uppercased()) files can't store \(MetadataTool.label(forKey: key).lowercased()) tags here.")
             }
             replaced.formUnion(readIdentifiers(key))
@@ -151,7 +180,7 @@ enum AppleMetadata {
 
         for key in changes.keys.sorted() {
             let text = changes[key] ?? ""
-            guard !text.isEmpty, let identifier = writeIdentifier(key, quickTime: quickTime) else { continue }
+            guard !text.isEmpty, let identifier = writeIdentifier(key, style: style) else { continue }
             let item = AVMutableMetadataItem()
             item.identifier = identifier
             item.value = text as NSString
@@ -183,7 +212,9 @@ enum AppleMetadata {
         for key in changes.keys.sorted() {
             let wanted = changes[key] ?? ""
             let now = await value(for: key, in: written) ?? ""
-            if wanted.isEmpty ? !now.isEmpty : now != wanted { failed.append(MetadataTool.label(forKey: key).lowercased()) }
+            if wanted.isEmpty ? !now.isEmpty : now != wanted {
+                failed.append(MetadataTool.label(forKey: key).lowercased() + (now.isEmpty ? "" : " (reads back as “\(now)”)"))
+            }
         }
         if removeLocation, await locationText(in: written) != nil { failed.append("the location removal") }
         guard failed.isEmpty else {
