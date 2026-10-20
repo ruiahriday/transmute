@@ -203,6 +203,7 @@ struct SettingsView: View {
     @AppStorage(WheelKind.tools.prefKey) private var toolsKey = WheelKind.tools.defaultKey.rawValue
     @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var showWheelEditor = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -229,6 +230,9 @@ struct SettingsView: View {
                     keyPicker("Formats wheel", selection: $convertKey)
                     keyPicker("Tools wheel", selection: $toolsKey)
                     keyPicker("Actions wheel", selection: $actionsKey)
+                    LabeledContent("What's on each wheel") {
+                        Button("Customize Wheels…") { showWheelEditor = true }
+                    }
                     if hasKeyClash {
                         Label("Two wheels use the same key. The actions wheel wins, then tools.",
                               systemImage: "exclamationmark.triangle")
@@ -298,6 +302,7 @@ struct SettingsView: View {
             .padding()
         }
         .frame(width: 480, height: 600)
+        .sheet(isPresented: $showWheelEditor) { WheelEditorView() }
     }
 
     private func chooseFolder() {

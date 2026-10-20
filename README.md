@@ -79,7 +79,10 @@ files in a folder and prints PASS or FAIL for each one. `scripts/make-fixtures.s
     PDFs, images to PDF, QR, zip),
   - **⌃ Control** shows actions (AirDrop, Float, Copy, Copy Path, open in Terminal, Move…).
 
-  You can change these keys, or turn a wheel off, in Settings.
+  You can change these keys, or turn a wheel off, in Settings. **Settings → Customize Wheels…**
+  picks which formats, tools and actions each wheel shows for each kind of file and where each
+  bubble sits: drag bubbles to swap them, add anything from any wheel, leave empty spaces, or
+  Reset to Default.
 
   Once the wheel is open you can let go of the key. Drop the files on a bubble, and the result
   is saved next to the original and shown in Finder. A small progress card appears in the
@@ -128,6 +131,7 @@ Sources/Transmute/
   App.swift             App entry point, menu bar item, progress card, settings
   ContentView.swift     Main window: drop zone, file list, Convert / Compress / Tools
   DragWheel.swift       The drag wheel shown while dragging files with a key held
+  WheelLayout.swift     What each wheel shows and where; WheelEditor.swift edits it
   SelfTest.swift        Headless --selftest run used by the build server
   JobQueue.swift        Batch queue: runs two files at a time, tracks progress, cancels
   Engine.swift          Sends each job to the right converter

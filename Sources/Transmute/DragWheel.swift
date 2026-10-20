@@ -5,7 +5,8 @@ import SwiftUI
 ///   ⇧ Shift      → a ring of output formats,
 ///   ⌘ Command    → tools (compress, clean metadata, zip…),
 ///   ⌃ Control    → file actions (AirDrop, float, copy, copy path, Terminal, move).
-/// The keys can be changed in Settings. Drop the files on a bubble to run it.
+/// The keys, and what each wheel shows and where (WheelLayout), can be changed in Settings.
+/// Drop the files on a bubble to run it.
 /// The converted copy lands next to the original.
 ///
 /// It polls the system drag pasteboard instead of using event taps, so it needs no
@@ -69,42 +70,14 @@ final class DragWheelController {
 
     // MARK: Items
 
-    static func items(for kind: WheelKind, urls: [URL]) -> [WheelItem] {
-        let kinds = urls.map(FileKind.of)
-        switch kind {
-        case .convert:
-            guard let first = kinds.first else { return [] }
-            let common = first.convertTargets.filter { format in kinds.allSatisfy { $0.convertTargets.contains(format) } }
-            return common.prefix(10).map { WheelItem(label: $0.label, symbol: $0.symbol, action: .job(.convert($0))) }
-        case .tools:
-            var items: [WheelItem] = []
-            if kinds.allSatisfy(\.canCompress) {
-                items.append(WheelItem(label: "Half size", symbol: "arrow.down.right.and.arrow.up.left",
-                                       action: .job(.compress(.percent(0.5)))))
-                items.append(WheelItem(label: "Quarter", symbol: "arrow.down.right.and.arrow.up.left",
-                                       action: .job(.compress(.percent(0.25)))))
-            }
-            if kinds.allSatisfy(\.canStripMetadata) {
-                items.append(WheelItem(label: "Clean", symbol: "eye.slash", action: .job(.stripMetadata)))
-            }
-            if kinds.allSatisfy({ $0 == .pdf }) {
-                items.append(WheelItem(label: "Split", symbol: "rectangle.split.3x1", action: .job(.splitPDF)))
-                if kinds.count > 1 { items.append(WheelItem(label: "Merge", symbol: "doc.on.doc", action: .batch(.mergePDFs))) }
-            }
-            if kinds.allSatisfy({ $0 == .image }) {
-                items.append(WheelItem(label: "To PDF", symbol: "doc.richtext", action: .batch(.imagesToPDF)))
-                items.append(WheelItem(label: "QR", symbol: "qrcode.viewfinder", action: .job(.readQR)))
-            }
-            items.append(WheelItem(label: "Zip", symbol: "archivebox", action: .batch(.archive(.zip))))
-            return items
-        case .actions:
-            return FileAction.allCases.map { WheelItem(label: $0.label, symbol: $0.symbol, action: .file($0)) }
-        }
+    /// The wheel's positions clockwise from the top, as set in Settings; nil is an empty position.
+    static func items(for kind: WheelKind, urls: [URL]) -> [WheelItem?] {
+        WheelLayout.resolve(kind, urls.map(FileKind.of), custom: WheelLayout.saved).map(WheelItem.init(id:))
     }
 
     // MARK: Panel
 
-    private func show(_ items: [WheelItem], kind: WheelKind, at point: NSPoint?) {
+    private func show(_ items: [WheelItem?], kind: WheelKind, at point: NSPoint?) {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         currentWheel = kind
@@ -166,8 +139,16 @@ final class DragWheelController {
     }
 }
 
-enum WheelKind: CaseIterable {
+enum WheelKind: CaseIterable, Identifiable {
     case convert, tools, actions
+
+    var id: String {
+        switch self {
+        case .convert: "convert"
+        case .tools: "tools"
+        case .actions: "actions"
+        }
+    }
 
     var title: String {
         switch self {
@@ -245,10 +226,74 @@ struct WheelItem: Identifiable {
     let label: String
     let symbol: String
     let action: Action
+
+    init(label: String, symbol: String, action: Action) {
+        self.label = label
+        self.symbol = symbol
+        self.action = action
+    }
+
+    /// The bubble for a WheelLayout id; nil for an empty position or an unknown id.
+    init?(id: String) {
+        if let format = WheelLayout.format(of: id) {
+            self.init(label: format.label, symbol: format.symbol, action: .job(.convert(format)))
+            return
+        }
+        let squeeze = "arrow.down.right.and.arrow.up.left"
+        switch id {
+        case "tool:half": self.init(label: "Half size", symbol: squeeze, action: .job(.compress(.percent(0.5))))
+        case "tool:quarter": self.init(label: "Quarter", symbol: squeeze, action: .job(.compress(.percent(0.25))))
+        case "tool:clean": self.init(label: "Clean", symbol: "eye.slash", action: .job(.stripMetadata))
+        case "tool:split": self.init(label: "Split", symbol: "rectangle.split.3x1", action: .job(.splitPDF))
+        case "tool:merge": self.init(label: "Merge", symbol: "doc.on.doc", action: .batch(.mergePDFs))
+        case "tool:topdf": self.init(label: "To PDF", symbol: "doc.richtext", action: .batch(.imagesToPDF))
+        case "tool:qr": self.init(label: "QR", symbol: "qrcode.viewfinder", action: .job(.readQR))
+        case "tool:zip": self.init(label: "Zip", symbol: "archivebox", action: .batch(.archive(.zip)))
+        default:
+            guard id.hasPrefix("action:"),
+                  let action = FileAction.allCases.first(where: { "action:" + $0.id == id }) else { return nil }
+            self.init(label: action.label, symbol: action.symbol, action: .file(action))
+        }
+    }
+
+    /// A longer name for the list in Settings: "Convert to PDF", "Compress to half size"…
+    static func describe(_ id: String) -> String {
+        if id == WheelLayout.gap { return "Empty space" }
+        if let format = WheelLayout.format(of: id) { return format == .extract ? "Extract" : "Convert to \(format.label)" }
+        switch id {
+        case "tool:half": return "Compress to half size"
+        case "tool:quarter": return "Compress to a quarter"
+        case "tool:clean": return "Remove metadata"
+        case "tool:split": return "Split into pages"
+        case "tool:merge": return "Merge PDFs (2 or more)"
+        case "tool:topdf": return "Images to one PDF"
+        case "tool:qr": return "Read QR code"
+        case "tool:zip": return "Zip"
+        case "action:airdrop": return "AirDrop"
+        case "action:float": return "Float (floating files)"
+        case "action:copy": return "Copy"
+        case "action:copypath": return "Copy path"
+        case "action:terminal": return "Open Terminal here"
+        case "action:move": return "Move to a folder"
+        default: return id
+        }
+    }
 }
 
 enum FileAction: CaseIterable {
     case airDrop, float, copy, copyPath, terminal, move
+
+    /// Its name in WheelLayout ids ("action:copypath").
+    var id: String {
+        switch self {
+        case .airDrop: "airdrop"
+        case .float: "float"
+        case .copy: "copy"
+        case .copyPath: "copypath"
+        case .terminal: "terminal"
+        case .move: "move"
+        }
+    }
 
     var label: String {
         switch self {
@@ -309,13 +354,13 @@ struct WheelView: View {
     static let size: CGFloat = 360
 
     let kind: WheelKind
-    let items: [WheelItem]
+    /// Positions clockwise from the top; nil leaves a position empty.
+    let items: [WheelItem?]
     let onDrop: (WheelItem) -> Void
 
     @State private var targeted: UUID?
 
     private let radius: CGFloat = 128
-    private let bubble: CGFloat = 66
 
     // Split into small pieces: one big expression mixing CGFloat and Double maths is too
     // slow for the type checker.
@@ -323,15 +368,19 @@ struct WheelView: View {
         ZStack {
             ring
             caption
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                bubbleView(item).offset(position(of: index))
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                if let item {
+                    bubbleView(item).offset(WheelGeometry.position(of: index, count: items.count, radius: radius))
+                }
             }
         }
         .frame(width: Self.size, height: Self.size)
     }
 
+    private var bubble: CGFloat { WheelGeometry.bubbleSize(count: items.count, radius: radius, largest: 66) }
+
     private var ring: some View {
-        let diameter: CGFloat = (radius + bubble / 2 + 10) * 2
+        let diameter: CGFloat = (radius + 33 + 10) * 2
         return Circle()
             .fill(.ultraThinMaterial)
             .overlay(Circle().strokeBorder(Color.primary.opacity(0.1)))
@@ -343,12 +392,6 @@ struct WheelView: View {
             Text(kind.title).font(.headline)
             Text("Drop on a bubble").font(.caption).foregroundStyle(.secondary)
         }
-    }
-
-    private func position(of index: Int) -> CGSize {
-        let count = Double(max(items.count, 1))
-        let angle: Double = Double(index) / count * 2 * Double.pi - Double.pi / 2
-        return CGSize(width: CGFloat(cos(angle)) * radius, height: CGFloat(sin(angle)) * radius)
     }
 
     private func bubbleView(_ item: WheelItem) -> some View {
@@ -372,5 +415,20 @@ struct WheelView: View {
             onDrop(item)
             return true
         }
+    }
+}
+
+/// Where the bubbles go, shared by the wheel and its editor in Settings.
+enum WheelGeometry {
+    /// Position `index` of `count`, from the centre: the first at the top, then clockwise.
+    static func position(of index: Int, count: Int, radius: CGFloat) -> CGSize {
+        let total = Double(max(count, 1))
+        let angle: Double = Double(index) / total * 2 * Double.pi - Double.pi / 2
+        return CGSize(width: CGFloat(cos(angle)) * radius, height: CGFloat(sin(angle)) * radius)
+    }
+
+    /// Bubbles shrink a little when there are so many that they would touch.
+    static func bubbleSize(count: Int, radius: CGFloat, largest: CGFloat) -> CGFloat {
+        min(largest, 2 * CGFloat.pi * radius / CGFloat(max(count, 1)) - 4)
     }
 }
