@@ -206,11 +206,7 @@ enum AppleVideoEditor {
         session.audioTimePitchAlgorithm = .spectral // speed changes keep the pitch, like ffmpeg's atempo
         session.shouldOptimizeForNetworkUse = true
         if stripMetadata { session.metadataItemFilter = .forSharing() }
-        let failure = await withTaskCancellationHandler {
-            await session.runExport(to: out, as: type, progress: progress)
-        } onCancel: {
-            session.cancelExport()
-        }
+        let failure = await session.runExport(to: out, as: type, progress: progress)
         try Task.checkCancellation()
         if let failure {
             try? FileManager.default.removeItem(at: out)

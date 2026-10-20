@@ -264,11 +264,7 @@ enum AppleMedia {
             session.metadataItemFilter = .forSharing()
         }
         try? FileManager.default.removeItem(at: output)
-        let failure = await withTaskCancellationHandler {
-            await session.runExport(to: output, as: type, progress: progress)
-        } onCancel: {
-            session.cancelExport()
-        }
+        let failure = await session.runExport(to: output, as: type, progress: progress)
         try Task.checkCancellation()
         if let failure { throw ConversionError(failure.localizedDescription) }
         progress(1)
@@ -276,8 +272,8 @@ enum AppleMedia {
 }
 
 extension AVAssetExportSession {
-    /// Whether `preset` can save `asset` as `type`. Asked of the class rather than a session,
-    /// because on iOS 18 poking at a session before its export starts can leave it unable to start.
+    /// Whether `preset` can save `asset` as `type`, asked of the class so the session itself is
+    /// left untouched until its export starts.
     static func canExport(_ asset: AVAsset, preset: String, as type: AVFileType) async -> Bool {
         await withCheckedContinuation { (done: CheckedContinuation<Bool, Never>) in
             determineCompatibility(ofExportPreset: preset, with: asset, outputFileType: type) { done.resume(returning: $0) }
@@ -285,9 +281,12 @@ extension AVAssetExportSession {
     }
 
     /// Exports to `url`, reporting progress, and returns what went wrong (nil when the file was saved).
-    /// Nothing reads the session until its export is under way; see `canExport`.
+    /// Cancelling the task stops the export. A session cancelled before it starts raises an
+    /// Objective-C exception when told to start, so cancellation is only passed on once it's running.
     func runExport(to url: URL, as type: AVFileType, progress: @escaping ProgressHandler) async -> Error? {
+        if Task.isCancelled { return CancellationError() }
         if #available(macOS 15, iOS 18, *) {
+            // The newer call stops by itself when the task is cancelled.
             let watcher = Task {
                 try await Task.sleep(nanoseconds: 300_000_000)
                 for await state in states(updateInterval: 0.25) {
@@ -304,17 +303,50 @@ extension AVAssetExportSession {
         }
         outputURL = url
         outputFileType = type
+        let gate = ExportGate()
         var poller: Task<Void, Never>?
-        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
-            exportAsynchronously { done.resume() }
-            poller = Task { [weak self] in
-                while !Task.isCancelled, let self {
-                    progress(Double(self.progress))
-                    try? await Task.sleep(nanoseconds: 250_000_000)
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+                guard gate.start() else { return done.resume() }
+                exportAsynchronously { done.resume() }
+                poller = Task { [weak self] in
+                    while !Task.isCancelled, let self {
+                        progress(Double(self.progress))
+                        try? await Task.sleep(nanoseconds: 250_000_000)
+                    }
                 }
             }
+        } onCancel: {
+            if gate.cancel() { cancelExport() }
         }
         poller?.cancel()
+        if gate.wasCancelledBeforeStart { return CancellationError() }
         return status == .completed ? nil : (error ?? ConversionError("The export failed."))
+    }
+}
+
+/// Whether an export has started or been cancelled, whichever came first.
+private final class ExportGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var started = false
+    private var cancelled = false
+
+    /// True when the export may start (it wasn't cancelled first).
+    func start() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        started = !cancelled
+        return started
+    }
+
+    /// True when the export is running and should be told to stop.
+    func cancel() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        cancelled = true
+        return started
+    }
+
+    var wasCancelledBeforeStart: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return cancelled && !started
     }
 }

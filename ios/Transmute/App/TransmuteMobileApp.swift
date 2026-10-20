@@ -35,9 +35,15 @@ struct RootView: View {
     private func startAutomation() async {
         let args = CommandLine.arguments
         if let flag = args.firstIndex(of: "--selftest"), flag + 1 < args.count {
+            // Showing the progress text replaces HomeView, which cancels this .task, so the
+            // test runs in a task of its own.
+            let folder = Automation.folder(args[flag + 1])
+            Task {
+                let failures = await IOSSelfTest.run(inputDir: folder)
+                exit(failures == 0 ? 0 : 1)
+            }
             testOutput = "Running the self-test…"
-            let failures = await IOSSelfTest.run(inputDir: Automation.folder(args[flag + 1]))
-            exit(failures == 0 ? 0 : 1)
+            return
         }
         if let flag = args.firstIndex(of: "--demo"), flag + 1 < args.count {
             await Automation.demo(Automation.folder(args[flag + 1]), screen: Automation.value(after: "--screen", in: args))
