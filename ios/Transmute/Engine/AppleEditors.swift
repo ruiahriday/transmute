@@ -201,8 +201,6 @@ enum AppleVideoEditor {
             throw ConversionError("This video can't be saved as \(type == .mov ? "MOV" : "MP4") here.")
         }
         try? FileManager.default.removeItem(at: out)
-        session.outputURL = out
-        session.outputFileType = type
         session.videoComposition = videoComposition
         session.audioMix = audioMix
         session.audioTimePitchAlgorithm = .spectral // speed changes keep the pitch, like ffmpeg's atempo
@@ -214,16 +212,16 @@ enum AppleVideoEditor {
                 try? await Task.sleep(nanoseconds: 250_000_000)
             }
         }
-        await withTaskCancellationHandler {
-            await session.runExport()
+        let failure = await withTaskCancellationHandler {
+            await session.runExport(to: out, as: type)
         } onCancel: {
             session.cancelExport()
         }
         poller.cancel()
         try Task.checkCancellation()
-        guard session.status == .completed else {
+        if let failure {
             try? FileManager.default.removeItem(at: out)
-            throw ConversionError(session.error?.localizedDescription ?? "Saving the video failed.")
+            throw ConversionError(failure.localizedDescription)
         }
     }
 }

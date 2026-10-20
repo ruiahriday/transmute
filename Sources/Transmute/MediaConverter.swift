@@ -256,12 +256,10 @@ enum AppleMedia {
         guard let session = AVAssetExportSession(asset: asset, presetName: preset) else {
             throw ConversionError("macOS can't export \(input.lastPathComponent) this way.")
         }
-        session.outputURL = output
-        // Setting an unsupported type raises an Objective-C exception, so check first.
+        // Asking for an unsupported type raises an Objective-C exception, so check first.
         guard session.supportedFileTypes.contains(type) else {
             throw ConversionError("macOS can't save \(input.lastPathComponent) as \(type.rawValue).")
         }
-        session.outputFileType = type
         if clearMetadata {
             session.metadata = []
             session.metadataItemFilter = .forSharing()
@@ -273,26 +271,37 @@ enum AppleMedia {
                 try? await Task.sleep(nanoseconds: 250_000_000)
             }
         }
-        await withTaskCancellationHandler {
-            await session.runExport()
+        let failure = await withTaskCancellationHandler {
+            await session.runExport(to: output, as: type)
         } onCancel: {
             session.cancelExport()
         }
         poller.cancel()
         try Task.checkCancellation()
-        guard session.status == .completed else {
-            throw ConversionError(session.error?.localizedDescription ?? "Export failed.")
-        }
+        if let failure { throw ConversionError(failure.localizedDescription) }
         progress(1)
     }
 }
 
 extension AVAssetExportSession {
-    /// Starts the export exactly once and waits for it. The SDK's async `export()`
-    /// can start a session twice on iOS 18, which crashes.
-    func runExport() async {
+    /// Exports to `url` and returns what went wrong, or nil when the file was saved.
+    /// Uses the newer export call where there is one: on iOS 18 the older one can refuse
+    /// to start with an exception that would crash the app.
+    func runExport(to url: URL, as type: AVFileType) async -> Error? {
+        if #available(macOS 15, iOS 18, *) {
+            do {
+                try await export(to: url, as: type)
+                return nil
+            } catch {
+                return error
+            }
+        }
+        outputURL = url
+        outputFileType = type
+        guard status == .unknown else { return error ?? ConversionError("The export couldn't start.") }
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             exportAsynchronously { done.resume() }
         }
+        return status == .completed ? nil : (error ?? ConversionError("The export failed."))
     }
 }

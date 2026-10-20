@@ -150,14 +150,11 @@ enum AppleMetadata {
             throw ConversionError("This \(ext.uppercased()) file can't be re-saved with new tags.")
         }
         let out = OutputPaths.destination(for: input, ext: input.pathExtension, suffix: "tagged", folder: options.outputFolder)
-        session.outputURL = out
-        session.outputFileType = type
         session.metadata = items
         if removeLocation { session.metadataItemFilter = .forSharing() }
-        await session.runExport()
-        guard session.status == .completed else {
+        if let failure = await session.runExport(to: out, as: type) {
             try? FileManager.default.removeItem(at: out)
-            throw ConversionError(session.error?.localizedDescription ?? "Saving the tags failed.")
+            throw ConversionError(failure.localizedDescription)
         }
 
         // Read the copy back to make sure the changes landed.
