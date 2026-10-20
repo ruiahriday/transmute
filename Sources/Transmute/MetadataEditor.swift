@@ -680,7 +680,8 @@ enum MetadataTool {
         guard let ffmpeg = Tools.ffmpeg else {
             let seconds = await MediaInfo.duration(of: url)
             if seconds > 0 { addField("media.duration", "Duration", clock(seconds), in: "File", to: &fields) }
-            addField("tags.note", "Tags", "Install ffmpeg to see and edit tags", in: "Tags", to: &fields)
+            let hint = AppInfo.isAppStoreBuild ? "Needs the included ffmpeg" : "Install ffmpeg to see and edit tags"
+            addField("tags.note", "Tags", hint, in: "Tags", to: &fields)
             return fields
         }
         let banner = try await probe(url, ffmpeg: ffmpeg)
