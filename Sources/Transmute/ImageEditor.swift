@@ -1234,6 +1234,8 @@ struct ImageEditorView: View {
                         HStack(spacing: 3) {
                             if aspect == preset { Image(systemName: "checkmark") }
                             Text(preset.rawValue)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
                         }
                         .frame(maxWidth: .infinity)
                     }

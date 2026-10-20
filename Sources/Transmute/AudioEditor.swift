@@ -569,7 +569,7 @@ struct AudioEditorView: View {
     }
 
     private var trimRow: some View {
-        HStack(spacing: 8) {
+        ControlRow(spacing: 8) {
             Button("Set Start") { setStart() }
             TextField("Start", value: $edit.trimStart, format: secondsFormat)
                 .frame(width: 70)
@@ -707,12 +707,7 @@ struct AudioEditorView: View {
     }
 
     private func row<Content: View>(_ title: String, @ViewBuilder _ content: () -> Content) -> some View {
-        HStack(spacing: 10) {
-            Text(title)
-                .frame(width: 70, alignment: .leading)
-            content()
-            Spacer(minLength: 0)
-        }
+        EditorRow(title: title, titleWidth: 70) { content() }
     }
 
     // MARK: Footer
