@@ -18,9 +18,9 @@ targets:
     platform: iOS
     sources:
       - path: Transmute
-        group: iPhone and iPad
+        excludes:
+          - Info.plist
       - path: ../Sources/Transmute
-        group: Shared with Mac
         excludes:
           - App.swift
           - ContentView.swift
