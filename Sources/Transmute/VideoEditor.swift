@@ -60,7 +60,11 @@ struct VideoEdit: Equatable, Sendable {
 /// AVFoundation when it can read the file. Runs off the main thread.
 enum VideoEditEngine {
     /// Containers the editor writes.
+    #if os(iOS)
+    static let editableFormats: [OutputFormat] = [.mp4, .mov]
+    #else
     static let editableFormats: [OutputFormat] = [.mp4, .mov, .mkv, .webm]
+    #endif
 
     static func outputFormat(for edit: VideoEdit, input: URL) -> OutputFormat {
         if let chosen = edit.outputFormat, editableFormats.contains(chosen) { return chosen }
@@ -88,6 +92,9 @@ enum VideoEditEngine {
     /// Trims, re-times, crops, rotates and remixes one video into a new file (two when splitting).
     static func apply(_ edit: VideoEdit, to input: URL, options: ConversionOptions,
                       progress: @escaping ProgressHandler) async throws -> JobResult {
+        #if os(iOS)
+        return try await AppleVideoEditor.apply(edit, to: input, options: options, progress: progress)
+        #else
         let ffmpeg = try Tools.requireFFmpeg(for: "Editing video")
         if let chosen = edit.outputFormat, !editableFormats.contains(chosen) {
             throw ConversionError("Edited videos can be saved as MP4, MOV, MKV or WebM, not \(chosen.label).")
@@ -178,6 +185,7 @@ enum VideoEditEngine {
             message = "Length \(timeLabel(lengths[0], tenths: true))"
         }
         return JobResult(outputs: outputs, message: message)
+        #endif
     }
 
     /// The -vf chain: speed, crop, rotation and flip, ending on even dimensions for the encoders.
@@ -246,6 +254,9 @@ enum VideoEditEngine {
     /// first video's frame at 30 fps; videos without sound get silence so the audio stays in step.
     static func join(_ urls: [URL], options: ConversionOptions, progress: @escaping ProgressHandler) async throws -> URL {
         guard urls.count >= 2 else { throw ConversionError("Choose at least two videos to join.") }
+        #if os(iOS)
+        return try await AppleVideoEditor.join(urls, options: options, progress: progress)
+        #else
         let ffmpeg = try Tools.requireFFmpeg(for: "Joining videos")
         let size = await frameSize(of: urls[0], ffmpeg: ffmpeg) ?? (width: 1920, height: 1080)
         let width = max(2, size.width / 2 * 2)
@@ -303,6 +314,7 @@ enum VideoEditEngine {
         }
         progress(1)
         return out
+        #endif
     }
 
     // MARK: Snapshot
@@ -487,8 +499,14 @@ struct VideoEditorView: View {
                 .font(.headline)
                 .lineLimit(1)
                 .truncationMode(.middle)
+            #if os(iOS)
+            preview
+                .frame(maxWidth: .infinity)
+                .frame(height: 240)
+            #else
             preview
                 .frame(maxWidth: .infinity, minHeight: 200, idealHeight: 300, maxHeight: .infinity)
+            #endif
             timeline
             Divider()
             settings
@@ -496,7 +514,8 @@ struct VideoEditorView: View {
             footer
         }
         .padding(16)
-        .frame(minWidth: 640, idealWidth: 760, minHeight: 640, idealHeight: 760)
+        .scrollsOnPhone()
+        .editorWindowSize(minWidth: 640, idealWidth: 760, minHeight: 640, idealHeight: 760)
         .task { await prepare() }
         .onDisappear { tearDown() }
     }
@@ -677,8 +696,10 @@ struct VideoEditorView: View {
                     Text(keepLabel).tag(Optional<OutputFormat>.none)
                     Text("MP4").tag(Optional(OutputFormat.mp4))
                     Text("MOV").tag(Optional(OutputFormat.mov))
+                    #if os(macOS)
                     Text("WebM").tag(Optional(OutputFormat.webm))
                     Text("MKV").tag(Optional(OutputFormat.mkv))
+                    #endif
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()

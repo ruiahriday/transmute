@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import CoreText
@@ -730,7 +734,40 @@ struct ImageEditorView: View {
     @State private var addedOrder: [UUID] = []
     @FocusState private var textFieldFocused: Bool
 
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    #endif
+
     var body: some View {
+        layout
+            .editorWindowSize(minWidth: 760, idealWidth: 1000, minHeight: 560, idealHeight: 700)
+            .task(id: url) { await loadPreview() }
+        .task(id: previewKey) { await refreshRendered() }
+    }
+
+    /// Canvas on the left and controls on the right; on a narrow iPhone screen, controls below.
+    @ViewBuilder
+    private var layout: some View {
+        #if os(iOS)
+        if sizeClass == .compact {
+            VStack(spacing: 0) {
+                canvasArea
+                Divider()
+                ScrollView(.horizontal, showsIndicators: false) {
+                    transformBar.padding(.horizontal, 12).padding(.vertical, 8)
+                }
+                Divider()
+                sidebar.frame(height: 330)
+            }
+        } else {
+            sideBySide
+        }
+        #else
+        sideBySide
+        #endif
+    }
+
+    private var sideBySide: some View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
                 canvasArea
@@ -743,9 +780,6 @@ struct ImageEditorView: View {
             sidebar
                 .frame(width: 280)
         }
-        .frame(minWidth: 760, idealWidth: 1000, minHeight: 560, idealHeight: 700)
-        .task(id: url) { await loadPreview() }
-        .task(id: previewKey) { await refreshRendered() }
     }
 
     private var previewKey: PreviewKey {
@@ -758,7 +792,11 @@ struct ImageEditorView: View {
     private var canvasArea: some View {
         GeometryReader { proxy in
             ZStack {
+                #if canImport(AppKit)
                 Color(nsColor: .underPageBackgroundColor)
+                #else
+                Color(uiColor: .secondarySystemBackground)
+                #endif
                 if let image = rendered ?? preview {
                     let size = canvasSize(imageWidth: image.width, imageHeight: image.height, in: proxy.size)
                     // Turns and flips are only shown here; drawing still happens in the

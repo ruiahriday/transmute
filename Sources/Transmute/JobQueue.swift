@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import Combine
 import Foundation
 
@@ -153,7 +157,9 @@ final class JobQueue: ObservableObject {
             do {
                 let output = try await Engine.batch(tool, urls: urls, options: options)
                 ids.forEach { self?.setState($0, .done(JobResult(outputs: [output]))) }
+                #if canImport(AppKit)
                 if reveal { NSWorkspace.shared.activateFileViewerSelecting([output]) }
+                #endif
             } catch {
                 ids.forEach { self?.setState($0, .failed(error.localizedDescription)) }
             }
@@ -201,6 +207,8 @@ final class JobQueue: ObservableObject {
             if case .done(let result) = job(id)?.state { return result.outputs }
             return nil
         }.flatMap { $0 }
+        #if canImport(AppKit)
         if !outputs.isEmpty { NSWorkspace.shared.activateFileViewerSelecting(outputs) }
+        #endif
     }
 }

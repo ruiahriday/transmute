@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import CoreText
 import PDFKit
 import QuickLookThumbnailing
@@ -75,7 +79,12 @@ enum OfficeConverter {
     private static func isInstalled(_ app: IWorkApp) -> Bool {
         // Lets the self-test exercise the fallbacks on a Mac that has iWork.
         if ProcessInfo.processInfo.environment["TRANSMUTE_NO_IWORK"] != nil { return false }
+        #if os(iOS)
+        // Other apps can't be scripted on iPhone and iPad.
+        return false
+        #else
         return NSWorkspace.shared.urlForApplication(withBundleIdentifier: app.bundleID) != nil
+        #endif
     }
 
     private static func missingApp(_ app: IWorkApp, _ what: String) -> ConversionError {
@@ -134,8 +143,10 @@ enum OfficeConverter {
 
     /// Starts the app in the background so it doesn't jump in front of the user.
     private static func launchHidden(_ app: IWorkApp) async {
+        #if os(macOS)
         guard NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleID).isEmpty else { return }
         _ = try? await Shell.run("/usr/bin/open", ["-g", "-j", "-b", app.bundleID])
+        #endif
     }
 
     /// A double-quoted AppleScript string literal.
@@ -552,7 +563,7 @@ enum OfficeConverter {
         var index = 0
         while index < ns.length {
             var effective = NSRange(location: 0, length: 0)
-            let font = text.attribute(.font, at: index, longestEffectiveRange: &effective, in: full) as? NSFont
+            let font = text.attribute(.font, at: index, longestEffectiveRange: &effective, in: full) as? PlatformFont
             sizeCounts[(font?.pointSize ?? 12).rounded(), default: 0] += effective.length
             index = max(index + 1, NSMaxRange(effective))
         }
@@ -575,8 +586,7 @@ enum OfficeConverter {
             while position < NSMaxRange(range) {
                 var effective = NSRange(location: 0, length: 0)
                 let attributes = text.attributes(at: position, longestEffectiveRange: &effective, in: range)
-                let font = attributes[.font] as? NSFont
-                let traits = font?.fontDescriptor.symbolicTraits ?? []
+                let font = attributes[.font] as? PlatformFont
                 var link: String?
                 if let url = attributes[.link] as? URL {
                     link = url.absoluteString
@@ -586,8 +596,8 @@ enum OfficeConverter {
                 if let target = link, !["http", "https", "mailto"].contains(URL(string: target)?.scheme?.lowercased() ?? "") {
                     link = nil
                 }
-                runs.append(Run(text: ns.substring(with: effective), bold: traits.contains(.bold),
-                                italic: traits.contains(.italic), size: font?.pointSize ?? bodySize, link: link))
+                runs.append(Run(text: ns.substring(with: effective), bold: font?.isBold ?? false,
+                                italic: font?.isItalic ?? false, size: font?.pointSize ?? bodySize, link: link))
                 position = max(position + 1, NSMaxRange(effective))
             }
 
@@ -745,8 +755,12 @@ enum OfficeConverter {
             try Data(text.utf8).write(to: url)
         }
         do {
+            #if os(iOS)
+            try ZipArchive.create(out, from: stage, items: ["mimetype", "META-INF", "OEBPS"], stored: ["mimetype"])
+            #else
             try await Shell.check("/usr/bin/zip", ["-X0", "-q", out.path, "mimetype"], currentDirectory: stage)
             try await Shell.check("/usr/bin/zip", ["-Xr9Dq", out.path, "META-INF", "OEBPS"], currentDirectory: stage)
+            #endif
         } catch {
             try? FileManager.default.removeItem(at: out)
             throw error
@@ -1446,7 +1460,11 @@ enum OfficeConverter {
             try Data(text.utf8).write(to: url)
         }
         do {
+            #if os(iOS)
+            try ZipArchive.create(out, from: stage, items: try FileManager.default.contentsOfDirectory(atPath: stage.path))
+            #else
             try await Shell.check("/usr/bin/zip", ["-X", "-r", "-D", "-q", out.path, "."], currentDirectory: stage)
+            #endif
         } catch {
             try? FileManager.default.removeItem(at: out)
             throw error
@@ -1671,6 +1689,14 @@ enum OfficeConverter {
             return Unpacked(root: URL(fileURLWithPath: input.path, isDirectory: true), isTemporary: false)
         }
         let folder = try makeTempDir()
+        #if os(iOS)
+        do {
+            try ZipArchive.extract(input, to: folder)
+        } catch {
+            try? FileManager.default.removeItem(at: folder)
+            throw ConversionError("\(input.lastPathComponent) couldn't be opened; it may be damaged.")
+        }
+        #else
         do {
             try await Shell.check("/usr/bin/ditto", ["-x", "-k", input.path, folder.path])
         } catch let error as CancellationError {
@@ -1685,6 +1711,7 @@ enum OfficeConverter {
                 throw ConversionError("\(input.lastPathComponent) couldn't be opened; it may be damaged.")
             }
         }
+        #endif
         return Unpacked(root: folder, isTemporary: true)
     }
 

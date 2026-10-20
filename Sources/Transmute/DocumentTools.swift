@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import CoreText
 import PDFKit
 import UniformTypeIdentifiers
@@ -29,11 +33,15 @@ enum PDFTools {
             let bounds = page.bounds(for: .mediaBox)
             let rotated = page.rotation % 180 != 0
             let scale: CGFloat = 2 // 144 dpi
-            let size = NSSize(width: (rotated ? bounds.height : bounds.width) * scale,
+            let size = CGSize(width: (rotated ? bounds.height : bounds.width) * scale,
                               height: (rotated ? bounds.width : bounds.height) * scale)
             let thumb = page.thumbnail(of: size, for: .mediaBox)
+            #if canImport(AppKit)
             var rect = CGRect(origin: .zero, size: thumb.size)
             guard let image = thumb.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { continue }
+            #else
+            guard let image = thumb.cgImage else { continue }
+            #endif
             let out = folder.map { $0.appendingPathComponent("Page \(index + 1).\(format.fileExtension)") }
                 ?? OutputPaths.destination(for: input, ext: format.fileExtension, folder: options.outputFolder)
             try ImageConverter.data(from: image, type: type, quality: options.quality).write(to: out, options: .atomic)
@@ -79,7 +87,11 @@ enum PDFTools {
             let cg = try ImageConverter.loadCGImage(url)
             let w = CGFloat(cg.width), h = CGFloat(cg.height)
             let fit = min(a4.width / w, a4.height / h, 1)
+            #if canImport(AppKit)
             let image = NSImage(cgImage: cg, size: NSSize(width: w * fit, height: h * fit))
+            #else
+            let image = UIImage(cgImage: cg, scale: 1 / fit, orientation: .up)
+            #endif
             if let page = PDFPage(image: image) { doc.insert(page, at: doc.pageCount) }
         }
         guard doc.pageCount > 0 else { throw ConversionError("None of the images could be read.") }
@@ -134,8 +146,16 @@ enum DocumentConverter {
             } else {
                 text = String(decoding: try Data(contentsOf: url), as: UTF8.self)
             }
-            return NSAttributedString(string: text, attributes: [.font: NSFont.systemFont(ofSize: 12)])
+            return NSAttributedString(string: text, attributes: [.font: PlatformFont.systemFont(ofSize: 12)])
         }
+        #if os(iOS)
+        // iOS only reads RTF and HTML this way; Word files have their own reader.
+        switch url.pathExtension.lowercased() {
+        case "docx": return try WordDocument.read(url)
+        case "rtf", "rtfd", "html", "htm": break
+        default: throw ConversionError("\(url.pathExtension.uppercased()) documents can't be opened on iPhone and iPad yet.")
+        }
+        #endif
         return try NSAttributedString(url: url, options: [:], documentAttributes: nil)
     }
 
@@ -147,13 +167,23 @@ enum DocumentConverter {
             try text.string.write(to: out, atomically: true, encoding: .utf8)
         case .pdf:
             try renderPDF(text, to: out)
+        #if os(iOS)
+        case .docx:
+            try WordDocument.write(text, to: out)
+        case .odt:
+            throw ConversionError("Saving ODT isn't available on iPhone and iPad yet.")
+        #endif
         case .rtf, .docx, .html, .odt:
+            #if os(iOS)
+            let type: NSAttributedString.DocumentType = format == .rtf ? .rtf : .html
+            #else
             let type: NSAttributedString.DocumentType = switch format {
             case .rtf: .rtf
             case .docx: .officeOpenXML
             case .html: .html
             default: .openDocument
             }
+            #endif
             let data = try text.data(from: NSRange(location: 0, length: text.length),
                                      documentAttributes: [.documentType: type])
             try data.write(to: out, options: .atomic)
@@ -267,6 +297,15 @@ enum ArchiveTool {
         }
         defer { if let staging { try? FileManager.default.removeItem(at: staging) } }
 
+        #if os(iOS)
+        switch format {
+        case .zip: try ZipArchive.create(out, from: parent, items: names)
+        case .tar: try TarArchive.create(out, from: parent, items: names, gzip: false)
+        case .tgz: try TarArchive.create(out, from: parent, items: names, gzip: true)
+        default: throw ConversionError("\(format.label) isn't an archive format.")
+        }
+        return out
+        #else
         switch format {
         case .zip where inputs.count == 1:
             try await Shell.check("/usr/bin/ditto", ["-c", "-k", "--sequesterRsrc", "--keepParent", first.path, out.path])
@@ -280,12 +319,35 @@ enum ArchiveTool {
             throw ConversionError("\(format.label) isn't an archive format.")
         }
         return out
+        #endif
     }
 
     /// Unpacks into a folder named after the archive. Handles zip, tar, gz, bz2, xz, rar and 7z
     /// through the system's libarchive-based `tar`.
     static func extract(_ input: URL, options: ConversionOptions) async throws -> URL {
         let name = input.lastPathComponent.lowercased()
+        #if os(iOS)
+        if name.hasSuffix(".gz") && !name.hasSuffix(".tar.gz") {
+            let out = OutputPaths.destination(for: input, ext: "", folder: options.outputFolder)
+            try Gzip.decompress(input, to: out)
+            return out
+        }
+        let dir = OutputPaths.destination(for: input, ext: "", folder: options.outputFolder)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        do {
+            if name.hasSuffix(".zip") {
+                try ZipArchive.extract(input, to: dir)
+            } else if name.hasSuffix(".tar") || name.hasSuffix(".tar.gz") || name.hasSuffix(".tgz") {
+                try TarArchive.extract(input, to: dir)
+            } else {
+                throw ConversionError("\(input.pathExtension.uppercased()) archives can't be opened on iPhone and iPad yet.")
+            }
+        } catch {
+            try? FileManager.default.removeItem(at: dir)
+            throw error
+        }
+        return dir
+        #else
         if name.hasSuffix(".gz") && !name.hasSuffix(".tar.gz") {
             // A single gzipped file, not a folder.
             let out = OutputPaths.destination(for: input, ext: "", folder: options.outputFolder)
@@ -300,6 +362,7 @@ enum ArchiveTool {
             try await Shell.check("/usr/bin/tar", ["-xf", input.path, "-C", dir.path])
         }
         return dir
+        #endif
     }
 
     /// Converts one archive format to another by unpacking to a temporary folder.

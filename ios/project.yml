@@ -1,0 +1,56 @@
+# Xcode project for Transmute on iPhone and iPad, generated with XcodeGen:
+#   cd ios && xcodegen generate --project ..
+# The converters are shared with the Mac app (../Sources/Transmute); Mac-only files are left out.
+name: Transmute
+options:
+  bundleIdPrefix: com.ruiahriday
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Transmute:
+    type: application
+    platform: iOS
+    sources:
+      - path: Transmute
+        group: iPhone and iPad
+      - path: ../Sources/Transmute
+        group: Shared with Mac
+        excludes:
+          - App.swift
+          - ContentView.swift
+          - DragWheel.swift
+          - Feedback.swift
+          - FloatingShelf.swift
+          - SelfTest.swift
+          - WheelEditor.swift
+          - WheelLayout.swift
+    settings:
+      base:
+        PRODUCT_NAME: Transmute
+        PRODUCT_BUNDLE_IDENTIFIER: com.ruiahriday.transmute
+        INFOPLIST_FILE: ios/Transmute/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+      configs:
+        # Converting is heavy work, so even the build Xcode runs on a phone is optimized.
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"
+schemes:
+  Transmute:
+    build:
+      targets:
+        Transmute: all
+    run:
+      config: Debug
+    archive:
+      config: Release

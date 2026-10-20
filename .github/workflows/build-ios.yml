@@ -1,0 +1,182 @@
+name: Build Transmute for iPhone and iPad
+
+on:
+  push:
+    branches: [ios]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ios:
+    runs-on: macos-15
+    defaults:
+      run:
+        shell: bash
+    env:
+      BUNDLE_ID: com.ruiahriday.transmute
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate --spec ios/project.yml --project .
+          ls -d Transmute.xcodeproj
+
+      - name: Build for the simulator
+        id: build
+        run: |
+          mkdir -p logs
+          set -o pipefail
+          xcodebuild -project Transmute.xcodeproj -scheme Transmute -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} build 2>&1 | tee logs/build.log | grep -E "error:|warning: .*Transmute|BUILD" || true
+          test -d build/dd/Build/Products/Debug-iphonesimulator/Transmute.app
+
+      - name: Build for real iPhones and iPads (unsigned, to check it compiles)
+        id: device
+        run: |
+          set -o pipefail
+          xcodebuild -project Transmute.xcodeproj -scheme Transmute -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/dd-device \
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee logs/build-device.log | grep -E "error:|BUILD" || true
+          test -d build/dd-device/Build/Products/Release-iphoneos/Transmute.app
+
+      - name: Make sample files
+        run: |
+          set -euo pipefail
+          mkdir -p ffmpeg-dl && cd ffmpeg-dl
+          curl -fsSL --retry 3 -o ffmpeg.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/release/ffmpeg.zip"
+          unzip -q -o ffmpeg.zip
+          FF="$PWD/$(find . -type f -name ffmpeg | head -1)"
+          chmod +x "$FF"
+          cd ..
+          bash scripts/make-fixtures.sh "$RUNNER_TEMP/fixtures" "$FF" > logs/fixtures.log 2>&1
+
+      - name: Start an iPhone and an iPad simulator
+        run: |
+          python3 - <<'PY' > sims.env
+          import json, subprocess
+          data = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "-j"]))
+          runtimes = sorted((r for r in data["devices"] if "iOS" in r), key=lambda r: [int(x) if x.isdigit() else 0 for x in r.split("iOS-")[-1].split("-")])
+          devices = data["devices"][runtimes[-1]]
+          def pick(prefixes):
+              for prefix in prefixes:
+                  for d in devices:
+                      if d["name"].startswith(prefix):
+                          return d
+          phone = pick(["iPhone 16 Pro", "iPhone 16", "iPhone 15 Pro", "iPhone"])
+          pad = pick(["iPad Pro 13", "iPad Pro (12.9", "iPad Air 13", "iPad Pro", "iPad"])
+          print(f"PHONE={phone['udid']}\nPHONE_NAME='{phone['name']}'\nPAD={pad['udid']}\nPAD_NAME='{pad['name']}'")
+          PY
+          cat sims.env
+          cat sims.env >> "$GITHUB_ENV"
+          source sims.env
+          for udid in "$PHONE" "$PAD"; do
+            xcrun simctl boot "$udid" || true
+            xcrun simctl bootstatus "$udid" -b
+            xcrun simctl status_bar "$udid" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 || true
+            xcrun simctl install "$udid" build/dd/Build/Products/Debug-iphonesimulator/Transmute.app
+            DATA=$(xcrun simctl get_app_container "$udid" "$BUNDLE_ID" data)
+            mkdir -p "$DATA/Documents/fixtures"
+            cp -R "$RUNNER_TEMP/fixtures/." "$DATA/Documents/fixtures/"
+          done
+
+      - name: Self-test on the iPhone simulator
+        id: selftest
+        run: |
+          DATA=$(xcrun simctl get_app_container "$PHONE" "$BUNDLE_ID" data)
+          rm -f "$DATA/Documents/selftest.log"
+          # The app prints as it goes and quits when done; the log file is the full record.
+          timeout 1500 xcrun simctl launch --console-pty --terminate-running-process "$PHONE" "$BUNDLE_ID" --selftest fixtures > logs/selftest-console.log 2>&1 || true
+          cp "$DATA/Documents/selftest.log" logs/selftest.log 2>/dev/null || cp logs/selftest-console.log logs/selftest.log
+          grep -E "^(PASS|FAIL|SKIP|RESULT)" logs/selftest.log | tail -n 400
+          grep -qE "^RESULT: [0-9]+ passed, 0 failed" logs/selftest.log
+
+      - name: Screenshots
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          mkdir -p shots
+          shoot() {
+            local udid="$1" prefix="$2" screen="$3"
+            xcrun simctl terminate "$udid" "$BUNDLE_ID" 2>/dev/null || true
+            xcrun simctl launch "$udid" "$BUNDLE_ID" --demo fixtures --screen "$screen" >/dev/null
+            sleep 7
+            xcrun simctl io "$udid" screenshot "shots/$prefix-$screen.png" >/dev/null 2>&1 || true
+          }
+          for screen in empty convert compress tools results saved settings image video audio info; do shoot "$PHONE" iphone "$screen"; done
+          for screen in empty convert tools results image video audio; do shoot "$PAD" ipad "$screen"; done
+          ls -la shots
+
+      - name: Report results as annotations
+        if: always()
+        run: |
+          level() { if [[ "$1" == "failure" ]]; then echo error; else echo notice; fi; }
+          bash scripts/ci-report.sh "$(level '${{ steps.build.outcome }}')" "iOS build" logs/build.log
+          bash scripts/ci-report.sh "$(level '${{ steps.device.outcome }}')" "iOS device build" logs/build-device.log
+          bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "iOS self-test" logs/selftest.log 400
+
+      # Screenshots and logs go to a branch, which can be read without downloading artifacts.
+      - name: Publish screenshots and logs to the ios-ci branch
+        if: always()
+        run: |
+          set -e
+          rm -rf ci-out && mkdir -p ci-out
+          cp -R shots ci-out/ 2>/dev/null || true
+          cp logs/*.log ci-out/ 2>/dev/null || true
+          cd ci-out
+          git init -q -b ios-ci
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "iOS CI run ${{ github.run_number }} for ${{ github.sha }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ios-ci
+
+      - name: Package the Xcode project
+        if: steps.build.outcome == 'success' && steps.device.outcome == 'success'
+        run: |
+          set -euo pipefail
+          PKG="build/pkg/Transmute for iPhone and iPad"
+          mkdir -p "$PKG/Sources"
+          cp -R Transmute.xcodeproj "$PKG/"
+          cp -R ios "$PKG/ios"
+          cp -R Sources/Transmute "$PKG/Sources/Transmute"
+          cp ios/INSTALL.txt "$PKG/How to install.txt"
+          (cd build/pkg && ditto -c -k --sequesterRsrc --keepParent "Transmute for iPhone and iPad" ../Transmute-iOS-Xcode.zip)
+          ls -la build
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Transmute-iOS
+          path: |
+            build/Transmute-iOS-Xcode.zip
+            shots
+            logs
+
+      - name: Publish the download (release "ios-beta")
+        if: steps.selftest.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ios-beta --yes --cleanup-tag || true
+          cat > notes.md <<'NOTES'
+          **Transmute for iPhone and iPad (beta).** This is the Xcode project; your Mac builds it and puts it on your iPhone or iPad.
+
+          1. Download `Transmute-iOS-Xcode.zip` and double-click it.
+          2. Open the folder and double-click `Transmute.xcodeproj` (Xcode opens it).
+          3. Follow `How to install.txt` in the same folder.
+
+          Needs Xcode (free from the Mac App Store) and an iPhone or iPad with iOS 16 or newer.
+          NOTES
+          gh release create ios-beta build/Transmute-iOS-Xcode.zip --prerelease \
+            --target "$GITHUB_SHA" --title "Transmute for iPhone and iPad (beta, build ${{ github.run_number }})" --notes-file notes.md

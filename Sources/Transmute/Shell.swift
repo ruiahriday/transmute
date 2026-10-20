@@ -4,6 +4,10 @@ import Foundation
 /// so we look in the usual Homebrew locations and inside the app bundle.
 enum Tools {
     static var ffmpeg: String? {
+        #if os(iOS)
+        // iPhone and iPad apps can't run other programs.
+        return nil
+        #else
         // Lets the self-test exercise the Apple-only fallbacks.
         if ProcessInfo.processInfo.environment["TRANSMUTE_NO_FFMPEG"] != nil { return nil }
         let candidates = [
@@ -12,16 +16,22 @@ enum Tools {
             "/usr/local/bin/ffmpeg",
         ]
         return candidates.compactMap { $0 }.first { FileManager.default.isExecutableFile(atPath: $0) }
+        #endif
     }
 
     static func requireFFmpeg(for what: String) throws -> String {
         guard let path = ffmpeg else {
+            #if os(iOS)
+            throw ConversionError("\(what) isn't available on iPhone and iPad yet; it works in Transmute for Mac.")
+            #else
             throw ConversionError("\(what) needs ffmpeg. Install it once with: brew install ffmpeg")
+            #endif
         }
         return path
     }
 }
 
+#if os(macOS)
 /// Collects a process's output and calls back once per line.
 private final class LineCollector: @unchecked Sendable {
     private let lock = NSLock()
@@ -161,3 +171,39 @@ enum Shell {
         return output
     }
 }
+#else
+/// iPhone and iPad apps can't start other programs, so every command fails with a clear message.
+/// Code that needs one checks for iOS first and uses a built-in way instead where there is one.
+enum Shell {
+    struct Output {
+        let status: Int32
+        let stdout: String
+        let stderr: String
+    }
+
+    static func run(
+        _ executable: String,
+        _ arguments: [String],
+        currentDirectory: URL? = nil,
+        stdoutFile: URL? = nil,
+        onStdoutLine: (@Sendable (String) -> Void)? = nil,
+        onStderrLine: (@Sendable (String) -> Void)? = nil
+    ) async throws -> Output {
+        let tool = URL(fileURLWithPath: executable).lastPathComponent
+        throw ConversionError("This needs \(tool), which only Transmute for Mac has.")
+    }
+
+    @discardableResult
+    static func check(
+        _ executable: String,
+        _ arguments: [String],
+        currentDirectory: URL? = nil,
+        stdoutFile: URL? = nil,
+        onStdoutLine: (@Sendable (String) -> Void)? = nil,
+        onStderrLine: (@Sendable (String) -> Void)? = nil
+    ) async throws -> Output {
+        try await run(executable, arguments, currentDirectory: currentDirectory, stdoutFile: stdoutFile,
+                      onStdoutLine: onStdoutLine, onStderrLine: onStderrLine)
+    }
+}
+#endif

@@ -1,0 +1,50 @@
+TRANSMUTE FOR iPHONE AND iPAD: HOW TO INSTALL
+=============================================
+
+You need: a Mac, the free Xcode app, your normal Apple ID, and a cable for your
+iPhone or iPad (iOS / iPadOS 16 or newer). No paid developer account is needed
+to put it on your own devices.
+
+ONE-TIME SETUP ON THE MAC
+1. Install Xcode from the Mac App Store (free, but a big download).
+2. Open Xcode once. If it asks which platforms to install, tick iOS and click
+   Download & Install. Wait for it to finish.
+3. In Xcode, open the Xcode menu > Settings > Accounts. Click + (bottom left),
+   choose Apple ID, and sign in with your usual Apple ID.
+
+OPEN THE PROJECT
+4. Double-click "Transmute.xcodeproj" in this folder. Xcode opens it.
+5. In the left column, click the blue "Transmute" icon at the very top.
+   In the middle, under TARGETS, click "Transmute", then the
+   "Signing & Capabilities" tab.
+6. Next to "Team", choose your name with "(Personal Team)".
+   If Xcode then says the bundle identifier isn't available, change
+   "Bundle Identifier" to something only you would use, for example
+   com.yourname.transmute, and press Return.
+
+PUT IT ON YOUR iPHONE (then repeat steps 7 to 11 for your iPad)
+7. Connect the iPhone to the Mac with a cable and unlock it. If it asks
+   "Trust This Computer?", tap Trust and enter your passcode.
+8. Turn on Developer Mode on the iPhone: Settings > Privacy & Security >
+   Developer Mode (near the bottom) > On. The iPhone restarts; after it
+   restarts, tap Turn On and enter your passcode.
+   (Developer Mode only appears after the iPhone has been connected to Xcode.)
+9. In Xcode, at the top of the window, click the device name next to
+   "Transmute" and choose your iPhone from the list.
+10. Click the Play button (top left) or press Command-R. The first build takes
+    a few minutes. Keep the iPhone unlocked.
+11. The first time, the iPhone says "Untrusted Developer". On the iPhone go to
+    Settings > General > VPN & Device Management, tap your Apple ID under
+    Developer App, then tap Trust. Now open Transmute from the Home Screen.
+
+GOOD TO KNOW
+- With a free Apple ID the app stops opening after 7 days. Connect the device
+  and press Play in Xcode again; your converted files stay.
+- A free Apple ID can have up to 3 of these apps on a device at once.
+- After the first time you can skip the cable: in Xcode choose Window >
+  Devices and Simulators, select the iPhone and tick "Connect via network".
+- Converted files are in the Files app under On My iPhone > Transmute > Converted.
+- To send files to Transmute from another app, tap Share, then Transmute.
+- Friends' iPhones: this needs the paid Apple Developer Program (about Rs 8,700
+  a year). Then the app can go out through TestFlight, Apple's beta app, and
+  friends install it from a link without a Mac.

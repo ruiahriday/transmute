@@ -3,7 +3,7 @@ name: Build Transmute
 on:
   push:
     # dev is for trying changes on the Mac build server; only main publishes the download.
-    branches: [main, dev]
+    branches: [main, dev, ios]
   workflow_dispatch:
 
 permissions:

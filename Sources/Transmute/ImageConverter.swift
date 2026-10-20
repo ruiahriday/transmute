@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import CoreImage
 import ImageIO
 import UniformTypeIdentifiers
@@ -114,6 +118,12 @@ enum ImageConverter {
            let image = try? renderedImage(source, index: 0, maxPixel: nil) {
             return image
         }
+        #if os(iOS)
+        guard let uiImage = UIImage(contentsOfFile: url.path), let image = uiImage.cgImage else {
+            throw ConversionError("\(url.lastPathComponent) can't be opened as an image on iPhone and iPad.")
+        }
+        return image
+        #else
         guard let nsImage = NSImage(contentsOf: url) else {
             throw ConversionError("macOS can't open \(url.lastPathComponent) as an image.")
         }
@@ -124,6 +134,7 @@ enum ImageConverter {
             throw ConversionError("Couldn't render \(url.lastPathComponent).")
         }
         return image
+        #endif
     }
 
     /// Puts an image on a white background (for formats without transparency).
@@ -154,6 +165,11 @@ enum ImageConverter {
 
     /// macOS can read WebP but not write it, so this goes through ffmpeg.
     static func encodeWebP(_ input: URL, to out: URL, quality: Double) async throws {
+        #if os(iOS)
+        // Newer iOS versions can write WebP themselves.
+        guard canWriteWebP else { throw ConversionError("Saving WebP isn't available on this iPhone or iPad.") }
+        try encode(input, type: .webP, quality: quality, strip: false, maxPixel: nil).write(to: out, options: .atomic)
+        #else
         let ffmpeg = try Tools.requireFFmpeg(for: "Saving WebP")
         var source = input
         var temp: URL?
@@ -175,7 +191,14 @@ enum ImageConverter {
             try? FileManager.default.removeItem(at: out)
             throw error
         }
+        #endif
     }
+
+    /// Whether ImageIO on this device can write WebP.
+    static let canWriteWebP: Bool = {
+        let types = CGImageDestinationCopyTypeIdentifiers() as? [String] ?? []
+        return types.contains(UTType.webP.identifier)
+    }()
 
     /// Wraps the pixels in an SVG file. This doesn't trace the image into vector shapes.
     static func writeSVG(_ image: CGImage, to out: URL) throws {

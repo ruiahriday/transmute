@@ -1,4 +1,8 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+#endif
 import ImageIO
 import PDFKit
 import SwiftUI
@@ -677,6 +681,9 @@ enum MetadataTool {
     private static func readMedia(_ url: URL) async throws -> [MetadataField] {
         var fields = fileFields(url)
         let ext = url.pathExtension.lowercased()
+        #if os(iOS)
+        return try await AppleMetadata.read(url, adding: fields)
+        #else
         guard let ffmpeg = Tools.ffmpeg else {
             let seconds = await MediaInfo.duration(of: url)
             if seconds > 0 { addField("media.duration", "Duration", clock(seconds), in: "File", to: &fields) }
@@ -748,10 +755,14 @@ enum MetadataTool {
             addField("tag.\(tag.key.lowercased())", tag.key, tag.value, in: "Other tags", to: &fields)
         }
         return fields
+        #endif
     }
 
     private static func writeMedia(_ changes: [String: String], removeLocation: Bool, to input: URL,
                                    options: ConversionOptions) async throws -> URL {
+        #if os(iOS)
+        return try await AppleMetadata.write(changes, removeLocation: removeLocation, to: input, options: options)
+        #else
         let ffmpeg = try Tools.requireFFmpeg(for: "Editing tags")
         let ext = input.pathExtension.lowercased()
         let allowed = editableMediaKeys(forExtension: ext)
@@ -841,6 +852,7 @@ enum MetadataTool {
             throw ConversionError("Couldn't save \(failed.joined(separator: ", ")) in this \(ext.uppercased()) file.")
         }
         return out
+        #endif
     }
 
     /// Every name to set for one change: ffmpeg's own key, the spellings the file already uses, and the
@@ -1163,15 +1175,23 @@ struct MetadataEditorView: View {
             Divider()
             footer
         }
+        #if os(macOS)
         .frame(width: 520, height: 560)
+        #endif
         .task { await load() }
     }
 
     private var header: some View {
         HStack(spacing: 10) {
+            #if canImport(AppKit)
             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                 .resizable()
                 .frame(width: 32, height: 32)
+            #else
+            Image(systemName: FileKind.of(url).symbol)
+                .font(.title2)
+                .frame(width: 32, height: 32)
+            #endif
             VStack(alignment: .leading, spacing: 2) {
                 Text(url.lastPathComponent)
                     .font(.headline)
@@ -1333,9 +1353,13 @@ struct MetadataEditorView: View {
             if field.editable { copy.value = currentText(field) }
             return copy
         }
+        #if canImport(AppKit)
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(MetadataTool.plainText(shown, title: url.lastPathComponent), forType: .string)
+        #else
+        UIPasteboard.general.string = MetadataTool.plainText(shown, title: url.lastPathComponent)
+        #endif
         copied = true
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 1_500_000_000)

@@ -51,7 +51,11 @@ struct AudioEdit: Equatable, Sendable {
 /// and on the sound track of a video. Runs off the main thread.
 enum AudioEditEngine {
     /// Formats the editor writes.
+    #if os(iOS)
+    static let editableFormats: [OutputFormat] = [.m4a, .wav, .flac, .aiff]
+    #else
     static let editableFormats: [OutputFormat] = [.mp3, .m4a, .wav, .flac, .ogg, .opus, .aiff]
+    #endif
 
     static func outputFormat(for edit: AudioEdit, input: URL) -> OutputFormat {
         if let chosen = edit.outputFormat, editableFormats.contains(chosen) { return chosen }
@@ -75,6 +79,9 @@ enum AudioEditEngine {
     /// Bleeps, trims, normalises, fades and remixes one file's sound into a new audio file.
     static func apply(_ edit: AudioEdit, to input: URL, options: ConversionOptions,
                       progress: @escaping ProgressHandler) async throws -> JobResult {
+        #if os(iOS)
+        return try await AppleAudioEditor.apply(edit, to: input, options: options, progress: progress)
+        #else
         let ffmpeg = try Tools.requireFFmpeg(for: "Editing audio")
         if let chosen = edit.outputFormat, !editableFormats.contains(chosen) {
             throw ConversionError("Edited audio can be saved as MP3, M4A, WAV, FLAC, OGG, Opus or AIFF, not \(chosen.label).")
@@ -104,6 +111,7 @@ enum AudioEditEngine {
         progress(1)
         let message = plan.seconds > 0 ? "Length \(VideoEditEngine.timeLabel(plan.seconds, tenths: true))" : nil
         return JobResult(outputs: [out], message: message)
+        #endif
     }
 
     /// The -filter_complex graph for an edit, and how many seconds long the result will be (0 when unknown).
@@ -446,7 +454,8 @@ struct AudioEditorView: View {
             footer
         }
         .padding(16)
-        .frame(minWidth: 640, idealWidth: 740, minHeight: 620, idealHeight: 700)
+        .scrollsOnPhone()
+        .editorWindowSize(minWidth: 640, idealWidth: 740, minHeight: 620, idealHeight: 700)
         .task { await prepare() }
         .task { await loadWaveform() }
         .onDisappear { tearDown() }
@@ -683,7 +692,9 @@ struct AudioEditorView: View {
             row("Save as") {
                 Picker("Save as", selection: $edit.outputFormat) {
                     Text(keepLabel).tag(Optional<OutputFormat>.none)
+                    #if os(macOS)
                     Text("MP3").tag(Optional(OutputFormat.mp3))
+                    #endif
                     Text("M4A").tag(Optional(OutputFormat.m4a))
                     Text("WAV").tag(Optional(OutputFormat.wav))
                     Text("FLAC").tag(Optional(OutputFormat.flac))

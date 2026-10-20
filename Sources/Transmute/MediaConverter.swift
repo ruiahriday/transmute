@@ -112,7 +112,11 @@ enum MediaConverter {
                 try await AppleMedia.export(input, preset: preset, type: .mp4, output: out, progress: progress)
             } else {
                 let bitrate = Int(min(320_000, max(32_000, totalBitsPerSecond)))
+                #if os(iOS)
+                try await AppleAudio.transcode(input, to: .m4a, output: out, bitrate: bitrate, progress: progress)
+                #else
                 try await Shell.check("/usr/bin/afconvert", ["-f", "m4af", "-d", "aac", "-b", String(bitrate), input.path, out.path])
+                #endif
             }
         } catch {
             try? FileManager.default.removeItem(at: out)
@@ -216,6 +220,12 @@ enum AppleMedia {
                              output: output, progress: progress)
         case .m4a:
             try await export(input, preset: AVAssetExportPresetAppleM4A, type: .m4a, output: output, progress: progress)
+        #if os(iOS)
+        case .wav, .aiff, .flac:
+            try await AppleAudio.transcode(input, to: format, output: output, progress: progress)
+        case .gif where FileKind.of(input) == .video:
+            try await AppleGIF.make(from: input, output: output, progress: progress)
+        #else
         case .wav, .aiff, .flac:
             let args: [String] = switch format {
             case .wav: ["-f", "WAVE", "-d", "LEI16"]
@@ -234,6 +244,7 @@ enum AppleMedia {
             defer { if let temp { try? FileManager.default.removeItem(at: temp) } }
             try await Shell.check("/usr/bin/afconvert", args + [source.path, output.path])
             progress(1)
+        #endif
         default:
             throw ConversionError("\(format.label) needs ffmpeg. Install it once with: brew install ffmpeg")
         }
