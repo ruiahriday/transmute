@@ -91,7 +91,10 @@ struct WrappingHStack: Layout {
     var lineSpacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        arrange(subviews, width: proposal.width ?? .infinity).size
+        let size = arrange(subviews, width: proposal.width ?? .infinity).size
+        // Take the whole offered width, so placing the controls wraps them exactly as measured here.
+        if let width = proposal.width, width.isFinite { return CGSize(width: width, height: size.height) }
+        return size
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
