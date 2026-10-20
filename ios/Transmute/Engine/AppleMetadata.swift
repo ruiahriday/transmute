@@ -108,7 +108,27 @@ enum AppleMetadata {
         guard writableExtensions.contains(ext) else {
             throw ConversionError("On iPhone and iPad, tags can be saved in MP4, M4V, MOV and M4A files.")
         }
-        let quickTime = ext == "mov"
+        // MOV takes QuickTime-style tags and M4A iTunes-style ones. MP4 and M4V take either,
+        // but some tags only stick in one style, so try iTunes-style first and fall back.
+        let styles: [Bool] = switch ext {
+        case "mov": [true]
+        case "m4a": [false]
+        default: [false, true]
+        }
+        var lastError: Error = ConversionError("Couldn't save the tags.")
+        for quickTime in styles {
+            do {
+                return try await write(changes, removeLocation: removeLocation, to: input, quickTime: quickTime, options: options)
+            } catch {
+                lastError = error
+            }
+        }
+        throw lastError
+    }
+
+    private static func write(_ changes: [String: String], removeLocation: Bool, to input: URL, quickTime: Bool,
+                              options: ConversionOptions) async throws -> URL {
+        let ext = input.pathExtension.lowercased()
         let asset = AVURLAsset(url: input)
         var items = await allItems(asset)
 

@@ -86,7 +86,8 @@ enum Mobile {
     static func canStripMetadata(_ url: URL) -> Bool {
         let e = ext(url)
         switch FileKind.of(url) {
-        case .image: return canOpen(url)
+        // Removing metadata re-saves the picture in its own format, which needs an encoder for it.
+        case .image: return canOpen(url) && (e != "webp" || ImageConverter.canWriteWebP) && (e != "heic" || canWriteHEIC)
         case .pdf: return true
         case .video: return ["mp4", "mov", "m4v"].contains(e)
         case .audio: return ["m4a", "wav", "aiff", "aif", "caf"].contains(e)

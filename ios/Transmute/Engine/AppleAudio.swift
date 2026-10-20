@@ -103,7 +103,9 @@ enum AppleAudio {
                 settings[AVFormatIDKey] = kAudioFormatMPEG4AAC
                 // AAC tops out at 48 kHz.
                 if rate > 48_000 { rate = 48_000 }
-                settings[AVEncoderBitRateKey] = min(320_000, max(32_000, bitrate ?? 192_000))
+                // The AAC encoder refuses more than about 160 kbit/s per channel (so mono stops at 160).
+                let ceiling = 160_000 * max(1, channels)
+                settings[AVEncoderBitRateKey] = min(ceiling, max(32_000, bitrate ?? 192_000))
             default:
                 throw ConversionError("Sound can't be saved as \(outputFormat.label) on iPhone and iPad.")
             }

@@ -232,6 +232,7 @@ enum IOSSelfTest {
             let out = try await Engine.perform(.writeMetadata(edit), on: try fixture("clip.mp4"), options: workOptions) { _ in }.outputs
             let fields = try await MetadataTool.read(out[0])
             try expect(fields.contains { $0.key == "title" && $0.value == "Transmute Test" }, "title missing")
+            try expect(fields.contains { $0.key == "artist" && $0.value == "Self Test" }, "artist missing")
             return out
         }
         await check("editor: photo description written and read back") {
