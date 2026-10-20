@@ -41,6 +41,9 @@
                     <ComboBox x:Name="ActionsKey" Grid.Row="2" Grid.Column="1" Margin="0,2" SelectionChanged="OnKeyChanged" />
                 </Grid>
                 <TextBlock x:Name="KeyNote" Style="{StaticResource Caption}" Margin="22,6,0,0" />
+                <Button Content="Customize Wheels…" HorizontalAlignment="Left" Margin="22,10,0,0" Click="OnCustomizeWheels" />
+                <TextBlock Style="{StaticResource Caption}" Margin="22,4,0,0"
+                           Text="Choose which formats, tools and actions each wheel shows for each kind of file, and where they sit." />
 
                 <TextBlock Text="Floating files" Style="{StaticResource SectionTitle}" />
                 <CheckBox x:Name="ShakeBox" Content="Open when I shake files while dragging them" Click="OnChanged" />

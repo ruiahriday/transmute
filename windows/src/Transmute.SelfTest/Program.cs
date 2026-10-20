@@ -39,6 +39,8 @@ static class Tests
         var inputs = Directory.GetFiles(inputDir).Where(f => !Path.GetFileName(f).StartsWith('.')).OrderBy(f => f, StringComparer.Ordinal).ToList();
         string Fixture(string name) => inputs.FirstOrDefault(f => Path.GetFileName(f) == name) ?? throw new Exception($"fixture {name} missing");
 
+        await WheelLayoutChecks();
+
         // Pass 1: every input through every operation it supports.
         foreach (var input in inputs) await Exercise(input, options);
 
@@ -545,6 +547,50 @@ static class Tests
     }
 
     // Bookkeeping
+
+    static async Task WheelLayoutChecks()
+    {
+        static Task<IReadOnlyList<string>> Done() => Task.FromResult<IReadOnlyList<string>>([]);
+        static void Same(IEnumerable<string> got, params string[] want) =>
+            Expect(got.SequenceEqual(want), $"got [{string.Join(", ", got)}], expected [{string.Join(", ", want)}]");
+        await Check("Drag wheel: default layouts are the built-in ones", () =>
+        {
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document], null), WheelLayout.Default(WheelKind.Convert, FileKind.Document).ToArray());
+            Expect(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document], null)[0] == "convert:pdf", "PDF should come first for documents");
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf], null), "tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:zip");
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf, FileKind.Pdf], null), "tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:merge", "tool:zip");
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Image, FileKind.Video], null), "convert:gif");
+            return Done();
+        });
+        await Check("Drag wheel: a customized layout keeps its order, spaces and mixed-in items", () =>
+        {
+            var custom = new Dictionary<string, List<string>>
+            {
+                ["convert.document"] = ["gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip"],
+            };
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document], custom), "gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip");
+            // Other wheels and kinds keep their defaults.
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Pdf], custom), WheelLayout.Default(WheelKind.Convert, FileKind.Pdf).ToArray());
+            // Something that doesn't suit every file leaves its spot empty; nothing left means no wheel.
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document, FileKind.Ebook], custom), "gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip");
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document, FileKind.Image], custom), "gap", "convert:pdf", "gap", "gap", "action:float", "tool:zip");
+            Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Document, FileKind.Audio], custom), "gap", "gap", "gap", "gap", "action:float", "tool:zip");
+            custom["tools.pdf"] = ["tool:merge"];
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf], custom));
+            custom["tools.pdf"] = [];
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf], custom));
+            return Done();
+        });
+        await Check("Drag wheel: saved layouts are cleaned up", () =>
+        {
+            var many = Enumerable.Repeat("gap", 20).Prepend("convert:pdf").Append("tool:qr").Append("convert:pdf").Append("nonsense");
+            var clean = WheelLayout.Clean(many, FileKind.Document);
+            Expect(clean.Count == WheelLayout.MaxSlots && clean[0] == "convert:pdf" && !clean.Contains("tool:qr") && !clean.Contains("nonsense"), string.Join(", ", clean));
+            Same(WheelLayout.Clean(["convert:pdf", "convert:pdf", "gap"], FileKind.Document), "convert:pdf", "gap");
+            Expect(WheelLayout.Available(FileKind.Image).Contains("tool:qr") && WheelLayout.Available(FileKind.Document).Contains("action:terminal"), "available items");
+            return Done();
+        });
+    }
 
     static async Task Check(string name, Func<Task<IReadOnlyList<string>>> body, Func<Exception, bool>? skipWhen = null)
     {

@@ -104,7 +104,36 @@ static class SmokeTest
                 var wheel = WheelWindow.Shared;
                 return wheel;
             });
+            // A customized wheel: PDF moved to the right, RTF taken off, Float added from the actions.
+            Settings.Current.WheelLayouts[WheelLayout.Key(WheelKind.Convert, FileKind.Document)] =
+                ["convert:docx", "convert:pdf", "convert:txt", "action:float"];
+            await Step("drag wheel (customized)", async () =>
+            {
+                WheelWindow.Shared.Preview(WheelKind.Convert, [report]);
+                await Wait(0.8);
+                return WheelWindow.Shared;
+            });
             WheelWindow.Shared.Hide();
+            await Step("wheel editor", async () =>
+            {
+                var editor = WheelEditorWindow.Open(Application.Current.Windows.OfType<SettingsWindow>().SingleOrDefault());
+                editor.Select(WheelKind.Convert, FileKind.Document);
+                editor.Move(3, 2);
+                await Wait(1);
+                var saved = Settings.Current.WheelLayouts[WheelLayout.Key(WheelKind.Convert, FileKind.Document)];
+                if (!saved.SequenceEqual(["convert:docx", "convert:pdf", "action:float", "convert:txt"]))
+                    throw new Exception("swapping two bubbles saved " + string.Join(", ", saved));
+                return editor;
+            });
+            await Step("wheel editor (tools)", async () =>
+            {
+                var editor = WheelEditorWindow.Open();
+                editor.Select(WheelKind.Tools, FileKind.Image);
+                await Wait(0.8);
+                return editor;
+            });
+            Application.Current.Windows.OfType<WheelEditorWindow>().SingleOrDefault()?.Close();
+            Settings.Current.WheelLayouts.Clear();
 
             await Step("progress card", async () =>
             {

@@ -6,8 +6,6 @@ namespace Transmute.App;
 
 public enum WheelKey { Shift, Ctrl, Alt, Off }
 
-public enum WheelKind { Convert, Tools, Actions }
-
 /// Preferences, kept in %APPDATA%\Transmute\settings.json.
 public sealed class Settings
 {
@@ -28,6 +26,8 @@ public sealed class Settings
     public WheelKey ConvertKey { get; set; } = WheelKey.Shift;
     public WheelKey ToolsKey { get; set; } = WheelKey.Ctrl;
     public WheelKey ActionsKey { get; set; } = WheelKey.Alt;
+    /// Customized wheels by WheelLayout.Key ("convert.document"); a missing entry means the default.
+    public Dictionary<string, List<string>> WheelLayouts { get; set; } = [];
     public bool ShakeToShelf { get; set; } = true;
     public bool TopEdgeToShelf { get; set; } = true;
     public bool OpenWindowAtStart { get; set; } = true;

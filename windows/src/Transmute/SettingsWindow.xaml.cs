@@ -111,6 +111,7 @@ public partial class SettingsWindow : Window
         catch { LoginBox.IsChecked = Settings.OpenAtLogin; }
     }
 
+    void OnCustomizeWheels(object sender, RoutedEventArgs e) => WheelEditorWindow.Open(this);
     void OnFeedback(object sender, RoutedEventArgs e) => Feedback.OpenForm();
     void OnCopyDetails(object sender, RoutedEventArgs e) => Feedback.CopyDetails();
     void OnDone(object sender, RoutedEventArgs e) => Close();

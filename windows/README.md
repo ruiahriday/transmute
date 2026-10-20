@@ -26,6 +26,8 @@ This beta isn't signed yet, so Windows may show "Windows protected your PC". Cli
   Transmute** under "Show more options" on Windows 11).
 - **Drag wheel:** while dragging files anywhere, hold **Shift** for formats, **Ctrl** for tools
   or **Alt** for actions, and drop on a bubble. Dropping on the wheel never moves your file.
+  **Settings → Customize Wheels** picks which formats, tools and actions each wheel shows for
+  each kind of file, and where each bubble sits (drag them around; Reset to default puts it back).
 - **Floating files:** shake files while dragging them, or drag them to the middle of the top edge
   of the screen, to park them on a small shelf that stays on top.
 - Transmute waits in the notification area by the clock. Right-click its icon for the menu.

@@ -47,6 +47,8 @@ sealed class DragWatcher
             shake = new ShakeDetector();
             return;
         }
+        // Bubbles being rearranged in Settings aren't files.
+        if (WheelEditorWindow.IsDragging) return;
         Native.GetCursorPos(out var point);
         if (!wasDown)
         {
@@ -138,49 +140,59 @@ sealed record WheelItem(string Label, string Glyph, JobOperation? Operation = nu
 
 static class WheelItems
 {
-    public static List<WheelItem> For(WheelKind kind, IReadOnlyList<string> paths)
+    /// The wheel's positions clockwise from the top, as set in Settings; null is an empty position.
+    public static List<WheelItem?> For(WheelKind kind, IReadOnlyList<string> paths) =>
+        WheelLayout.Resolve(kind, paths.Select(Kinds.Of).ToList(), Settings.Current.WheelLayouts).Select(Item).ToList();
+
+    public static WheelItem? Item(string id)
     {
-        var kinds = paths.Select(Kinds.Of).ToList();
-        var items = new List<WheelItem>();
-        switch (kind)
+        if (WheelLayout.Format(id) is { } format) return new(format.Label(), Glyph(format), new JobOperation.Convert(format));
+        return id switch
         {
-            case WheelKind.Convert:
-                if (kinds.Count == 0) break;
-                var common = kinds[0].ConvertTargets().Where(f => kinds.All(k => k.ConvertTargets().Contains(f)));
-                items.AddRange(common.Take(10).Select(f => new WheelItem(f.Label(), Glyph(f), new JobOperation.Convert(f))));
-                break;
-            case WheelKind.Tools:
-                if (kinds.All(k => k.CanCompress()))
-                {
-                    items.Add(new("Half size", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.5))));
-                    items.Add(new("Quarter", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.25))));
-                }
-                if (kinds.All(k => k.CanStripMetadata())) items.Add(new("Clean", "⌀", new JobOperation.StripMetadata()));
-                if (kinds.All(k => k == FileKind.Pdf))
-                {
-                    items.Add(new("Split", "▥", new JobOperation.SplitPdf()));
-                    if (kinds.Count > 1) items.Add(new("Merge", "❐", Batch: new BatchTool.MergePdfs()));
-                }
-                if (kinds.All(k => k == FileKind.Image))
-                {
-                    items.Add(new("To PDF", "📄", Batch: new BatchTool.ImagesToPdf()));
-                    items.Add(new("QR", "▦", new JobOperation.ReadQr()));
-                }
-                items.Add(new("Zip", "🗜", Batch: new BatchTool.Archive(OutputFormat.Zip)));
-                break;
-            case WheelKind.Actions:
-                items.Add(new("Float", "📌", Action: FileAction.Float));
-                items.Add(new("Copy", "⧉", Action: FileAction.Copy));
-                items.Add(new("Copy Path", "🔗", Action: FileAction.CopyPath));
-                items.Add(new("Terminal", ">_", Action: FileAction.Terminal));
-                items.Add(new("Move…", "📁", Action: FileAction.Move));
-                items.Add(new("Show", "🔍", Action: FileAction.ShowInFolder));
-                break;
-        }
-        return items;
+            "tool:half" => new("Half size", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.5))),
+            "tool:quarter" => new("Quarter", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.25))),
+            "tool:clean" => new("Clean", "⌀", new JobOperation.StripMetadata()),
+            "tool:split" => new("Split", "▥", new JobOperation.SplitPdf()),
+            "tool:merge" => new("Merge", "❐", Batch: new BatchTool.MergePdfs()),
+            "tool:topdf" => new("To PDF", "📄", Batch: new BatchTool.ImagesToPdf()),
+            "tool:qr" => new("QR", "▦", new JobOperation.ReadQr()),
+            "tool:zip" => new("Zip", "🗜", Batch: new BatchTool.Archive(OutputFormat.Zip)),
+            "action:float" => new("Float", "📌", Action: FileAction.Float),
+            "action:copy" => new("Copy", "⧉", Action: FileAction.Copy),
+            "action:copypath" => new("Copy Path", "🔗", Action: FileAction.CopyPath),
+            "action:terminal" => new("Terminal", ">_", Action: FileAction.Terminal),
+            "action:move" => new("Move…", "📁", Action: FileAction.Move),
+            "action:show" => new("Show", "🔍", Action: FileAction.ShowInFolder),
+            _ => null,
+        };
     }
 
-    static string Glyph(OutputFormat format) => format switch
+    /// A longer name for the list in Settings: "Convert to PDF", "Compress to half size"…
+    public static string Describe(string id)
+    {
+        if (id == WheelLayout.Gap) return "Empty space";
+        if (WheelLayout.Format(id) is { } format) return format == OutputFormat.Extract ? "Extract" : $"Convert to {format.Label()}";
+        return id switch
+        {
+            "tool:half" => "Compress to half size",
+            "tool:quarter" => "Compress to a quarter",
+            "tool:clean" => "Remove metadata",
+            "tool:split" => "Split into pages",
+            "tool:merge" => "Merge PDFs (2 or more)",
+            "tool:topdf" => "Images to one PDF",
+            "tool:qr" => "Read QR code",
+            "tool:zip" => "Zip",
+            "action:float" => "Float (floating files)",
+            "action:copy" => "Copy",
+            "action:copypath" => "Copy path",
+            "action:terminal" => "Open Terminal here",
+            "action:move" => "Move to a folder",
+            "action:show" => "Show in File Explorer",
+            _ => id,
+        };
+    }
+
+    public static string Glyph(OutputFormat format) => format switch
     {
         OutputFormat.Mp3 or OutputFormat.M4a or OutputFormat.Wav or OutputFormat.Flac or OutputFormat.Ogg or OutputFormat.Opus
             or OutputFormat.Aiff or OutputFormat.Wma => "♪",
@@ -387,29 +399,42 @@ sealed class WheelWindow : Window
         Canvas.SetTop(caption, (Size - caption.DesiredSize.Height) / 2);
         canvas.Children.Add(caption);
 
+        var size = BubbleSize(items.Count, Radius, Bubble);
         for (var i = 0; i < items.Count; i++)
         {
-            var angle = (double)i / items.Count * 2 * Math.PI - Math.PI / 2;
-            var bubble = MakeBubble(items[i]);
-            Canvas.SetLeft(bubble, Size / 2 + Math.Cos(angle) * Radius - Bubble / 2);
-            Canvas.SetTop(bubble, Size / 2 + Math.Sin(angle) * Radius - Bubble / 2);
+            if (items[i] is not { } item) continue;
+            var bubble = MakeBubble(item, size);
+            var (x, y) = Position(i, items.Count, Radius);
+            Canvas.SetLeft(bubble, Size / 2 + x - size / 2);
+            Canvas.SetTop(bubble, Size / 2 + y - size / 2);
             canvas.Children.Add(bubble);
         }
     }
 
-    Border MakeBubble(WheelItem item)
+    /// Where position `index` of `count` sits, from the centre: the first at the top, then clockwise.
+    public static (double X, double Y) Position(int index, int count, double radius)
+    {
+        var angle = (double)index / Math.Max(count, 1) * 2 * Math.PI - Math.PI / 2;
+        return (Math.Cos(angle) * radius, Math.Sin(angle) * radius);
+    }
+
+    /// Bubbles shrink a little when there are so many that they would touch.
+    public static double BubbleSize(int count, double radius, double largest) =>
+        Math.Min(largest, 2 * Math.PI * radius / Math.Max(count, 1) - 4);
+
+    Border MakeBubble(WheelItem item, double diameter)
     {
         var accent = (SolidColorBrush)Application.Current.FindResource("Accent");
         var glyph = new TextBlock { Text = item.Glyph, FontSize = 17, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol, Segoe UI") };
-        var label = new TextBlock { Text = item.Label, FontSize = 10.5, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = Bubble - 6 };
+        var label = new TextBlock { Text = item.Label, FontSize = 10.5, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = diameter - 6 };
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         stack.Children.Add(glyph);
         stack.Children.Add(label);
         var bubble = new Border
         {
-            Width = Bubble,
-            Height = Bubble,
-            CornerRadius = new CornerRadius(Bubble / 2),
+            Width = diameter,
+            Height = diameter,
+            CornerRadius = new CornerRadius(diameter / 2),
             Background = Brushes.White,
             BorderBrush = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
             BorderThickness = new Thickness(1),
