@@ -139,8 +139,14 @@ build_arch() {
       --extra-ldflags="-L$prefix/lib -arch $arch -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" \
       "${FFMPEG_FLAGS[@]}"
     make -j"$JOBS" && make install) > "$root/ffmpeg.log" 2>&1 || {
-      tail -60 "$root/ffmpeg.log"
-      [[ -f "$src/ffmpeg-$FFMPEG_VERSION/ffbuild/config.log" ]] && tail -60 "$src/ffmpeg-$FFMPEG_VERSION/ffbuild/config.log"
+      if [[ -f "$src/ffmpeg-$FFMPEG_VERSION/ffbuild/config.mak" ]]; then
+        # Configured; the compile or link failed. Show the linker's complaint first.
+        grep -E -B2 -A30 "Undefined symbols|ld: |error:" "$root/ffmpeg.log" | grep -v "^clang (LLVM" | head -120
+        tail -30 "$root/ffmpeg.log"
+      else
+        tail -40 "$root/ffmpeg.log"
+        tail -60 "$src/ffmpeg-$FFMPEG_VERSION/ffbuild/config.log"
+      fi
       return 1
     }
   log "[$arch] built $prefix/bin/ffmpeg"
