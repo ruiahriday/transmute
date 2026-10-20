@@ -162,7 +162,8 @@ lipo -info "$OUT/ffmpeg"
 
 log "Checking the result"
 # Only system libraries may be linked dynamically.
-if otool -L "$OUT/ffmpeg" | tail -n +2 | grep -v -E '^\s*(/usr/lib/|/System/Library/)' | grep -q .; then
+# (otool prints a header line per architecture; the libraries are the indented lines.)
+if otool -L "$OUT/ffmpeg" | grep -E '^[[:space:]]' | grep -v -E '^[[:space:]]+(/usr/lib/|/System/Library/)' | grep -q .; then
   otool -L "$OUT/ffmpeg"
   echo "error: ffmpeg links a non-system library" >&2
   exit 1
