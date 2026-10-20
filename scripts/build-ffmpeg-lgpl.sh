@@ -137,6 +137,7 @@ build_arch() {
       --pkg-config=pkg-config --pkg-config-flags=--static \
       --extra-cflags="-I$prefix/include -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" \
       --extra-ldflags="-L$prefix/lib -arch $arch -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET" \
+      --extra-libs=-liconv \
       "${FFMPEG_FLAGS[@]}"
     make -j"$JOBS" && make install) > "$root/ffmpeg.log" 2>&1 || {
       if [[ -f "$src/ffmpeg-$FFMPEG_VERSION/ffbuild/config.mak" ]]; then
