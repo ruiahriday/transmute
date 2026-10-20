@@ -219,6 +219,8 @@ jobs:
           unzip -q -o ffmpeg.zip -d x
           cp "$(find x -type f -name ffmpeg | head -1)" ./ffmpeg-fixtures
           chmod +x ffmpeg-fixtures
+          mkdir -p ../logs
+          ./ffmpeg-fixtures -hide_banner -version | head -1 | tee ../logs/fixtures-ffmpeg.log
 
       - name: Build App Store variant (universal)
         id: build
@@ -297,7 +299,8 @@ jobs:
           bash scripts/ci-report.sh "$(level '${{ steps.build.outcome }}')" "App Store build" logs/build.log
           bash scripts/ci-report.sh "$(level '${{ steps.bundle.outcome }}')" "App Store bundle" logs/bundle.log 80
           bash scripts/ci-report.sh "$(level '${{ steps.launch.outcome }}')" "App Store launch test" logs/launch.log 40
-          bash scripts/ci-report.sh notice "App Store fixtures" logs/fixtures.log 40
+          cat logs/fixtures-ffmpeg.log logs/fixtures.log > logs/fixtures-all.log 2>/dev/null || true
+          bash scripts/ci-report.sh notice "App Store fixtures" logs/fixtures-all.log 40
           # Annotations are cut short, so the counts and failed names get one of their own.
           grep -E "^(variant|fixtures|ffmpeg):|passed, .* failed|FAILED:" logs/selftest.log > logs/selftest-summary.log || true
           bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "App Store self-test summary" logs/selftest-summary.log 200

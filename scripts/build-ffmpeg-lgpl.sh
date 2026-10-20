@@ -14,7 +14,7 @@
 # here rebuilds.
 set -euo pipefail
 
-FFMPEG_VERSION=7.1.1
+FFMPEG_VERSION=8.0
 LAME_VERSION=3.100
 OGG_VERSION=1.3.5
 VORBIS_VERSION=1.3.7
@@ -125,7 +125,7 @@ build_arch() {
   FFMPEG_FLAGS=(
     --disable-autodetect --disable-shared --enable-static
     --disable-doc --disable-debug --disable-ffplay --disable-ffprobe
-    --disable-network --disable-indevs --disable-outdevs
+    --disable-network --disable-indevs --enable-indev=lavfi --disable-outdevs
     --enable-videotoolbox --enable-audiotoolbox
     --enable-zlib --enable-bzlib --enable-iconv
     --enable-libmp3lame --enable-libvorbis --enable-libopus --enable-libvpx --enable-libwebp
