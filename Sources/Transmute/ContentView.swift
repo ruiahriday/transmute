@@ -40,7 +40,11 @@ struct ContentView: View {
             return true
         }
         .fileImporter(isPresented: $showImporter, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
-            if case .success(let urls) = result { queue.add(urls) }
+            if case .success(let urls) = result {
+                // Sandboxed: files picked here come with a security scope that must be opened.
+                if AppInfo.isAppStoreBuild { urls.forEach(FolderAccess.beginAccess) }
+                queue.add(urls)
+            }
         }
         .toolbar {
             ToolbarItemGroup {

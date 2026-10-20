@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Entitlements for the Mac App Store (sandboxed) build; build-app.sh uses them when APPSTORE=1.
+     The real App Store signature also gets com.apple.application-identifier and
+     com.apple.developer.team-identifier from the provisioning profile. -->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Files the user opens, drops or picks a folder for. -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!-- Fallback output folder when the user doesn't allow saving next to the original. -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    <!-- Remembered output folders and floating files (security-scoped bookmarks). -->
+    <key>com.apple.security.files.bookmarks.app-scope</key>
+    <true/>
+    <!-- Asking Pages, Keynote and Numbers to export documents. -->
+    <key>com.apple.security.temporary-exception.apple-events</key>
+    <array>
+        <string>com.apple.iWork.Pages</string>
+        <string>com.apple.iWork.Keynote</string>
+        <string>com.apple.iWork.Numbers</string>
+    </array>
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+</dict>
+</plist>

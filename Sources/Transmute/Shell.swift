@@ -2,23 +2,136 @@ import Foundation
 
 /// Locates optional command-line helpers. GUI apps don't inherit the shell PATH,
 /// so we look in the usual Homebrew locations and inside the app bundle.
+/// The App Store build only ever uses the ffmpeg inside the app bundle.
 enum Tools {
     static var ffmpeg: String? {
         // Lets the self-test exercise the Apple-only fallbacks.
         if ProcessInfo.processInfo.environment["TRANSMUTE_NO_FFMPEG"] != nil { return nil }
+        #if APPSTORE
+        let candidates = [Bundle.main.path(forAuxiliaryExecutable: "ffmpeg")]
+        #else
         let candidates = [
             Bundle.main.path(forAuxiliaryExecutable: "ffmpeg"),
             "/opt/homebrew/bin/ffmpeg",
             "/usr/local/bin/ffmpeg",
         ]
+        #endif
         return candidates.compactMap { $0 }.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    /// What to tell the user when ffmpeg is missing.
+    static var missingFFmpegHint: String {
+        #if APPSTORE
+        "The ffmpeg that comes with \(AppInfo.name) is missing; reinstall the app."
+        #else
+        "Install it once with: brew install ffmpeg"
+        #endif
     }
 
     static func requireFFmpeg(for what: String) throws -> String {
         guard let path = ffmpeg else {
-            throw ConversionError("\(what) needs ffmpeg. Install it once with: brew install ffmpeg")
+            throw ConversionError("\(what) needs ffmpeg. \(missingFFmpegHint)")
         }
         return path
+    }
+}
+
+/// The app's name as shown to users (the App Store build sets its own at build time).
+enum AppInfo {
+    static var name: String {
+        let info = Bundle.main.infoDictionary
+        let display = info?["CFBundleDisplayName"] as? String ?? info?["CFBundleName"] as? String
+        return display.flatMap { $0.isEmpty ? nil : $0 } ?? "Transmute"
+    }
+
+    static var isAppStoreBuild: Bool {
+        #if APPSTORE
+        true
+        #else
+        false
+        #endif
+    }
+}
+
+/// Picks encoders the bundled ffmpeg actually has. The download build's ffmpeg includes
+/// libx264; the App Store build's ffmpeg is LGPL-only and encodes H.264 with Apple's
+/// VideoToolbox instead.
+enum Encoders {
+    /// Names of the encoders the current ffmpeg offers (empty without ffmpeg).
+    static let available: Set<String> = {
+        guard let ffmpeg = Tools.ffmpeg else { return [] }
+        let output = runSync(ffmpeg, ["-hide_banner", "-encoders"])
+        var names = Set<String>()
+        for line in output.split(whereSeparator: \.isNewline) {
+            // " V....D libx264              libx264 H.264 ..."
+            let parts = line.split(separator: " ", omittingEmptySubsequences: true)
+            guard parts.count >= 2, parts[0].count == 6 else { continue }
+            names.insert(String(parts[1]))
+        }
+        return names
+    }()
+
+    static func has(_ name: String) -> Bool { available.contains(name) }
+
+    /// VideoToolbox's constant-quality mode (-q:v) needs Apple-silicon hardware; Intel Macs
+    /// and virtual machines without a hardware encoder only take a bitrate.
+    private static let videoToolboxQuality: Bool = {
+        guard let ffmpeg = Tools.ffmpeg else { return false }
+        let args = ["-hide_banner", "-nostdin", "-loglevel", "error", "-f", "lavfi",
+                    "-i", "color=c=gray:s=128x128:d=0.2", "-c:v", "h264_videotoolbox",
+                    "-q:v", "60", "-allow_sw", "1", "-f", "null", "-"]
+        return runSyncStatus(ffmpeg, args) == 0
+    }()
+
+    /// H.264 video at about the quality of x264 at `crf` (lower is better).
+    static func h264(crf: Int) -> [String] {
+        if has("libx264") || !has("h264_videotoolbox") {
+            return ["-c:v", "libx264", "-preset", "medium", "-crf", String(crf)]
+        }
+        if videoToolboxQuality {
+            // Roughly: CRF 18 → 70, CRF 23 → 60, CRF 28 → 50.
+            let quality = max(30, min(85, 106 - 2 * crf))
+            return ["-c:v", "h264_videotoolbox", "-q:v", String(quality), "-allow_sw", "1"]
+        }
+        let bitrate = crf <= 20 ? "8M" : "5M"
+        return ["-c:v", "h264_videotoolbox", "-b:v", bitrate, "-allow_sw", "1"]
+    }
+
+    /// H.264 video at an average bitrate (bits per second) with a peak limit.
+    static func h264(bitrate: Int) -> [String] {
+        let rate = String(bitrate)
+        let peak = String(Int(Double(bitrate) * 1.4))
+        if has("libx264") || !has("h264_videotoolbox") {
+            return ["-c:v", "libx264", "-preset", "medium", "-b:v", rate, "-maxrate", peak,
+                    "-bufsize", String(bitrate * 2)]
+        }
+        return ["-c:v", "h264_videotoolbox", "-b:v", rate, "-maxrate", peak, "-allow_sw", "1"]
+    }
+
+    private static func runSync(_ executable: String, _ arguments: [String]) -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.standardInput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        guard (try? process.run()) != nil else { return "" }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func runSyncStatus(_ executable: String, _ arguments: [String]) -> Int32 {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return -1 }
+        process.waitUntilExit()
+        return process.terminationStatus
     }
 }
 

@@ -27,7 +27,8 @@ enum MediaConverter {
     private static let evenSize = ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2"]
 
     static func ffmpegArgs(for format: OutputFormat) -> [String]? {
-        let h264 = ["-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p"] + evenSize
+        let video: [String] = Encoders.h264(crf: 23)
+        let h264: [String] = video + ["-pix_fmt", "yuv420p"] + evenSize
         switch format {
         case .mp4: return h264 + ["-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart"]
         case .mov: return h264 + ["-c:a", "aac", "-b:a", "160k"]
@@ -84,9 +85,8 @@ enum MediaConverter {
             if outExt == "webm" {
                 args = ["-c:v", "libvpx-vp9", "-b:v", v, "-row-mt", "1", "-vf", filters, "-c:a", "libopus", "-b:a", "96k"]
             } else {
-                args = ["-c:v", "libx264", "-preset", "medium", "-b:v", v, "-maxrate", String(Int(video * 1.4)),
-                        "-bufsize", String(Int(video * 2)), "-pix_fmt", "yuv420p", "-vf", filters,
-                        "-c:a", "aac", "-b:a", "96k"]
+                let encoder: [String] = Encoders.h264(bitrate: Int(video))
+                args = encoder + ["-pix_fmt", "yuv420p", "-vf", filters, "-c:a", "aac", "-b:a", "96k"]
                 if outExt != "mkv" { args += ["-movflags", "+faststart"] }
             }
         } else {
@@ -148,7 +148,7 @@ enum MediaConverter {
                 case "aif", "aiff": type = .aiff
                 case "caf": type = .caf
                 default:
-                    throw ConversionError("Removing metadata from \(input.pathExtension.uppercased()) files needs ffmpeg. Install it once with: brew install ffmpeg")
+                    throw ConversionError("Removing metadata from \(input.pathExtension.uppercased()) files needs ffmpeg. \(Tools.missingFFmpegHint)")
                 }
                 try await AppleMedia.export(input, preset: AVAssetExportPresetPassthrough, type: type, output: out,
                                             clearMetadata: true, progress: { _ in })
@@ -235,7 +235,7 @@ enum AppleMedia {
             try await Shell.check("/usr/bin/afconvert", args + [source.path, output.path])
             progress(1)
         default:
-            throw ConversionError("\(format.label) needs ffmpeg. Install it once with: brew install ffmpeg")
+            throw ConversionError("\(format.label) needs ffmpeg. \(Tools.missingFFmpegHint)")
         }
     }
 

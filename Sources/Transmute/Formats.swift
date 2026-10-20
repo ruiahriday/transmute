@@ -188,10 +188,17 @@ struct ConversionOptions: Sendable {
         var options = ConversionOptions()
         if d.object(forKey: Prefs.imageQuality) != nil { options.quality = d.double(forKey: Prefs.imageQuality) }
         options.stripMetadata = d.bool(forKey: Prefs.stripMetadata)
+        #if APPSTORE
+        // The sandbox needs the bookmark; the path is only shown in Settings.
+        if d.string(forKey: Prefs.outputMode) == OutputMode.folder.rawValue {
+            options.outputFolder = FolderAccess.savedOutputFolder
+        }
+        #else
         if d.string(forKey: Prefs.outputMode) == OutputMode.folder.rawValue,
            let path = d.string(forKey: Prefs.outputFolderPath), !path.isEmpty {
             options.outputFolder = URL(fileURLWithPath: path, isDirectory: true)
         }
+        #endif
         return options
     }
 }
@@ -206,6 +213,7 @@ enum Prefs {
     static let imageQuality = "imageQuality"
     static let stripMetadata = "stripMetadataOnConvert"
     static let outputMode = "outputMode"
+    /// Shown in Settings. The App Store build also keeps a bookmark (FolderAccess).
     static let outputFolderPath = "outputFolderPath"
     static let revealWhenDone = "revealWhenDone"
     static let wheelEnabled = "dragWheelEnabled"

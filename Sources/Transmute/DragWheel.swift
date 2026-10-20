@@ -85,9 +85,11 @@ final class DragWheelController {
             let size = WheelView.size
             panel.setFrame(NSRect(x: point.x - size / 2, y: point.y - size / 2, width: size, height: size), display: false)
         }
-        let urls = currentURLs
-        panel.contentView = NSHostingView(rootView: WheelView(kind: kind, items: items) { [weak self] item in
-            self?.run(item, on: urls)
+        let peeked = currentURLs
+        // Act on the files from the drop itself: in the App Sandbox only dropped files can be
+        // read, not the ones peeked at on the drag pasteboard while dragging.
+        panel.contentView = NSHostingView(rootView: WheelView(kind: kind, items: items) { [weak self] item, dropped in
+            self?.run(item, on: dropped.isEmpty ? peeked : dropped)
         })
         panel.orderFrontRegardless()
     }
@@ -356,7 +358,7 @@ struct WheelView: View {
     let kind: WheelKind
     /// Positions clockwise from the top; nil leaves a position empty.
     let items: [WheelItem?]
-    let onDrop: (WheelItem) -> Void
+    let onDrop: (WheelItem, [URL]) -> Void
 
     @State private var targeted: UUID?
 
@@ -411,9 +413,44 @@ struct WheelView: View {
             set: { inside in
                 if inside { targeted = item.id } else if targeted == item.id { targeted = nil }
             }
-        )) { _ in
-            onDrop(item)
+        )) { providers in
+            DroppedFiles.load(providers) { urls in onDrop(item, urls) }
             return true
+        }
+    }
+}
+
+/// Reads the file URLs out of a drop, keeping their order, and calls back on the main actor.
+enum DroppedFiles {
+    static func load(_ providers: [NSItemProvider], completion: @escaping @MainActor ([URL]) -> Void) {
+        let collected = Collected(count: providers.count)
+        let group = DispatchGroup()
+        for (index, provider) in providers.enumerated() where provider.canLoadObject(ofClass: URL.self) {
+            group.enter()
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                if let url, url.isFileURL { collected.set(index, url) }
+                group.leave()
+            }
+        }
+        group.notify(queue: .main) {
+            let urls = collected.urls
+            MainActor.assumeIsolated { completion(urls) }
+        }
+    }
+
+    private final class Collected: @unchecked Sendable {
+        private let lock = NSLock()
+        private var slots: [URL?]
+        init(count: Int) { slots = Array(repeating: nil, count: count) }
+        func set(_ index: Int, _ url: URL) {
+            lock.lock()
+            slots[index] = url
+            lock.unlock()
+        }
+        var urls: [URL] {
+            lock.lock()
+            defer { lock.unlock() }
+            return slots.compactMap { $0 }
         }
     }
 }

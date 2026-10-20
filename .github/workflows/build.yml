@@ -3,7 +3,8 @@ name: Build Transmute
 on:
   push:
     # dev is for trying changes on the Mac build server; only main publishes the download.
-    branches: [main, dev]
+    # appstore holds the Mac App Store (sandboxed) variant; it never publishes anything.
+    branches: [main, dev, appstore]
   workflow_dispatch:
 
 permissions:
@@ -129,3 +130,178 @@ jobs:
           NOTES
           gh release create latest build/Transmute.dmg build/Transmute.zip \
             --target "$GITHUB_SHA" --title "Transmute 1.0 beta (build ${{ github.run_number }})" --notes-file notes.md --latest
+
+  # ---- Mac App Store variant (appstore branch only; never publishes) ---------------------
+
+  # LGPL-only ffmpeg built from source (no libx264), cached on the build script's hash.
+  ffmpeg-lgpl:
+    if: github.ref == 'refs/heads/appstore'
+    runs-on: macos-15
+    continue-on-error: true
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cached LGPL ffmpeg
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: ffmpeg-lgpl/out
+          key: ffmpeg-lgpl-macos15-${{ hashFiles('scripts/build-ffmpeg-lgpl.sh') }}
+
+      - name: Build LGPL ffmpeg from source (arm64 + x86_64)
+        id: ffbuild
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p logs
+          brew install nasm pkg-config > logs/brew.log 2>&1 || true
+          bash scripts/build-ffmpeg-lgpl.sh ffmpeg-lgpl 2>&1 | tee logs/ffmpeg-lgpl.log
+
+      - name: List encoders
+        id: encoders
+        run: |
+          mkdir -p logs
+          {
+            echo "cache hit: ${{ steps.cache.outputs.cache-hit }}"
+            lipo -info ffmpeg-lgpl/out/ffmpeg
+            ffmpeg-lgpl/out/ffmpeg -hide_banner -version | head -1
+            ffmpeg-lgpl/out/ffmpeg -hide_banner -L | head -2
+            for enc in h264_videotoolbox hevc_videotoolbox libx264 libvpx-vp9 libvpx libopus libvorbis libmp3lame libwebp aac aac_at flac wmv2 wmav2 mpeg4 gif png pcm_s16le; do
+              if ffmpeg-lgpl/out/ffmpeg -hide_banner -encoders 2>/dev/null | grep -q " $enc "; then echo "ok      $enc"; else echo "MISSING $enc"; fi
+            done
+          } 2>&1 | tee logs/encoders.log
+
+      - name: Report results as annotations
+        if: always()
+        run: |
+          level() { if [[ "$1" == "failure" ]]; then echo error; else echo notice; fi; }
+          bash scripts/ci-report.sh "$(level '${{ steps.ffbuild.outcome }}')" "LGPL ffmpeg build" logs/ffmpeg-lgpl.log 120
+          bash scripts/ci-report.sh "$(level '${{ steps.encoders.outcome }}')" "LGPL ffmpeg encoders" logs/encoders.log 60
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-lgpl
+          path: ffmpeg-lgpl/out
+
+  # Builds the App Store variant and runs the self-test inside the App Sandbox.
+  appstore:
+    needs: ffmpeg-lgpl
+    if: always() && github.ref == 'refs/heads/appstore'
+    runs-on: macos-15
+    continue-on-error: true
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    env:
+      # TODO(rename): placeholders until the product name and bundle id are chosen.
+      APPSTORE_BUNDLE_ID: com.example.transmute
+      APPSTORE_NAME: Transmute
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get the LGPL ffmpeg
+        id: getff
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ffmpeg-lgpl
+          path: ffmpeg-lgpl
+
+      - name: Download ffmpeg for making test files only (not bundled)
+        run: |
+          set -euo pipefail
+          mkdir -p ffmpeg-dl && cd ffmpeg-dl
+          curl -fsSL --retry 3 -o ffmpeg.zip "https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/release/ffmpeg.zip"
+          unzip -q -o ffmpeg.zip -d x
+          cp "$(find x -type f -name ffmpeg | head -1)" ./ffmpeg-fixtures
+          chmod +x ffmpeg-fixtures
+          mkdir -p ../logs
+          ./ffmpeg-fixtures -hide_banner -version | head -1 | tee ../logs/fixtures-ffmpeg.log
+
+      - name: Build App Store variant (universal)
+        id: build
+        run: |
+          mkdir -p logs
+          # Artifacts lose the executable bit.
+          if [[ -f ffmpeg-lgpl/ffmpeg ]]; then
+            chmod +x ffmpeg-lgpl/ffmpeg
+            export FFMPEG_BIN="$PWD/ffmpeg-lgpl/ffmpeg" FFMPEG_LICENSES="$PWD/ffmpeg-lgpl/LICENSES.txt"
+          else
+            echo "warning: no LGPL ffmpeg artifact; building without ffmpeg"
+          fi
+          APPSTORE=1 UNIVERSAL=1 BUILD_NUMBER=${{ github.run_number }} bash build-app.sh 2>&1 | tee logs/build.log
+          echo "APP=build/appstore/$APPSTORE_NAME.app" >> "$GITHUB_ENV"
+
+      - name: Check the bundle
+        id: bundle
+        run: |
+          {
+            set +e -x
+            lipo -info "$APP/Contents/MacOS/Transmute"
+            plutil -lint "$APP/Contents/Info.plist"
+            plutil -lint "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
+            /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" -c "Print :ITSAppUsesNonExemptEncryption" -c "Print :LSApplicationCategoryType" "$APP/Contents/Info.plist"
+            codesign --verify --deep --strict --verbose=2 "$APP"
+            codesign -d --entitlements - --xml "$APP" | plutil -p -
+            if [[ -f "$APP/Contents/MacOS/ffmpeg" ]]; then
+              codesign -d --entitlements - --xml "$APP/Contents/MacOS/ffmpeg" | plutil -p -
+              "$APP/Contents/MacOS/ffmpeg" -hide_banner -buildconf | grep -E -- "--enable-(gpl|nonfree)" && echo "ERROR: GPL ffmpeg bundled"
+            fi
+            strings "$APP/Contents/MacOS/Transmute" | grep -i "brew install" && echo "ERROR: Homebrew text in the App Store binary"
+            wc -l "$APP/Contents/Resources/ThirdPartyNotices.txt"
+            set +x
+          } > logs/bundle.log 2>&1
+          cat logs/bundle.log
+          ! grep -q "^ERROR" logs/bundle.log
+
+      - name: Launch test (sandboxed; app must stay running)
+        id: launch
+        run: |
+          "$APP/Contents/MacOS/Transmute" > logs/launch.log 2>&1 &
+          PID=$!
+          sleep 10
+          if kill -0 "$PID" 2>/dev/null; then
+            echo "App launched and is still running"
+            kill "$PID"
+          else
+            echo "The app quit or crashed at launch" >> logs/launch.log
+            cat logs/launch.log
+            exit 1
+          fi
+          CONTAINER="$HOME/Library/Containers/$APPSTORE_BUNDLE_ID"
+          if [[ -d "$CONTAINER" ]]; then echo "container created: $CONTAINER" >> logs/launch.log; else echo "no container at $CONTAINER" >> logs/launch.log; fi
+
+      - name: Conversion self-test inside the sandbox (informational)
+        id: selftest
+        continue-on-error: true
+        run: |
+          bash scripts/make-fixtures.sh "$RUNNER_TEMP/fixtures" "$PWD/ffmpeg-dl/ffmpeg-fixtures" > logs/fixtures.log 2>&1
+          # The sandboxed app can't read $RUNNER_TEMP. It looks in Downloads (entitlement) and
+          # in its own container instead; put a copy in both.
+          rm -rf "$HOME/Downloads/transmute-selftest-fixtures"
+          mkdir -p "$HOME/Downloads"
+          cp -R "$RUNNER_TEMP/fixtures" "$HOME/Downloads/transmute-selftest-fixtures" || echo "couldn't copy to Downloads"
+          DATA="$HOME/Library/Containers/$APPSTORE_BUNDLE_ID/Data"
+          if [[ -d "$DATA" ]]; then
+            rm -rf "$DATA/selftest-fixtures"
+            cp -R "$RUNNER_TEMP/fixtures" "$DATA/selftest-fixtures" || echo "couldn't copy into the container"
+          fi
+          "$APP/Contents/MacOS/Transmute" --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest.log
+
+      - name: Report results as annotations
+        if: always()
+        run: |
+          level() { if [[ "$1" == "failure" ]]; then echo error; else echo notice; fi; }
+          bash scripts/ci-report.sh "$(level '${{ steps.build.outcome }}')" "App Store build" logs/build.log
+          bash scripts/ci-report.sh "$(level '${{ steps.bundle.outcome }}')" "App Store bundle" logs/bundle.log 80
+          bash scripts/ci-report.sh "$(level '${{ steps.launch.outcome }}')" "App Store launch test" logs/launch.log 40
+          cat logs/fixtures-ffmpeg.log logs/fixtures.log > logs/fixtures-all.log 2>/dev/null || true
+          bash scripts/ci-report.sh notice "App Store fixtures" logs/fixtures-all.log 40
+          # Annotations are cut short, so the counts and failed names get one of their own.
+          grep -E "^(variant|fixtures|ffmpeg):|passed, .* failed|FAILED:" logs/selftest.log > logs/selftest-summary.log || true
+          bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "App Store self-test summary" logs/selftest-summary.log 200
+          bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "App Store sandboxed self-test" logs/selftest.log 400

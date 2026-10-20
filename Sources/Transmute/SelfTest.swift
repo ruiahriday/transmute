@@ -36,8 +36,11 @@ enum SelfTest {
         return (try? ImageConverter.data(from: image, type: .heic)) != nil
     }()
 
-    static func run(inputDir: URL) async -> Int {
+    static func run(inputDir requested: URL) async -> Int {
         let fm = FileManager.default
+        let sandboxed = ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+        print("variant: \(AppInfo.isAppStoreBuild ? "App Store" : "download"), sandboxed: \(sandboxed ? "yes" : "no")")
+        let inputDir = readableFixtures(requested)
         let outDir = fm.temporaryDirectory.appendingPathComponent("transmute-selftest-\(UUID().uuidString)")
         try? fm.createDirectory(at: outDir, withIntermediateDirectories: true)
         let options = ConversionOptions(quality: 0.8, outputFolder: outDir, stripMetadata: false)
@@ -401,7 +404,7 @@ enum SelfTest {
                 let silent = outDir.appendingPathComponent("silent portrait.mov")
                 try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-f", "lavfi",
                                                "-i", "testsrc=duration=2:size=240x320:rate=30",
-                                               "-c:v", "libx264", "-pix_fmt", "yuv420p", silent.path])
+                                               "-pix_fmt", "yuv420p"] + Encoders.h264(crf: 23) + [silent.path])
                 let joined = try await Engine.batch(.joinVideos, urls: [editClip, silent, editMovie], options: options)
                 // 3 + 2 + 3 s in the first clip's 320×240 frame, with sound.
                 try await expectVideo(joined, seconds: 8, width: 320, height: 240, audio: true)
@@ -571,7 +574,7 @@ enum SelfTest {
                 let silent = outDir.appendingPathComponent("no sound.mp4")
                 try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-f", "lavfi",
                                                "-i", "testsrc=duration=1:size=160x120:rate=10",
-                                               "-c:v", "libx264", "-pix_fmt", "yuv420p", silent.path])
+                                               "-pix_fmt", "yuv420p"] + Encoders.h264(crf: 23) + [silent.path])
                 do {
                     _ = try await Engine.perform(.editAudio(AudioEdit()), on: silent, options: options) { _ in }
                 } catch {
@@ -807,6 +810,27 @@ enum SelfTest {
         print("\n\(passed) passed, \(failed.count) failed, \(skipped) skipped")
         for name in failed { print("  FAILED: \(name)") }
         return failed.count
+    }
+
+    /// The sandboxed App Store build can't read a folder named on the command line, so it
+    /// also looks in its container and in Downloads (which it has an entitlement for).
+    private static func readableFixtures(_ dir: URL) -> URL {
+        let fm = FileManager.default
+        if let items = try? fm.contentsOfDirectory(atPath: dir.path), !items.isEmpty { return dir }
+        #if APPSTORE
+        let fallbacks = [
+            URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("selftest-fixtures", isDirectory: true),
+            FolderAccess.downloads.appendingPathComponent("transmute-selftest-fixtures", isDirectory: true),
+        ]
+        for folder in fallbacks {
+            if let items = try? fm.contentsOfDirectory(atPath: folder.path), !items.isEmpty {
+                print("fixtures: \(dir.path) isn't readable here; using \(folder.path)")
+                return folder
+            }
+        }
+        #endif
+        print("fixtures: can't read \(dir.path)")
+        return dir
     }
 
     private static func wheelLayoutChecks() {
