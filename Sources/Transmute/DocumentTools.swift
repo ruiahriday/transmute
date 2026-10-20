@@ -107,7 +107,7 @@ enum PDFTools {
         if options.stripMetadata { doc.documentAttributes = [:] }
         let out = OutputPaths.destination(for: input, ext: "pdf", suffix: "compressed", folder: options.outputFolder)
         var writeOptions: [PDFDocumentWriteOption: Any] = [:]
-        if #available(macOS 13.4, *) {
+        if #available(macOS 13.4, iOS 16.4, *) {
             writeOptions[.saveImagesAsJPEGOption] = true
             writeOptions[.optimizeImagesForScreenOption] = true
         }
