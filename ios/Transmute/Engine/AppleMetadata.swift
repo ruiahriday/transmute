@@ -154,7 +154,7 @@ enum AppleMetadata {
         session.outputFileType = type
         session.metadata = items
         if removeLocation { session.metadataItemFilter = .forSharing() }
-        await session.export()
+        await session.runExport()
         guard session.status == .completed else {
             try? FileManager.default.removeItem(at: out)
             throw ConversionError(session.error?.localizedDescription ?? "Saving the tags failed.")

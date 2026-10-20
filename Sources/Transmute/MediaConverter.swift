@@ -274,7 +274,7 @@ enum AppleMedia {
             }
         }
         await withTaskCancellationHandler {
-            await session.export()
+            await session.runExport()
         } onCancel: {
             session.cancelExport()
         }
@@ -284,5 +284,15 @@ enum AppleMedia {
             throw ConversionError(session.error?.localizedDescription ?? "Export failed.")
         }
         progress(1)
+    }
+}
+
+extension AVAssetExportSession {
+    /// Starts the export exactly once and waits for it. The SDK's async `export()`
+    /// can start a session twice on iOS 18, which crashes.
+    func runExport() async {
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            exportAsynchronously { done.resume() }
+        }
     }
 }

@@ -215,7 +215,7 @@ enum AppleVideoEditor {
             }
         }
         await withTaskCancellationHandler {
-            await session.export()
+            await session.runExport()
         } onCancel: {
             session.cancelExport()
         }
