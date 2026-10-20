@@ -750,14 +750,17 @@ struct ImageEditorView: View {
     private var layout: some View {
         #if os(iOS)
         if sizeClass == .compact {
-            VStack(spacing: 0) {
-                canvasArea
-                Divider()
-                ScrollView(.horizontal, showsIndicators: false) {
-                    transformBar.padding(.horizontal, 12).padding(.vertical, 8)
+            // The photo and the tools share the screen about evenly.
+            GeometryReader { geo in
+                VStack(spacing: 0) {
+                    canvasArea
+                    Divider()
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        transformBar.padding(.horizontal, 12).padding(.vertical, 8)
+                    }
+                    Divider()
+                    sidebar.frame(height: max(300, geo.size.height * 0.5))
                 }
-                Divider()
-                sidebar.frame(height: 330)
             }
         } else {
             sideBySide
