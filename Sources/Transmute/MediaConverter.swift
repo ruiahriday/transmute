@@ -256,8 +256,7 @@ enum AppleMedia {
         guard let session = AVAssetExportSession(asset: asset, presetName: preset) else {
             throw ConversionError("macOS can't export \(input.lastPathComponent) this way.")
         }
-        // Asking for an unsupported type raises an Objective-C exception, so check first.
-        guard session.supportedFileTypes.contains(type) else {
+        guard await AVAssetExportSession.canExport(asset, preset: preset, as: type) else {
             throw ConversionError("macOS can't save \(input.lastPathComponent) as \(type.rawValue).")
         }
         if clearMetadata {
@@ -265,18 +264,11 @@ enum AppleMedia {
             session.metadataItemFilter = .forSharing()
         }
         try? FileManager.default.removeItem(at: output)
-        let poller = Task {
-            while !Task.isCancelled {
-                progress(Double(session.progress))
-                try? await Task.sleep(nanoseconds: 250_000_000)
-            }
-        }
         let failure = await withTaskCancellationHandler {
-            await session.runExport(to: output, as: type)
+            await session.runExport(to: output, as: type, progress: progress)
         } onCancel: {
             session.cancelExport()
         }
-        poller.cancel()
         try Task.checkCancellation()
         if let failure { throw ConversionError(failure.localizedDescription) }
         progress(1)
@@ -284,11 +276,25 @@ enum AppleMedia {
 }
 
 extension AVAssetExportSession {
-    /// Exports to `url` and returns what went wrong, or nil when the file was saved.
-    /// Uses the newer export call where there is one: on iOS 18 the older one can refuse
-    /// to start with an exception that would crash the app.
-    func runExport(to url: URL, as type: AVFileType) async -> Error? {
+    /// Whether `preset` can save `asset` as `type`. Asked of the class rather than a session,
+    /// because on iOS 18 poking at a session before its export starts can leave it unable to start.
+    static func canExport(_ asset: AVAsset, preset: String, as type: AVFileType) async -> Bool {
+        await withCheckedContinuation { (done: CheckedContinuation<Bool, Never>) in
+            determineCompatibility(ofExportPreset: preset, with: asset, outputFileType: type) { done.resume(returning: $0) }
+        }
+    }
+
+    /// Exports to `url`, reporting progress, and returns what went wrong (nil when the file was saved).
+    /// Nothing reads the session until its export is under way; see `canExport`.
+    func runExport(to url: URL, as type: AVFileType, progress: @escaping ProgressHandler) async -> Error? {
         if #available(macOS 15, iOS 18, *) {
+            let watcher = Task {
+                try await Task.sleep(nanoseconds: 300_000_000)
+                for await state in states(updateInterval: 0.25) {
+                    if case .exporting(let fraction) = state { progress(fraction.fractionCompleted) }
+                }
+            }
+            defer { watcher.cancel() }
             do {
                 try await export(to: url, as: type)
                 return nil
@@ -298,10 +304,17 @@ extension AVAssetExportSession {
         }
         outputURL = url
         outputFileType = type
-        guard status == .unknown else { return error ?? ConversionError("The export couldn't start.") }
+        var poller: Task<Void, Never>?
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             exportAsynchronously { done.resume() }
+            poller = Task { [weak self] in
+                while !Task.isCancelled, let self {
+                    progress(Double(self.progress))
+                    try? await Task.sleep(nanoseconds: 250_000_000)
+                }
+            }
         }
+        poller?.cancel()
         return status == .completed ? nil : (error ?? ConversionError("The export failed."))
     }
 }

@@ -196,8 +196,8 @@ enum AppleVideoEditor {
 
     private static func export(_ asset: AVAsset, to out: URL, type: AVFileType, videoComposition: AVVideoComposition?,
                                audioMix: AVAudioMix?, stripMetadata: Bool, progress: @escaping ProgressHandler) async throws {
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality),
-              session.supportedFileTypes.contains(type) else {
+        guard await AVAssetExportSession.canExport(asset, preset: AVAssetExportPresetHighestQuality, as: type),
+              let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else {
             throw ConversionError("This video can't be saved as \(type == .mov ? "MOV" : "MP4") here.")
         }
         try? FileManager.default.removeItem(at: out)
@@ -206,18 +206,11 @@ enum AppleVideoEditor {
         session.audioTimePitchAlgorithm = .spectral // speed changes keep the pitch, like ffmpeg's atempo
         session.shouldOptimizeForNetworkUse = true
         if stripMetadata { session.metadataItemFilter = .forSharing() }
-        let poller = Task {
-            while !Task.isCancelled {
-                progress(Double(session.progress))
-                try? await Task.sleep(nanoseconds: 250_000_000)
-            }
-        }
         let failure = await withTaskCancellationHandler {
-            await session.runExport(to: out, as: type)
+            await session.runExport(to: out, as: type, progress: progress)
         } onCancel: {
             session.cancelExport()
         }
-        poller.cancel()
         try Task.checkCancellation()
         if let failure {
             try? FileManager.default.removeItem(at: out)

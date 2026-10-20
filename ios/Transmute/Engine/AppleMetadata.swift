@@ -145,14 +145,14 @@ enum AppleMetadata {
         case "m4v": .m4v
         default: .mp4
         }
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough),
-              session.supportedFileTypes.contains(type) else {
+        guard await AVAssetExportSession.canExport(asset, preset: AVAssetExportPresetPassthrough, as: type),
+              let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else {
             throw ConversionError("This \(ext.uppercased()) file can't be re-saved with new tags.")
         }
         let out = OutputPaths.destination(for: input, ext: input.pathExtension, suffix: "tagged", folder: options.outputFolder)
         session.metadata = items
         if removeLocation { session.metadataItemFilter = .forSharing() }
-        if let failure = await session.runExport(to: out, as: type) {
+        if let failure = await session.runExport(to: out, as: type, progress: { _ in }) {
             try? FileManager.default.removeItem(at: out)
             throw ConversionError(failure.localizedDescription)
         }
