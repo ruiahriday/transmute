@@ -1,0 +1,253 @@
+Command line invocation:
+    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/xcodebuild -project Transmute.xcodeproj -scheme Transmute -configuration Release -sdk iphoneos -destination generic/platform=iOS -derivedDataPath build/dd-device CODE_SIGNING_ALLOWED=NO build
+
+Build settings from command line:
+    CODE_SIGNING_ALLOWED = NO
+    SDKROOT = iphoneos18.5
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'Transmute' in project 'Transmute' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 9768561401d5d6fac70e9120d221588f
+Build description path: /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/XCBuildData/9768561401d5d6fac70e9120d221588f.xcbuilddata
+ClangStatCache /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk /Users/runner/work/transmute/transmute/build/dd-device/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -o /Users/runner/work/transmute/transmute/build/dd-device/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache
+
+CreateBuildDirectory /Users/runner/work/transmute/transmute/build/dd-device/Build/Products
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    builtin-create-build-directory /Users/runner/work/transmute/transmute/build/dd-device/Build/Products
+
+CreateBuildDirectory /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    builtin-create-build-directory /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute-0e4536a32887940d97ca6f4a9499c864-VFS-iphoneos/all-product-headers.yaml
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute-0e4536a32887940d97ca6f4a9499c864-VFS-iphoneos/all-product-headers.yaml
+
+CreateBuildDirectory /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    builtin-create-build-directory /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos
+
+CreateBuildDirectory /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
+    cd /Users/runner/work/transmute/transmute/Transmute.xcodeproj
+    builtin-create-build-directory /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyStaticMetadataFileList (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyMetadataFileList (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-project-headers.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-project-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-own-target-headers.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-generated-files.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-generated-files.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-target-headers.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-non-framework-target-headers.hmap (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_const_extract_protocols.json (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftConstValuesFileList (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.LinkFileList (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.LinkFileList
+
+WriteAuxiliaryFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-OutputFileMap.json (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    write-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-OutputFileMap.json
+
+MkDir /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /bin/mkdir -p /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app
+
+MkDir /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /bin/mkdir -p /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned
+
+MkDir /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/unthinned (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /bin/mkdir -p /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/unthinned
+
+GenerateAssetSymbols /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets --compile /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_dependencies --output-partial-info-plist /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 16.0 --platform iphoneos --bundle-identifier com.ruiahriday.transmute --generate-swift-asset-symbol-extensions NO --generate-swift-asset-symbols /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+CompileAssetCatalogVariant thinned /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/usr/bin/actool /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets --compile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 16.0 --platform iphoneos
+/* com.apple.actool.compilation-results */
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist_thinned
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned/AppIcon60x60@2x.png
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned/AppIcon76x76@2x~ipad.png
+/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned/Assets.car
+
+
+SwiftDriver Transmute normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-SwiftDriver -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Transmute -O -whole-module-optimization -enforce-exclusivity\=checked @/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -F /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/transmute/transmute/build/dd-device/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -output-file-map /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-generated-files.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-own-target-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-project-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-Swift.h -working-directory /Users/runner/work/transmute/transmute -no-emit-module-separately-wmo
+
+SwiftCompile normal arm64 Compiling\ AppleAudio.swift,\ AppleEditors.swift,\ AppleMetadata.swift,\ Archives.swift,\ AudioEditor.swift,\ Automation.swift,\ ControlsPanel.swift,\ DocumentTools.swift,\ Editors.swift,\ Engine.swift,\ Formats.swift,\ HomeView.swift,\ IOSSelfTest.swift,\ ImageConverter.swift,\ ImageEditor.swift,\ JobQueue.swift,\ Library.swift,\ MediaConverter.swift,\ MetadataEditor.swift,\ MobileSupport.swift,\ OfficeConverter.swift,\ Platform.swift,\ SettingsSheet.swift,\ Shell.swift,\ TransmuteMobileApp.swift,\ VideoEditor.swift,\ WordDocument.swift,\ GeneratedAssetSymbols.swift /Users/runner/work/transmute/transmute/ios/Transmute/Engine/AppleAudio.swift /Users/runner/work/transmute/transmute/ios/Transmute/Engine/AppleEditors.swift /Users/runner/work/transmute/transmute/ios/Transmute/Engine/AppleMetadata.swift /Users/runner/work/transmute/transmute/ios/Transmute/Engine/Archives.swift /Users/runner/work/transmute/transmute/Sources/Transmute/AudioEditor.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/Automation.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/ControlsPanel.swift /Users/runner/work/transmute/transmute/Sources/Transmute/DocumentTools.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/Editors.swift /Users/runner/work/transmute/transmute/Sources/Transmute/Engine.swift /Users/runner/work/transmute/transmute/Sources/Transmute/Formats.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/HomeView.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/IOSSelfTest.swift /Users/runner/work/transmute/transmute/Sources/Transmute/ImageConverter.swift /Users/runner/work/transmute/transmute/Sources/Transmute/ImageEditor.swift /Users/runner/work/transmute/transmute/Sources/Transmute/JobQueue.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/Library.swift /Users/runner/work/transmute/transmute/Sources/Transmute/MediaConverter.swift /Users/runner/work/transmute/transmute/Sources/Transmute/MetadataEditor.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/MobileSupport.swift /Users/runner/work/transmute/transmute/Sources/Transmute/OfficeConverter.swift /Users/runner/work/transmute/transmute/Sources/Transmute/Platform.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/SettingsSheet.swift /Users/runner/work/transmute/transmute/Sources/Transmute/Shell.swift /Users/runner/work/transmute/transmute/ios/Transmute/App/TransmuteMobileApp.swift /Users/runner/work/transmute/transmute/Sources/Transmute/VideoEditor.swift /Users/runner/work/transmute/transmute/ios/Transmute/Engine/WordDocument.swift /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Transmute' from project 'Transmute')
+CompileSwift normal arm64 (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    
+/Users/runner/work/transmute/transmute/Sources/Transmute/DocumentTools.swift:176:20: warning: case is already handled by previous patterns; consider removing it
+        case .rtf, .docx, .html, .odt:
+                   ^~~~~
+/Users/runner/work/transmute/transmute/Sources/Transmute/DocumentTools.swift:176:34: warning: case is already handled by previous patterns; consider removing it
+        case .rtf, .docx, .html, .odt:
+                                 ^~~~
+/Users/runner/work/transmute/transmute/ios/Transmute/App/Library.swift:106:28: warning: capture of 'provider' with non-sendable type 'NSItemProvider' in a '@Sendable' closure
+                var name = provider.suggestedName ?? url.deletingPathExtension().lastPathComponent
+                           ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/Foundation.framework/Headers/NSItemProvider.h:75:12: note: class 'NSItemProvider' does not conform to the 'Sendable' protocol
+@interface NSItemProvider : NSObject <NSCopying>
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/MediaConverter.swift:320:32: warning: capture of 'self' with non-sendable type 'AVAssetExportSession' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+            if gate.cancel() { cancelExport() }
+                               ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetExportSession.h:156:12: note: class 'AVAssetExportSession' does not conform to the 'Sendable' protocol
+@interface AVAssetExportSession : NSObject
+           ^
+
+SwiftDriver\ Compilation Transmute normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-Swift-Compilation -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Transmute -O -whole-module-optimization -enforce-exclusivity\=checked @/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -F /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/transmute/transmute/build/dd-device/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -output-file-map /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-generated-files.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-own-target-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-project-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-Swift.h -working-directory /Users/runner/work/transmute/transmute -no-emit-module-separately-wmo
+
+LinkAssetCatalog /Users/runner/work/transmute/transmute/ios/Transmute/Assets.xcassets (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-linkAssetCatalog --thinned /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/thinned --thinned-dependencies /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist_unthinned --output /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app --plist-output /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/AppIcon60x60@2x.png (in target 'Transmute' from project 'Transmute')
+note: Emplaced /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Assets.car (in target 'Transmute' from project 'Transmute')
+note: Emplaced /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/AppIcon76x76@2x~ipad.png (in target 'Transmute' from project 'Transmute')
+
+ProcessInfoPlistFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Info.plist /Users/runner/work/transmute/transmute/ios/Transmute/Info.plist (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-infoPlistUtility /Users/runner/work/transmute/transmute/ios/Transmute/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/PkgInfo -expandbuildsettings -format binary -platform iphoneos -additionalcontentfile /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/assetcatalog_generated_info.plist -requiredArchitecture arm64 -o /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Info.plist
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppleAudio.swift, AppleEditors.swift, AppleMetadata.swift, Archives.swift, AudioEditor.swift, Automation.swift, ControlsPanel.swift, DocumentTools.swift, Editors.swift, Engine.swift, Formats.swift, HomeView.swift, IOSSelfTest.swift, ImageConverter.swift, ImageEditor.swift, JobQueue.swift, Library.swift, MediaConverter.swift, MetadataEditor.swift, MobileSupport.swift, OfficeConverter.swift, Platform.swift, SettingsSheet.swift, Shell.swift, TransmuteMobileApp.swift, VideoEditor.swift, WordDocument.swift, GeneratedAssetSymbols.swift (in target 'Transmute' from project 'Transmute')
+
+SwiftDriver\ Compilation\ Requirements Transmute normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Transmute -O -whole-module-optimization -enforce-exclusivity\=checked @/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList -enable-bare-slash-regex -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -target arm64-apple-ios16.0 -g -module-cache-path /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex -Xfrontend -serialize-debugging-options -swift-version 5 -I /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -F /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -c -num-threads 3 -Xcc -ivfsstatcache -Xcc /Users/runner/work/transmute/transmute/build/dd-device/SDKStatCaches.noindex/iphoneos18.5-22F76-a529daf784b3616c7c04a36aeb7f5c05.sdkstatcache -output-file-map /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/runner/work/transmute/transmute/build/dd-device/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_const_extract_protocols.json -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-generated-files.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-own-target-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-all-target-headers.hmap -Xcc -iquote -Xcc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute-project-headers.hmap -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/include -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources-normal/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/arm64 -Xcc -I/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources -emit-objc-header -emit-objc-header-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-Swift.h -working-directory /Users/runner/work/transmute/transmute -no-emit-module-separately-wmo
+
+SwiftMergeGeneratedHeaders /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/Transmute-Swift.h /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-Swift.h (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-swiftHeaderTool -arch arm64 /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute-Swift.h -o /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/DerivedSources/Transmute-Swift.h
+
+Copy /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.swiftdoc /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftdoc (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftdoc /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.swiftdoc
+
+Copy /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.swiftmodule /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.swiftmodule
+
+Copy /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.abi.json /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.abi.json (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.abi.json /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/arm64-apple-ios.abi.json
+
+Copy /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftsourceinfo (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftsourceinfo /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.swiftmodule/Project/arm64-apple-ios.swiftsourceinfo
+
+Ld /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute normal (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios16.0 -isysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk -Os -L/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -L/Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -F/Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/EagerLinkingTBDs/Release-iphoneos -F/Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos -filelist /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.LinkFileList -Xlinker -rpath -Xlinker @executable_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_lto.o -Xlinker -dependency_info -Xlinker /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphoneos -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.swiftmodule -o /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute
+
+ExtractAppIntentsMetadata (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name Transmute --sdk-root /Applications/Xcode_16.4.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk --xcode-version 16F6 --platform-family iOS --deployment-target 16.0 --bundle-identifier com.ruiahriday.transmute --output /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app --target-triple arm64-apple-ios16.0 --binary-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute --dependency-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute_dependency_info.dat --stringsdata-file /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftFileList --metadata-file-list /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyMetadataFileList --static-metadata-file-list /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyStaticMetadataFileList --swift-const-vals-list /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Objects-normal/arm64/Transmute.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-10-20 10:34:35.054 appintentsmetadataprocessor[5814:20272] Starting appintentsmetadataprocessor export
+2026-10-20 10:34:35.064 appintentsmetadataprocessor[5814:20272] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CopySwiftLibs /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-swiftStdLibTool --copy --verbose --scan-executable /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute --scan-folder /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Frameworks --scan-folder /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/PlugIns --scan-folder /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/SystemExtensions --scan-folder /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Extensions --platform iphoneos --toolchain /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+Ignoring --strip-bitcode because --sign was not passed
+
+GenerateDSYMFile /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app.dSYM /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Transmute -o /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app.dSYM
+
+AppIntentsSSUTraining (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Info.plist --temp-dir-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/ssu --bundle-id com.ruiahriday.transmute --product-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app --extracted-metadata-path /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app/Metadata.appintents --metadata-file-list /Users/runner/work/transmute/transmute/build/dd-device/Build/Intermediates.noindex/Transmute.build/Release-iphoneos/Transmute.build/Transmute.DependencyMetadataFileList --archive-ssu-assets
+2026-10-20 10:34:35.105 appintentsnltrainingprocessor[5817:20278] Parsing options for appintentsnltrainingprocessor
+2026-10-20 10:34:35.107 appintentsnltrainingprocessor[5817:20278] No AppShortcuts found - Skipping.
+
+RegisterExecutionPolicyException /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-RegisterExecutionPolicyException /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app
+
+Validate /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    builtin-validationUtility /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app -infoplist-subpath Info.plist
+
+Touch /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app (in target 'Transmute' from project 'Transmute')
+    cd /Users/runner/work/transmute/transmute
+    /usr/bin/touch -c /Users/runner/work/transmute/transmute/build/dd-device/Build/Products/Release-iphoneos/Transmute.app
+
+note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Transmute' from project 'Transmute')
+** BUILD SUCCEEDED **
+
