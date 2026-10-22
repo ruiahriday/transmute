@@ -309,9 +309,15 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            HStack {
+            HStack(spacing: 8) {
+                SpinformMark().frame(width: 20, height: 20)
+                Text("Spinform \(Feedback.version)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+                Button("Done") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+                    .buttonStyle(.borderedProminent)
             }
             .padding()
         }

@@ -23,7 +23,7 @@ enum Theme {
                  .adaptive(light: 0xDB2777, dark: 0xF472B6)],
         startPoint: .leading, endPoint: .trailing)
     /// The app's accent for controls (toggles, sliders, selection rings).
-    static let accent = Color.adaptive(light: 0x7C3AED, dark: 0xA78BFA)
+    static let accent = Color.adaptive(light: 0x7C3AED, dark: 0x8B5CF6)
     /// Finished, saved, done.
     static let success = Color.adaptive(light: 0x059669, dark: 0x34D399)
     /// The core dot's warm gradient.

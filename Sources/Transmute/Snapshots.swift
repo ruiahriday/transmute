@@ -23,6 +23,8 @@ enum Snapshots {
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
             NSApp.appearance = NSAppearance(named: appearance)
             let suffix = appearance == .aqua ? "light" : "dark"
+            // Showcased "running" jobs from the previous pass would survive clear().
+            for job in queue.jobs { queue.showcase(job.id, .queued) }
             queue.clear()
 
             await shoot("main-empty-\(suffix)", output, size: CGSize(width: 760, height: 600)) {
