@@ -290,14 +290,14 @@ static class Capture
     }
 
     /// Text from a picture file (or a video's current frame) chosen by the user.
-    public static async Task RecognizeFile(string path)
+    public static async Task RecognizeFile(string path, double at = 0)
     {
         try
         {
             BgraImage image;
             if (Kinds.Of(path) == FileKind.Video)
             {
-                var frame = await VideoEditEngine.PreviewFrame(path, 0, 4000, default) ?? throw new ConversionException("Couldn't read a frame of that video.");
+                var frame = await VideoEditEngine.PreviewFrame(path, at, 4000, default) ?? throw new ConversionException("Couldn't read a frame of that video.");
                 image = CaptureKit.FromBitmap(Editors.Bitmap(frame));
             }
             else

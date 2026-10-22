@@ -293,6 +293,68 @@ static partial class Tests
             return [project, .. result.Outputs];
         });
 
+        await Check("Video studio: zooms follow clicks, the pointer glides, frames land on the background", () =>
+        {
+            var samples = new List<StudioSample> { new(0, 100, 100, false), new(1.0, 300, 200, false), new(1.0, 300, 200, true), new(1.6, 310, 205, true), new(5.0, 50, 50, true) };
+            var windows = StudioDirector.ClickZooms(samples);
+            Expect(windows.Count == 2, $"two bursts of clicks, got {windows.Count}");
+            Expect(Math.Abs(windows[0].Start - 0.45) < 0.01 && Math.Abs(windows[0].End - 3.3) < 0.01, $"first zoom {windows[0]}");
+            var options = new StudioOptions { ZoomLevel = 2 };
+            var path = new PointerPath(samples, 6, 0.35);
+            var still = StudioDirector.At(0.1, options, windows, path, 400, 300);
+            Expect(still.Zoom == 1, $"no zoom before the click ({still.Zoom})");
+            var close = StudioDirector.At(1.8, options, windows, path, 400, 300);
+            Expect(Math.Abs(close.Zoom - 2) < 0.01, $"zoomed at the click ({close.Zoom:0.00})");
+            Expect(Math.Abs(close.X - 0.75) < 0.03 && Math.Abs(close.Y - 0.6833) < 0.05, $"centred near the pointer ({close.X:0.00}, {close.Y:0.00})");
+            var edge = StudioDirector.At(5.5, options, windows, path, 400, 300);
+            Expect(edge.X >= 0.25 - 1e-9 && edge.Y >= 0.25 - 1e-9, $"the view stays inside the picture ({edge.X:0.00}, {edge.Y:0.00})");
+            var manual = StudioDirector.At(8, options with { Zooms = [new StudioZoom(7, 9, 3, 0.5, 0.5)] }, windows, path, 400, 300);
+            Expect(Math.Abs(manual.Zoom - 3) < 0.01, $"a manual zoom wins ({manual.Zoom:0.00})");
+            var jumpy = new PointerPath([new(0, 0, 0, false), new(1, 100, 0, false)], 2, 0.1);
+            Expect(jumpy.At(1).X is > 30 and < 70, $"the pointer glides instead of jumping ({jumpy.At(1).X:0})");
+
+            // A four-colour source on a landscape gradient with rounded corners and a drawn pointer.
+            var source = new BgraImage(320, 240);
+            for (var y = 0; y < 240; y++)
+                for (var x = 0; x < 320; x++)
+                {
+                    var i = (y * 320 + x) * 4;
+                    source.Pixels[i] = (byte)(x < 160 ? 255 : 0); source.Pixels[i + 1] = (byte)(y < 120 ? 255 : 0); source.Pixels[i + 2] = 40; source.Pixels[i + 3] = 255;
+                }
+            var track = new PointerTrack(320, 240, 1, [new(0, 160, 120, false)], CursorDrawn: false);
+            var look = new StudioOptions { Shape = StudioShape.Landscape, Background = Frames.BuiltIn[0].Style, AutoZoom = false, DrawCursor = true };
+            var renderer = new StudioRenderer(320, 240, look, track, 2);
+            Expect(renderer.Width == 1280 && renderer.Height == 720, $"size {renderer.Width}×{renderer.Height}");
+            var frame = new BgraImage(renderer.Width, renderer.Height);
+            renderer.Render(source, 0.5, frame);
+            var c = renderer.Content;
+            Expect(c.X > 0 && c.Height < 720 && Math.Abs(c.Width / (double)c.Height - 4.0 / 3) < 0.02, $"content box {c}");
+            var inner = frame.HexAt(c.X + c.Width / 4, c.Y + c.Height / 4);
+            Expect(inner == "28FFFF", $"top-left quarter shows through ({inner})");
+            Expect(frame.HexAt(c.X, c.Y) != "28FFFF", "rounded corner shows the background");
+            Expect(frame.HexAt(5, 5) != frame.HexAt(c.X + 5, c.Y + c.Height / 2), "background around the video");
+            var pointer = frame.HexAt(c.X + c.Width / 2 + 4, c.Y + c.Height / 2 + 10);
+            Expect(pointer is "FFFFFF" or "141418", $"the pointer is drawn ({pointer})");
+            return None();
+        });
+        await Check("Video studio: export a clip with a zoom, square, trimmed", async () =>
+        {
+            if (Tools.Ffmpeg is not { } ffmpeg) throw new Skip("no ffmpeg");
+            var clipPath = Path.Combine(folder, "studio-source.mp4");
+            await Shell.Check(ffmpeg, ["-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=480x270:rate=30:duration=3", "-f", "lavfi", "-i", "sine=duration=3",
+                "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", clipPath]);
+            var track = new PointerTrack(480, 270, 1, [new(0, 100, 100, false), new(1.2, 400, 200, true)], CursorDrawn: false);
+            var output = Path.Combine(folder, "studio-export.mp4");
+            var options = new StudioOptions { Shape = StudioShape.Square, Background = Frames.BuiltIn[2].Style, ZoomLevel = 2, DrawCursor = true, MotionBlur = true, TrimStart = 0.5, TrimEnd = 2.5 };
+            await VideoStudio.Export(clipPath, track, options, output, _ => { }, default);
+            var banner = await Banner(output);
+            var duration = MediaInfo.ParseDuration(banner) ?? 0;
+            Expect(duration is > 1.8 and < 2.3, $"trimmed to {duration:0.00} s");
+            Expect(MediaInfo.ParseFrameSize(banner) == (720, 720), $"square {MediaInfo.ParseFrameSize(banner)}");
+            Expect(MediaInfo.StreamLines(banner, "Audio").Any(), "sound kept");
+            return [output];
+        }, Skipped);
+
         await Check("Capture history: add, list, prune by age, delete and reload", () =>
         {
             var dir = Path.Combine(folder, "history");

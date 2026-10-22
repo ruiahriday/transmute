@@ -35,7 +35,7 @@ public static class ScreenRecording
         return (Math.Max(2, (int)Math.Round(w) / 2 * 2), Math.Max(2, (int)Math.Round(h) / 2 * 2));
     }
 
-    static IEnumerable<string> EncoderArgs(string encoder, RecordingQuality quality) => encoder switch
+    public static IEnumerable<string> EncoderArgs(string encoder, RecordingQuality quality) => encoder switch
     {
         "h264_nvenc" => ["-c:v", "h264_nvenc", "-preset", "p4", "-cq", quality == RecordingQuality.High ? "21" : "27"],
         "h264_qsv" => ["-c:v", "h264_qsv", "-global_quality", quality == RecordingQuality.High ? "22" : "28"],

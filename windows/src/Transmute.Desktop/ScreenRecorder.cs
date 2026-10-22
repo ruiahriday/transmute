@@ -206,7 +206,7 @@ public sealed class ScreenRecorder : IDisposable
         var events = Path.ChangeExtension(output, null) + ".pointer.json";
         try
         {
-            File.WriteAllText(Path.Combine(work, "pointer.json"), JsonSerializer.Serialize(new { area.Width, area.Height, Scale, Samples = samples }));
+            File.WriteAllText(Path.Combine(work, "pointer.json"), JsonSerializer.Serialize(new { area.Width, area.Height, Scale, Samples = samples, CursorDrawn = look.Cursor }));
             events = Path.Combine(work, "pointer.json");
         }
         catch { }

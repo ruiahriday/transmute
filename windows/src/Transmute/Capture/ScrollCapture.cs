@@ -31,6 +31,11 @@ sealed class ScrollCapture
 
     /// For the self-test and smoke test: scroll without moving the pointer.
     public Action? Scroller { get; set; }
+    /// For the smoke test: where to keep the frames it saw, and what happened to each.
+    public static string? DebugFolder { get; set; }
+    readonly Dictionary<StitchStep, int> steps = [];
+    string? lastError;
+    public string Diagnostics => $"{stitcher.Frames} frames joined, {stitcher.Length} px long; " + string.Join(", ", steps.Select(kv => $"{kv.Key} {kv.Value}")) + (lastError is null ? "" : $"; last error: {lastError}");
 
     ScrollCapture(PixelRect area)
     {
@@ -155,7 +160,14 @@ sealed class ScrollCapture
         try
         {
             var s = stitcher;
-            var step = await Task.Run(() => s.Add(ScreenGrab.Area(area)));
+            var index = steps.Values.Sum();
+            var step = await Task.Run(() =>
+            {
+                var frame = ScreenGrab.Area(area);
+                if (DebugFolder is { } debug && index < 8) frame.Save(Path.Combine(debug, $"scroll-frame-{index:00}.png"));
+                return s.Add(frame);
+            });
+            steps[step] = steps.GetValueOrDefault(step) + 1;
             if (s != stitcher) return;
             switch (step)
             {
@@ -173,6 +185,7 @@ sealed class ScrollCapture
         }
         catch (Exception e)
         {
+            lastError = e.Message;
             Update(e.Message);
         }
         finally { grabbing = false; }

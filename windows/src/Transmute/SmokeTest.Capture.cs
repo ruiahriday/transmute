@@ -128,8 +128,11 @@ static partial class SmokeTest
             var bounds = Screens.WindowBounds(CaptureKit.Handle(page));
             var inner = new PixelRect(bounds.X + 4, bounds.Y + 4, bounds.Width - 8, bounds.Height - 8);
             var cards = QuickAccess.Open.Count;
+            ScrollCapture.DebugFolder = output;
             var run = ScrollCapture.Start(inner, () => viewer.ScrollToVerticalOffset(viewer.VerticalOffset + 90));
             var done = await Task.WhenAny(run, Task.Delay(30_000));
+            var diagnostics = ScrollCapture.Current?.Diagnostics;
+            Log($"      page scrolled to {viewer.VerticalOffset:0} of {viewer.ScrollableHeight:0}; {diagnostics ?? "finished"}");
             page.Close();
             if (done != run) { await (ScrollCapture.Current?.Done() ?? Task.CompletedTask); throw new Exception("the scrolling capture didn't finish within 30 s"); }
             var card = QuickAccess.Open.LastOrDefault();
@@ -153,6 +156,7 @@ static partial class SmokeTest
         {
             Window? bar = null;
             Task? recording = null;
+            string? recorded = null;
             await step("recording bar", async () =>
             {
                 var recordArea = new PixelRect(monitor.Bounds.X, monitor.Bounds.Y, Math.Min(800, monitor.Bounds.Width), Math.Min(500, monitor.Bounds.Height));
@@ -170,9 +174,20 @@ static partial class SmokeTest
                 var card = QuickAccess.Open.LastOrDefault(c => c.Item.Kind == CaptureKind.Recording) ?? throw new Exception("no recording thumbnail");
                 Log($"      recorded {card.Item.Width} × {card.Item.Height}, {card.Item.Seconds:0.0} s: {Path.GetFileName(card.Item.Path)}");
                 if (card.Item.Seconds < 1.5) throw new Exception($"only {card.Item.Seconds:0.0} s");
+                recorded = card.Item.Path;
                 await Wait(0.5);
                 return card;
             });
+            if (recorded is not null)
+                await step("video studio", async () =>
+                {
+                    var studio = StudioWindow.Open(recorded) ?? throw new Exception("the studio didn't open");
+                    for (var i = 0; i < 60 && !studio.Drawn; i++) await Wait(0.25);
+                    if (!studio.Drawn) throw new Exception("the studio preview didn't appear within 15 s");
+                    await Wait(0.5);
+                    return studio;
+                });
+            foreach (var w in Application.Current.Windows.OfType<StudioWindow>().ToList()) w.Close();
         }
 
         await step("capture settings", async () =>

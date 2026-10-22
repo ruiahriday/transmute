@@ -116,6 +116,15 @@ Root: HKA; Subkey: "Software\Classes\*\shell\Spinform\command"; ValueType: strin
 Root: HKA; Subkey: "Software\Classes\Directory\shell\Spinform"; ValueType: string; ValueName: ""; ValueData: "Convert with Spinform"; Flags: uninsdeletekey; Tasks: contextmenu
 Root: HKA; Subkey: "Software\Classes\Directory\shell\Spinform"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\Spinform.exe"",0"; Tasks: contextmenu
 Root: HKA; Subkey: "Software\Classes\Directory\shell\Spinform\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Spinform.exe"" ""%1"""; Tasks: contextmenu
+; spinform:// links (spinform://capture/area, spinform://record …) and .spinform mark-up projects.
+Root: HKA; Subkey: "Software\Classes\spinform"; ValueType: string; ValueName: ""; ValueData: "URL:Spinform"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\spinform"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\spinform\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\Spinform.exe"",0"
+Root: HKA; Subkey: "Software\Classes\spinform\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Spinform.exe"" ""%1"""
+Root: HKA; Subkey: "Software\Classes\.spinform"; ValueType: string; ValueName: ""; ValueData: "Spinform.Project"; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\Spinform.Project"; ValueType: string; ValueName: ""; ValueData: "Spinform mark-up project"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Spinform.Project\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: """{app}\Spinform.exe"",0"
+Root: HKA; Subkey: "Software\Classes\Spinform.Project\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Spinform.exe"" ""%1"""
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Spinform"; ValueData: """{app}\Spinform.exe"" --background"; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]

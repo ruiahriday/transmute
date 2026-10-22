@@ -152,6 +152,7 @@ sealed class HistoryWindow : Window
             Action("pin", "Pin on top", () => PinWindow.Show(path));
             Action("frame", "Put on a background", () => FrameWindow.Open(path));
         }
+        if (item.Kind == CaptureKind.Recording && path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)) Action("film", "Open in the video studio", () => StudioWindow.Open(item.SavedPath is { } v && File.Exists(v) ? v : path));
         if (item.Kind != CaptureKind.Text) Action("capture", "Show the thumbnail again", () => QuickAccess.Show(new CaptureItem(item.SavedPath is { } s && File.Exists(s) ? s : path, item.Kind, item.Width, item.Height, item.Seconds, null, item.Id)));
         Action("folder", "Show in folder", () => Native.RevealInExplorer([item.SavedPath is { } saved && File.Exists(saved) ? saved : path]));
         Action("trash", "Delete from history", () => CaptureKit.History.Delete(item.Id));

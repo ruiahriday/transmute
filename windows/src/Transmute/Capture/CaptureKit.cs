@@ -120,6 +120,7 @@ static class CaptureKit
         window.UpdateLayout();
         void Finish()
         {
+            if (!window.IsVisible) return; // closed or hidden in the meantime
             var (w, h) = PhysicalSize(window);
             var (x, y) = place(w, h);
             MoveTo(window, x, y);

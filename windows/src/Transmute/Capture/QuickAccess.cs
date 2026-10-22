@@ -96,6 +96,8 @@ sealed class QuickAccess : Window
             Action("text", "Copy the text in it", () => _ = ReadText());
             Action("frame", "Put on a background", () => FrameWindow.Open(item.Path));
         }
+        if (item.Kind == CaptureKind.Recording && item.Path.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase))
+            Action("film", "Open in the video studio: zooms, background, shapes", () => { StudioWindow.Open(item.Path); Dismiss(0); });
         if (ShareSheet.IsAvailable) Action("share", "Share…", () => { try { ShareSheet.Show(CaptureKit.Handle(this), item.Path); } catch (Exception e) { Toast.Show("Couldn't open Share", e.Message, ok: false); } });
         Action("folder", "Show in folder", () => Native.RevealInExplorer([item.Path]));
 

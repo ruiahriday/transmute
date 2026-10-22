@@ -31,6 +31,10 @@ public partial class MainWindow
         records.Children.Add(CaptureButton("record", "Record Area", CaptureAction.RecordArea, "Record part of the screen as an MP4 or GIF"));
         records.Children.Add(Tool("window", "Record Window", "Record one window", () => { Hide(); _ = RunThenShow(Capture.RecordWindow()); }));
         records.Children.Add(CaptureButton("screen", "Record Full Screen", CaptureAction.RecordScreen, "Record the display the pointer is on"));
+        records.Children.Add(Tool("film", "Video Studio…", "Zooms on clicks, a smoother pointer, a background, and landscape, square or vertical shapes", () =>
+        {
+            if (PickFile("Videos|*.mp4;*.mov;*.mkv;*.webm;*.avi|All files|*.*") is { } f) StudioWindow.Open(f);
+        }));
         CapturePanel.Children.Add(records);
 
         CapturePanel.Children.Add(new TextBlock { Text = "MORE", Style = (Style)FindResource("Overline"), Margin = new Thickness(0, 4, 0, 6) });

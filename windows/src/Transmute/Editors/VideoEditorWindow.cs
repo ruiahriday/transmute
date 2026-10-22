@@ -83,7 +83,10 @@ sealed class VideoEditorWindow : Window
         controls.Children.Add(volumeView);
 
         controls.Children.Add(Ui.Heading("Still picture"));
-        controls.Children.Add(Ui.Row(Ui.Button("Save frame as PNG", (_, _) => Editors.Run(job, new JobOperation.Snapshot(position)), tip: "Saves the frame at the playhead next to the video")));
+        controls.Children.Add(Ui.Row(Ui.Button("Save frame as PNG", (_, _) => Editors.Run(job, new JobOperation.Snapshot(position)), tip: "Saves the frame at the playhead next to the video"),
+            Ui.Button("Copy text", (_, _) => _ = Capture.RecognizeFile(job.Path, position), tip: "Reads the words (and QR codes) in the frame at the playhead and copies them")));
+        controls.Children.Add(Ui.Heading("Studio"));
+        controls.Children.Add(Ui.Row(Ui.Button("Open in Video Studio", (_, _) => StudioWindow.Open(job.Path), tip: "Zooms on clicks, a smoother pointer, a background and landscape, square or vertical shapes")));
 
         controls.Children.Add(Ui.Heading("Save as"));
         controls.Children.Add(Ui.Combo(VideoEditEngine.Formats.Select(f => (f.Label(), f)), VideoEditEngine.FormatFor(edit, job.Path), f => edit = edit with { OutputFormat = f }));
