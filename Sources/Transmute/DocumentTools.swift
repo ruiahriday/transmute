@@ -1,6 +1,7 @@
 import AppKit
 import CoreText
 import PDFKit
+import Quartz
 import UniformTypeIdentifiers
 
 enum PDFTools {
@@ -89,22 +90,135 @@ enum PDFTools {
         return out
     }
 
-    /// Recompresses embedded images. Text-only PDFs usually can't get much smaller.
-    static func compress(_ input: URL, options: ConversionOptions) throws -> JobResult {
-        let doc = try open(input)
-        if options.stripMetadata { doc.documentAttributes = [:] }
+    /// Recompresses and downsizes the pictures in a PDF, a step at a time, until it reaches `goal`
+    /// bytes. Text and drawings stay as they are, so text-only PDFs can't get much smaller.
+    static func compress(_ input: URL, goal: Int64? = nil, options: ConversionOptions) throws -> JobResult {
+        let original = OutputPaths.fileSize(input)
         let out = OutputPaths.destination(for: input, ext: "pdf", suffix: "compressed", folder: options.outputFolder)
-        var writeOptions: [PDFDocumentWriteOption: Any] = [:]
-        if #available(macOS 13.4, *) {
-            writeOptions[.saveImagesAsJPEGOption] = true
-            writeOptions[.optimizeImagesForScreenOption] = true
+        let work = FileManager.default.temporaryDirectory.appendingPathComponent("transmute-pdf-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: work) }
+        let target = goal ?? original / 2
+
+        var best: (url: URL, size: Int64)?
+        func consider(_ url: URL) -> Bool {
+            let size = OutputPaths.fileSize(url)
+            guard size > 0, size < (best?.size ?? original) else { return false }
+            best = (url, size)
+            return size <= target
         }
-        guard doc.write(to: out, withOptions: writeOptions) else { throw ConversionError("Couldn't save the PDF.") }
-        let before = OutputPaths.fileSize(input), after = OutputPaths.fileSize(out)
-        let message = after < before
-            ? "\(before.formattedSize) → \(after.formattedSize)"
-            : "Already about as small as it gets (\(after.formattedSize))"
+
+        // 1. Quartz filters: pictures as JPEG at falling quality and size, like Preview's
+        //    "Reduce File Size" but less harsh to start with.
+        var reached = false
+        for (i, level) in compressionLevels.enumerated() {
+            let attempt = work.appendingPathComponent("level-\(i).pdf")
+            guard (try? writeFiltered(input, level: level, stripMetadata: options.stripMetadata, to: attempt)) == true else { continue }
+            if consider(attempt) { reached = true; break }
+        }
+
+        // 2. Scanned PDFs (pictures of pages, no text) are redrawn page by page as JPEG pictures.
+        if !reached, let doc = try? open(input), !hasText(doc) {
+            for (i, dpi) in [150.0, 110, 80].enumerated() {
+                let attempt = work.appendingPathComponent("scan-\(i).pdf")
+                guard (try? rasterizeToPDF(doc, dpi: dpi, quality: 0.6, to: attempt)) != nil else { continue }
+                if consider(attempt) { break }
+            }
+        }
+
+        // 3. PDFKit's own image optimizer.
+        if best == nil || best!.size > target {
+            let doc = try open(input)
+            if options.stripMetadata { doc.documentAttributes = [:] }
+            var writeOptions: [PDFDocumentWriteOption: Any] = [:]
+            if #available(macOS 13.4, *) {
+                writeOptions[.saveImagesAsJPEGOption] = true
+                writeOptions[.optimizeImagesForScreenOption] = true
+            }
+            let attempt = work.appendingPathComponent("pdfkit.pdf")
+            if doc.write(to: attempt, withOptions: writeOptions) { _ = consider(attempt) }
+        }
+
+        guard let best else {
+            try FileManager.default.copyItem(at: input, to: out)
+            return JobResult(outputs: [out], message: "This PDF is already as small as Transmute can make it (it's mostly text and drawings, not pictures).")
+        }
+        try FileManager.default.moveItem(at: best.url, to: out)
+        var message = "\(original.formattedSize) → \(best.size.formattedSize)"
+        if goal != nil, best.size > target + target / 10 {
+            message += " (the target \(target.formattedSize) was too small: the rest is text and drawings)"
+        }
         return JobResult(outputs: [out], message: message)
+    }
+
+    struct CompressionLevel { let quality: Double; let scale: Double; let maxPixels: Int }
+
+    static let compressionLevels: [CompressionLevel] = [
+        .init(quality: 0.7, scale: 1, maxPixels: 2400),
+        .init(quality: 0.55, scale: 0.75, maxPixels: 1800),
+        .init(quality: 0.45, scale: 0.5, maxPixels: 1400),
+        .init(quality: 0.35, scale: 0.4, maxPixels: 1000),
+        .init(quality: 0.25, scale: 0.3, maxPixels: 800),
+    ]
+
+    /// Saves the PDF through a Quartz filter that re-encodes every picture as JPEG.
+    static func writeFiltered(_ input: URL, level: CompressionLevel, stripMetadata: Bool, to out: URL) throws -> Bool {
+        let filterURL = out.deletingPathExtension().appendingPathExtension("qfilter")
+        let plist: [String: Any] = [
+            "Domains": ["Applications": true, "Printing": true],
+            "FilterType": 1,
+            "Name": "Transmute compression",
+            "FilterData": [
+                "ColorSettings": [
+                    "ImageSettings": [
+                        "Compression Quality": level.quality,
+                        "ImageCompression": "ImageJPEGCompress",
+                        "ImageScaleSettings": [
+                            "ImageScaleFactor": level.scale,
+                            "ImageScaleInterpolate": true,
+                            "ImageSizeMax": level.maxPixels,
+                            "ImageSizeMin": 64,
+                        ],
+                    ],
+                ],
+            ],
+        ]
+        let data = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
+        try data.write(to: filterURL)
+        guard let filter = QuartzFilter(url: filterURL) else { return false }
+        let doc = try open(input)
+        if stripMetadata { doc.documentAttributes = [:] }
+        return doc.write(to: out, withOptions: [PDFDocumentWriteOption(rawValue: "QuartzFilter"): filter])
+    }
+
+    static func hasText(_ doc: PDFDocument) -> Bool {
+        for index in 0..<min(doc.pageCount, 20) {
+            if let text = doc.page(at: index)?.string, text.contains(where: { $0.isLetter || $0.isNumber }) { return true }
+        }
+        return false
+    }
+
+    /// Redraws every page as a JPEG picture at `dpi`; for scans, which are pictures already.
+    static func rasterizeToPDF(_ doc: PDFDocument, dpi: Double, quality: Double, to out: URL) throws {
+        guard let ctx = CGContext(out as CFURL, mediaBox: nil, nil) else { throw ConversionError("Couldn't create the PDF.") }
+        let scale = dpi / 72
+        for index in 0..<doc.pageCount {
+            guard let page = doc.page(at: index) else { continue }
+            let bounds = page.bounds(for: .mediaBox)
+            let rotated = page.rotation % 180 != 0
+            var box = CGRect(x: 0, y: 0, width: rotated ? bounds.height : bounds.width, height: rotated ? bounds.width : bounds.height)
+            let thumb = page.thumbnail(of: NSSize(width: box.width * scale, height: box.height * scale), for: .mediaBox)
+            var rect = CGRect(origin: .zero, size: thumb.size)
+            guard let image = thumb.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { continue }
+            let jpeg = try ImageConverter.data(from: image, type: .jpeg, quality: quality)
+            guard let provider = CGDataProvider(data: jpeg as CFData),
+                  let embedded = CGImage(jpegDataProviderSource: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
+            else { continue }
+            ctx.beginPage(mediaBox: &box)
+            ctx.draw(embedded, in: box)
+            ctx.endPage()
+        }
+        ctx.closePDF()
     }
 
     static func stripMetadata(_ input: URL, options: ConversionOptions) throws -> URL {

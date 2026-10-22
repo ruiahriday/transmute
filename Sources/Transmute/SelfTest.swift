@@ -1,6 +1,7 @@
 import AppKit
 import CoreImage
 import ImageIO
+import PDFKit
 
 /// Headless check that runs every conversion on a folder of sample files:
 ///   Transmute.app/Contents/MacOS/Transmute --selftest <folder>
@@ -85,6 +86,22 @@ enum SelfTest {
             await exercise(epub, options: epubOptions)
         } else {
             record("EPUB inputs", nil, "no EPUB was produced in pass 1")
+        }
+
+        // A 30 MB-style PDF of photos must really shrink (beta testers got "already as small as it gets").
+        await check("Photo PDF compress 50% is at most 60% of the original") {
+            let pdf = outDir.appendingPathComponent("photo scan.pdf")
+            try makePhotoPDF(pdf, pages: 3, width: 2400, height: 3200)
+            let before = OutputPaths.fileSize(pdf)
+            let result = try await Engine.perform(.compress(.percent(0.5)), on: pdf, options: options) { _ in }
+            guard let out = result.outputs.first else { throw ConversionError("no output") }
+            let after = OutputPaths.fileSize(out)
+            guard Double(after) <= Double(before) * 0.6 else {
+                throw ConversionError("\(before.formattedSize) → \(after.formattedSize): \(result.message ?? "")")
+            }
+            guard PDFDocument(url: out)?.pageCount == 3 else { throw ConversionError("pages went missing") }
+            print("      \(result.message ?? "")")
+            return result.outputs
         }
 
         // Office / e-book content checks (OfficeConverter.swift).
@@ -870,6 +887,34 @@ enum SelfTest {
                 try await Engine.perform(.splitPDF, on: input, options: options) { _ in }.outputs
             }
         }
+    }
+
+    /// A PDF with one big photo-like picture per page, stored losslessly so it is large.
+    private static func makePhotoPDF(_ url: URL, pages: Int, width: Int, height: Int) throws {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let pdf = CGContext(url as CFURL, mediaBox: nil, nil) else { throw ConversionError("no PDF context") }
+        var generator = SystemRandomNumberGenerator()
+        for page in 0..<pages {
+            guard let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue),
+                  let pixels = ctx.data?.assumingMemoryBound(to: UInt8.self) else { throw ConversionError("no bitmap") }
+            let row = ctx.bytesPerRow
+            for y in 0..<height {
+                for x in 0..<width {
+                    let i = y * row + x * 4
+                    let grain = UInt8.random(in: 0...40, using: &generator)
+                    pixels[i] = UInt8((x * 200 / width + page * 20) % 216) &+ grain
+                    pixels[i + 1] = UInt8(y * 200 / height) &+ grain
+                    pixels[i + 2] = UInt8(((x + y) * 100 / (width + height)) + 60) &+ grain
+                }
+            }
+            guard let image = ctx.makeImage() else { throw ConversionError("no image") }
+            var box = CGRect(x: 0, y: 0, width: 595, height: 842)
+            pdf.beginPage(mediaBox: &box)
+            pdf.draw(image, in: box)
+            pdf.endPage()
+        }
+        pdf.closePDF()
     }
 
     /// Runs one operation and checks every output exists, isn't empty, and (for images) decodes.

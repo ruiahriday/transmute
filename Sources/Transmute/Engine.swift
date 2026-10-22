@@ -19,7 +19,7 @@ enum Engine {
             case .image: return try ImageConverter.compress(input, goal: goal, options: options)
             case .video, .audio:
                 return try await MediaConverter.compress(input, kind: kind, goal: goal, options: options, progress: progress)
-            case .pdf: return try PDFTools.compress(input, options: options)
+            case .pdf: return try PDFTools.compress(input, goal: goal, options: options)
             default: throw ConversionError("\(kind.title) can't be compressed.")
             }
 
