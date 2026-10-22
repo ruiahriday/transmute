@@ -101,6 +101,7 @@ final class PinController: ObservableObject {
         panel.contentView = FirstClickHostingView(rootView: PinView(pin: self))
         panel.setFrame(NSRect(origin: start, size: size), display: true)
         panel.onEscape = { [weak self] in self?.close() }
+        panel.onArrow = { [weak self] dx, dy in self?.nudge(dx: dx, dy: dy) }
         panel.orderFrontRegardless()
         panel.makeKey()
     }
@@ -114,6 +115,14 @@ final class PinController: ObservableObject {
         frame.origin.y += (frame.height - height) / 2
         frame.size = NSSize(width: width, height: height)
         panel.setFrame(frame, display: true, animate: false)
+    }
+
+    /// Moves the pin by whole points (the arrow keys; Shift for ten at a time).
+    func nudge(dx: CGFloat, dy: CGFloat) {
+        var frame = panel.frame
+        frame.origin.x += dx
+        frame.origin.y += dy
+        panel.setFrame(frame, display: true)
     }
 
     func copy() {
@@ -186,7 +195,7 @@ struct PinView: View {
             button("minus.magnifyingglass", "Smaller") { pin.zoom(by: 0.8) }
             button("plus.magnifyingglass", "Larger") { pin.zoom(by: 1.25) }
             button("doc.on.doc", "Copy") { pin.copy() }
-            button("lock", "Lock: clicks pass through. Unlock from the Spinform menu.") { pin.locked = true }
+            button("lock", "Lock: clicks pass through. Unlock from the Spinform menu. Arrow keys nudge the pin.") { pin.locked = true }
         }
         .padding(.horizontal, 4)
         .padding(.vertical, 2)

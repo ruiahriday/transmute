@@ -27,6 +27,32 @@ extension Prefs {
     static let recordClicks = "recordShowClicks"
     static let recordKeys = "recordShowKeystrokes"
     static let recordCamera = "recordCamera"
+    static let captureFreeze = "captureFreezeScreen"
+    static let captureCrosshair = "captureShowCrosshair"
+    static let captureMagnifier = "captureShowMagnifier"
+    static let windowBackground = "captureWindowBackground"
+    static let windowBackgroundColor = "captureWindowBackgroundColor"
+    static let windowBackgroundImage = "captureWindowBackgroundImage"
+    static let windowPadding = "captureWindowPadding"
+    static let overlaySize = "captureOverlaySize"
+    static let recordScale = "recordResolution"
+    static let recordCursor = "recordShowCursor"
+    static let recordHideDesktop = "recordHideDesktop"
+    static let recordStudio = "recordStudioMode"
+    static let clickColor = "recordClickColor"
+    static let clickSize = "recordClickSize"
+    static let clickFilled = "recordClickFilled"
+    static let clickAnimate = "recordClickAnimate"
+    static let keysPosition = "recordKeysPosition"
+    static let keysSize = "recordKeysSize"
+    static let keysLight = "recordKeysLight"
+    static let keysShortcutsOnly = "recordKeysShortcutsOnly"
+    static let cameraPosition = "recordCameraPosition"
+    static let cameraSize = "recordCameraSize"
+    static let cameraShape = "recordCameraShape"
+    static let cameraFull = "recordCameraFull"
+    static let ocrLanguage = "ocrLanguage"
+    static let ocrKeepLineBreaks = "ocrKeepLineBreaks"
 
     static func registerCaptureDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -48,6 +74,31 @@ extension Prefs {
             recordClicks: true,
             recordKeys: false,
             recordCamera: false,
+            captureFreeze: true,
+            captureCrosshair: true,
+            captureMagnifier: true,
+            windowBackground: WindowBackdrop.shadow.rawValue,
+            windowBackgroundColor: 0x4338CA,
+            windowPadding: 0.06,
+            overlaySize: "medium",
+            recordScale: "full",
+            recordCursor: true,
+            recordHideDesktop: false,
+            recordStudio: false,
+            clickColor: 0x8B5CF6,
+            clickSize: 64.0,
+            clickFilled: true,
+            clickAnimate: true,
+            keysPosition: "bottom",
+            keysSize: "medium",
+            keysLight: false,
+            keysShortcutsOnly: false,
+            cameraPosition: "bottomRight",
+            cameraSize: "medium",
+            cameraShape: "circle",
+            cameraFull: false,
+            ocrLanguage: "",
+            ocrKeepLineBreaks: true,
         ])
     }
 }
@@ -86,9 +137,30 @@ enum CaptureSettings {
     static var autoSave: Bool { defaults.bool(forKey: Prefs.captureAutoSave) }
     static var copyToClipboard: Bool { defaults.bool(forKey: Prefs.captureCopy) }
     static var showOverlay: Bool { defaults.bool(forKey: Prefs.captureOverlay) }
-    static var overlayOnRight: Bool { defaults.string(forKey: Prefs.overlayCorner) == "right" }
+    static var overlayOnRight: Bool { (defaults.string(forKey: Prefs.overlayCorner) ?? "").hasSuffix("right") }
+    static var overlayOnTop: Bool { (defaults.string(forKey: Prefs.overlayCorner) ?? "").hasPrefix("top") }
+    /// The quick access card's size as a multiple of the standard size.
+    static var overlayScale: CGFloat {
+        switch defaults.string(forKey: Prefs.overlaySize) {
+        case "small": 0.8
+        case "large": 1.25
+        default: 1
+        }
+    }
+    static var freezeScreen: Bool { defaults.bool(forKey: Prefs.captureFreeze) }
+    static var showCrosshair: Bool { defaults.bool(forKey: Prefs.captureCrosshair) }
+    static var showMagnifier: Bool { defaults.bool(forKey: Prefs.captureMagnifier) }
+    static var windowBackdrop: WindowBackdrop {
+        WindowBackdrop(rawValue: defaults.string(forKey: Prefs.windowBackground) ?? "") ?? .shadow
+    }
+    static var windowBackdropColor: UInt32 { UInt32(truncatingIfNeeded: defaults.integer(forKey: Prefs.windowBackgroundColor)) }
+    static var windowBackdropImage: URL? {
+        guard let path = defaults.string(forKey: Prefs.windowBackgroundImage), !path.isEmpty else { return nil }
+        return URL(fileURLWithPath: path)
+    }
+    static var windowPadding: Double { defaults.double(forKey: Prefs.windowPadding) }
     static var overlaySeconds: Int { defaults.integer(forKey: Prefs.overlaySeconds) }
-    static var windowShadow: Bool { defaults.bool(forKey: Prefs.windowShadow) }
+    static var windowShadow: Bool { windowBackdrop != .transparent }
     static var hideDesktopIcons: Bool { defaults.bool(forKey: Prefs.hideDesktopIcons) }
     static var selfTimer: Int { defaults.integer(forKey: Prefs.captureTimer) }
     /// 0 keeps no history.
@@ -103,8 +175,46 @@ enum CaptureSettings {
             systemAudio: defaults.bool(forKey: Prefs.recordSystemAudio),
             clicks: defaults.bool(forKey: Prefs.recordClicks),
             keystrokes: defaults.bool(forKey: Prefs.recordKeys),
-            camera: defaults.bool(forKey: Prefs.recordCamera))
+            camera: defaults.bool(forKey: Prefs.recordCamera),
+            maxHeight: { () -> Int? in
+                switch defaults.string(forKey: Prefs.recordScale) {
+                case "1080": return 1080
+                case "720": return 720
+                default: return nil
+                }
+            }(),
+            cursor: defaults.bool(forKey: Prefs.recordCursor),
+            hideDesktop: defaults.bool(forKey: Prefs.recordHideDesktop),
+            studio: defaults.bool(forKey: Prefs.recordStudio))
     }
+}
+
+/// What goes behind a window capture.
+enum WindowBackdrop: String, CaseIterable, Identifiable {
+    /// Just the window, transparent around its rounded corners.
+    case transparent
+    /// The window with its shadow, on transparency.
+    case shadow
+    /// The window on the desktop picture, with padding.
+    case desktop
+    /// The window on a solid colour, with padding.
+    case color
+    /// The window on a picture of your choice, with padding.
+    case image
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .transparent: "Transparent, no shadow"
+        case .shadow: "Transparent with shadow"
+        case .desktop: "On the desktop picture"
+        case .color: "On a colour"
+        case .image: "On a picture…"
+        }
+    }
+
+    var usesBackground: Bool { self == .desktop || self == .color || self == .image }
 }
 
 struct RecordingOptions: Equatable, Sendable {
@@ -116,6 +226,12 @@ struct RecordingOptions: Equatable, Sendable {
     var clicks = true
     var keystrokes = false
     var camera = false
+    /// Caps the recording's height (1080 or 720), nil for full resolution.
+    var maxHeight: Int? = nil
+    var cursor = true
+    var hideDesktop = false
+    /// Records without the pointer, keeps its path, and opens Studio afterwards.
+    var studio = false
 }
 
 // MARK: - Permissions
@@ -510,6 +626,8 @@ enum CaptureFiles {
 /// A borderless panel that can take key presses without bringing Spinform to the front.
 final class KeyPanel: NSPanel {
     var onEscape: (() -> Void)?
+    /// Arrow keys: the distance to move, in points (Shift moves ten times as far).
+    var onArrow: ((CGFloat, CGFloat) -> Void)?
 
     override var canBecomeKey: Bool { true }
 
@@ -520,8 +638,22 @@ final class KeyPanel: NSPanel {
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53, let onEscape {
             onEscape()
+        } else if let onArrow, let step = Self.arrowStep(keyCode: event.keyCode, shift: event.modifierFlags.contains(.shift)) {
+            onArrow(step.dx, step.dy)
         } else {
             super.keyDown(with: event)
+        }
+    }
+
+    /// How far an arrow key nudges (AppKit's y runs up), or nil for other keys.
+    static func arrowStep(keyCode: UInt16, shift: Bool) -> (dx: CGFloat, dy: CGFloat)? {
+        let step: CGFloat = shift ? 10 : 1
+        switch keyCode {
+        case 123: return (-step, 0)
+        case 124: return (step, 0)
+        case 125: return (0, -step)
+        case 126: return (0, step)
+        default: return nil
         }
     }
 
@@ -542,6 +674,29 @@ final class KeyPanel: NSPanel {
 /// A hosting view whose buttons work on the first click, even when Spinform isn't the active app.
 final class FirstClickHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+/// A hosting view that reports a sideways two-finger swipe (for dismissing cards).
+final class SwipeHostingView<Content: View>: NSHostingView<Content> {
+    var onSwipe: ((CGFloat) -> Void)?
+    private var travelled: CGFloat = 0
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func scrollWheel(with event: NSEvent) {
+        guard event.hasPreciseScrollingDeltas, abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) else {
+            super.scrollWheel(with: event)
+            return
+        }
+        if event.phase == .began { travelled = 0 }
+        travelled += event.scrollingDeltaX
+        if abs(travelled) > 70 {
+            let direction = travelled
+            travelled = 0
+            onSwipe?(direction)
+        }
+        if event.phase == .ended || event.phase == .cancelled { travelled = 0 }
+    }
 }
 
 /// An area that moves its window when dragged (for borderless floating windows).

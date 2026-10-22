@@ -210,6 +210,10 @@ final class ScreenRecorder: NSObject, ObservableObject {
     private var webcam: WebcamBubble?
     private var outputSize = CGSize.zero
     private var gif = false
+    private var studio = false
+    private var hidDesktop = false
+    /// The pointer's path for Studio, when recording in Studio mode.
+    private var tracker: CursorTracker?
 
     func start(_ target: RecordingTarget, options requested: RecordingOptions) async {
         guard phase == .idle else { return }
@@ -231,6 +235,7 @@ final class ScreenRecorder: NSObject, ObservableObject {
                        symbol: "exclamationmark.triangle.fill")
         }
         gif = options.gif
+        studio = options.studio
 
         // Where, and how big.
         let rect: CGRect
@@ -245,13 +250,22 @@ final class ScreenRecorder: NSObject, ObservableObject {
         let scale = options.high ? screen.backingScaleFactor : 1
         let longest = max(rect.width, rect.height) * scale
         let fit = min(1, (options.high ? 3840 : 1920) / max(1, longest))
-        let width = Self.even(rect.width * scale * fit)
-        let height = Self.even(rect.height * scale * fit)
+        var width = Self.even(rect.width * scale * fit)
+        var height = Self.even(rect.height * scale * fit)
+        if let cap = options.maxHeight {
+            let size = Self.capped(width: width, height: height, maxHeight: cap)
+            width = size.width
+            height = size.height
+        }
         outputSize = CGSize(width: width, height: height)
+        if options.hideDesktop {
+            DesktopIconHider.show()
+            hidDesktop = true
+        }
 
         if options.camera {
             let bubble = WebcamBubble()
-            if bubble.show(in: rect) { webcam = bubble }
+            if bubble.show(in: rect, style: .fromSettings) { webcam = bubble }
         }
         if case .area = target { areaFrame = AreaFrame(around: rect) }
         showControls(near: rect, on: screen)
@@ -276,7 +290,8 @@ final class ScreenRecorder: NSObject, ObservableObject {
             config.height = height
             config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(options.fps))
             config.queueDepth = 6
-            config.showsCursor = true
+            // Studio draws its own smooth pointer, so the recording leaves the real one out.
+            config.showsCursor = options.cursor && !options.studio
             config.pixelFormat = kCVPixelFormatType_32BGRA
             if options.systemAudio {
                 config.capturesAudio = true
@@ -314,6 +329,11 @@ final class ScreenRecorder: NSObject, ObservableObject {
             phase = .recording
             showStatusItem()
             startHelpers(options, screen: screen)
+            if options.studio {
+                let tracker = CursorTracker(area: rect)
+                tracker.start()
+                self.tracker = tracker
+            }
         } catch {
             cleanUp()
             Toast.show("Couldn't start recording", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
@@ -322,6 +342,14 @@ final class ScreenRecorder: NSObject, ObservableObject {
 
     private static func even(_ value: CGFloat) -> Int {
         max(2, Int(value / 2) * 2)
+    }
+
+    /// Shrinks a size to at most `maxHeight` tall (the shorter side for portrait areas), keeping its shape, in even pixels.
+    static func capped(width: Int, height: Int, maxHeight: Int) -> (width: Int, height: Int) {
+        let shorter = min(width, height)
+        guard shorter > maxHeight else { return (width, height) }
+        let factor = CGFloat(maxHeight) / CGFloat(shorter)
+        return (even(CGFloat(width) * factor), even(CGFloat(height) * factor))
     }
 
     private func startMicrophone(into writer: StreamWriter) {
@@ -387,6 +415,8 @@ final class ScreenRecorder: NSObject, ObservableObject {
         let mixedNeeded = writer?.hasTwoAudioTracks == true
         let size = outputSize
         let makeGIF = gif
+        let track = tracker?.finish()
+        let openStudio = studio
         cleanUp()
         guard let writer, var file = await writer.finish() else {
             phase = .idle
@@ -409,7 +439,8 @@ final class ScreenRecorder: NSObject, ObservableObject {
                 Toast.show("Saved as MP4 instead of GIF", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
             }
         }
-        CaptureCoordinator.shared.deliverRecording(file, kind: .recording, size: size, duration: duration)
+        CaptureCoordinator.shared.deliverRecording(file, kind: .recording, size: size, duration: duration,
+                                                   track: track, openStudio: openStudio)
     }
 
     private func cleanUp() {
@@ -433,6 +464,12 @@ final class ScreenRecorder: NSObject, ObservableObject {
         for monitor in monitors { NSEvent.removeMonitor(monitor) }
         monitors.removeAll()
         KeystrokeOverlay.shared.hide()
+        tracker?.stop()
+        tracker = nil
+        if hidDesktop {
+            DesktopIconHider.hide()
+            hidDesktop = false
+        }
         if phase != .finishing { phase = .idle }
     }
 
@@ -497,7 +534,10 @@ final class ScreenRecorder: NSObject, ObservableObject {
         }
         if options.keystrokes {
             KeystrokeOverlay.shared.prepare(on: screen)
+            let shortcutsOnly = UserDefaults.standard.bool(forKey: Prefs.keysShortcutsOnly)
             if let global = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { event in
+                guard KeystrokeOverlay.shouldShow(keyCode: event.keyCode, flags: event.modifierFlags, shortcutsOnly: shortcutsOnly)
+                else { return }
                 let text = KeystrokeOverlay.describe(event)
                 MainActor.assumeIsolated { KeystrokeOverlay.shared.show(text) }
             }) {
@@ -601,17 +641,33 @@ struct RecordingControlsBar: View {
 
 // MARK: - Click highlights
 
+/// How clicks are shown, from Settings.
+struct ClickLook: Equatable {
+    var color: UInt32 = 0x8B5CF6
+    var size: CGFloat = 64
+    var filled = true
+    var animated = true
+
+    static var fromSettings: ClickLook {
+        let d = UserDefaults.standard
+        return ClickLook(color: UInt32(truncatingIfNeeded: d.integer(forKey: Prefs.clickColor)),
+                         size: CGFloat(min(max(d.double(forKey: Prefs.clickSize), 24), 160)),
+                         filled: d.bool(forKey: Prefs.clickFilled),
+                         animated: d.bool(forKey: Prefs.clickAnimate))
+    }
+}
+
 @MainActor
 enum ClickRipple {
-    static func show(at point: CGPoint) {
-        let side: CGFloat = 64
+    static func show(at point: CGPoint, look: ClickLook = .fromSettings) {
+        let side = look.size
         let frame = NSRect(x: point.x - side / 2, y: point.y - side / 2, width: side, height: side)
         let panel = KeyPanel.floating(frame, level: .screenSaver, clickThrough: true)
-        panel.contentView = NSHostingView(rootView: RippleView())
+        panel.contentView = NSHostingView(rootView: RippleView(look: look))
         panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 550_000_000)
+            try? await Task.sleep(nanoseconds: look.animated ? 550_000_000 : 380_000_000)
             panel.orderOut(nil)
             panel.close()
         }
@@ -619,30 +675,70 @@ enum ClickRipple {
 }
 
 struct RippleView: View {
+    var look = ClickLook()
+    var frozen = false
     @State private var grown = false
 
     var body: some View {
+        let color = RGBAColor(hex: look.color).color
+        let done = grown && look.animated && !frozen
         ZStack {
-            Circle().fill(Theme.violet.opacity(grown ? 0 : 0.35))
-            Circle().strokeBorder(Theme.violet.opacity(grown ? 0 : 0.95), lineWidth: 3)
+            if look.filled { Circle().fill(color.opacity(done ? 0 : 0.35)) }
+            Circle().strokeBorder(color.opacity(done ? 0 : 0.95), lineWidth: 3)
         }
-        .scaleEffect(grown ? 1 : 0.35)
-        .onAppear { withAnimation(.easeOut(duration: 0.5)) { grown = true } }
+        .scaleEffect(look.animated && !frozen ? (grown ? 1 : 0.35) : 0.8)
+        .onAppear { if look.animated && !frozen { withAnimation(.easeOut(duration: 0.5)) { grown = true } } }
     }
 }
 
 // MARK: - Keystrokes
+
+/// How keystrokes are shown, from Settings.
+struct KeystrokeLook: Equatable {
+    enum Position: String, CaseIterable {
+        case bottom, bottomLeft, bottomRight, top
+    }
+    var position: Position = .bottom
+    var scale: CGFloat = 1
+    var light = false
+
+    static var fromSettings: KeystrokeLook {
+        let d = UserDefaults.standard
+        let scale: CGFloat
+        switch d.string(forKey: Prefs.keysSize) {
+        case "small": scale = 0.75
+        case "large": scale = 1.4
+        default: scale = 1
+        }
+        return KeystrokeLook(position: Position(rawValue: d.string(forKey: Prefs.keysPosition) ?? "") ?? .bottom,
+                             scale: scale, light: d.bool(forKey: Prefs.keysLight))
+    }
+
+    /// Where the keystroke pill goes on a screen.
+    func frame(on screen: CGRect, visible: CGRect) -> CGRect {
+        let size = CGSize(width: 420 * scale, height: 64 * scale)
+        let x: CGFloat
+        switch position {
+        case .bottomLeft: x = visible.minX + 40
+        case .bottomRight: x = visible.maxX - size.width - 40
+        case .bottom, .top: x = screen.midX - size.width / 2
+        }
+        let y = position == .top ? visible.maxY - size.height - 40 : visible.minY + 60
+        return CGRect(origin: CGPoint(x: x, y: y), size: size)
+    }
+}
 
 @MainActor
 final class KeystrokeOverlay {
     static let shared = KeystrokeOverlay()
     private var panel: KeyPanel?
     private var frame = NSRect.zero
+    private var look = KeystrokeLook()
     private var generation = 0
 
     func prepare(on screen: NSScreen) {
-        let size = CGSize(width: 420, height: 64)
-        frame = NSRect(x: screen.frame.midX - size.width / 2, y: screen.visibleFrame.minY + 60, width: size.width, height: size.height)
+        look = .fromSettings
+        frame = look.frame(on: screen.frame, visible: screen.visibleFrame)
     }
 
     func show(_ text: String) {
@@ -651,7 +747,7 @@ final class KeystrokeOverlay {
         let current = generation
         let panel = self.panel ?? KeyPanel.floating(frame, level: .screenSaver, clickThrough: true)
         self.panel = panel
-        panel.contentView = NSHostingView(rootView: KeystrokeView(text: text))
+        panel.contentView = NSHostingView(rootView: KeystrokeView(text: text, look: look))
         panel.setFrame(frame, display: true)
         panel.orderFrontRegardless()
         Task { @MainActor in
@@ -662,6 +758,15 @@ final class KeystrokeOverlay {
 
     func hide() {
         panel?.orderOut(nil)
+    }
+
+    /// With "only shortcuts" on, plain typing stays private: only keys with ⌘, ⌃ or ⌥, and
+    /// special keys (Esc, Return, Tab, arrows, Delete, function keys) are shown.
+    nonisolated static func shouldShow(keyCode: UInt16, flags: NSEvent.ModifierFlags, shortcutsOnly: Bool) -> Bool {
+        guard shortcutsOnly else { return true }
+        if !flags.intersection([.command, .control, .option]).isEmpty { return true }
+        let special: Set<UInt16> = [36, 48, 51, 53, 117, 123, 124, 125, 126, 122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111]
+        return special.contains(keyCode)
     }
 
     /// "⌘ ⇧ K", with symbols for special keys.
@@ -687,49 +792,87 @@ final class KeystrokeOverlay {
 
 struct KeystrokeView: View {
     let text: String
+    var look = KeystrokeLook()
 
     var body: some View {
         Text(text)
-            .font(.system(size: 24, weight: .semibold, design: .rounded))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 9)
-            .background(Color.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.15)))
+            .font(.system(size: 24 * look.scale, weight: .semibold, design: .rounded))
+            .foregroundStyle(look.light ? Color.black : Color.white)
+            .padding(.horizontal, 18 * look.scale)
+            .padding(.vertical, 9 * look.scale)
+            .background(look.light ? Color.white.opacity(0.92) : Color.black.opacity(0.72),
+                        in: RoundedRectangle(cornerRadius: 14 * look.scale, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14 * look.scale, style: .continuous)
+                .strokeBorder(look.light ? Color.black.opacity(0.12) : Color.white.opacity(0.15)))
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
 // MARK: - Webcam bubble
 
-/// A round, draggable camera picture that's recorded along with the screen.
+/// How the camera appears in a recording, from Settings.
+struct WebcamStyle: Equatable {
+    enum Corner: String, CaseIterable {
+        case bottomRight, bottomLeft, topRight, topLeft
+    }
+    var corner: Corner = .bottomRight
+    var side: CGFloat = 168
+    var rounded = false
+    /// The camera fills the whole recorded area (picture-in-picture off).
+    var full = false
+
+    static var fromSettings: WebcamStyle {
+        let d = UserDefaults.standard
+        let side: CGFloat
+        switch d.string(forKey: Prefs.cameraSize) {
+        case "small": side = 120
+        case "large": side = 240
+        default: side = 168
+        }
+        return WebcamStyle(corner: Corner(rawValue: d.string(forKey: Prefs.cameraPosition) ?? "") ?? .bottomRight,
+                           side: side, rounded: d.string(forKey: Prefs.cameraShape) == "rounded",
+                           full: d.bool(forKey: Prefs.cameraFull))
+    }
+
+    /// The camera's frame for a recorded area (AppKit coordinates).
+    func frame(in rect: CGRect) -> CGRect {
+        if full { return rect }
+        let inset: CGFloat = 24
+        let x = (corner == .bottomRight || corner == .topRight) ? rect.maxX - side - inset : rect.minX + inset
+        let y = (corner == .topLeft || corner == .topRight) ? rect.maxY - side - inset : rect.minY + inset
+        return CGRect(x: x, y: y, width: side, height: side)
+    }
+
+    var cornerRadius: CGFloat { full ? 0 : (rounded ? side * 0.18 : side / 2) }
+}
+
+/// A draggable camera picture that's recorded along with the screen.
 @MainActor
 final class WebcamBubble {
     private var panel: NSPanel?
     private let session = AVCaptureSession()
 
-    func show(in rect: CGRect) -> Bool {
+    func show(in rect: CGRect, style: WebcamStyle = WebcamStyle()) -> Bool {
         guard let device = AVCaptureDevice.default(for: .video),
               let input = try? AVCaptureDeviceInput(device: device), session.canAddInput(input) else { return false }
         session.addInput(input)
         if session.canSetSessionPreset(.high) { session.sessionPreset = .high }
-        let side: CGFloat = 168
-        let frame = NSRect(x: rect.maxX - side - 24, y: rect.minY + 24, width: side, height: side)
+        let frame = style.frame(in: rect)
         let panel = NSPanel(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = !style.full
         panel.level = .floating
-        panel.isMovableByWindowBackground = true
+        panel.isMovableByWindowBackground = !style.full
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         let view = CameraView(frame: NSRect(origin: .zero, size: frame.size))
         view.wantsLayer = true
         let root = CALayer()
-        root.cornerRadius = side / 2
+        root.cornerRadius = style.cornerRadius
         root.masksToBounds = true
-        root.borderWidth = 3
+        root.borderWidth = style.full ? 0 : 3
         root.borderColor = NSColor.white.cgColor
         root.backgroundColor = NSColor.black.cgColor
         view.layer = root
@@ -760,5 +903,82 @@ final class WebcamBubble {
 
     private final class CameraView: NSView {
         override var mouseDownCanMoveWindow: Bool { true }
+    }
+}
+
+// MARK: - Pointer track for Studio
+
+/// Where the pointer was and when it clicked during a recording, relative to the recorded area
+/// (normalized, top-left origin) and the recording's start.
+struct CursorTrack: Codable, Equatable, Sendable {
+    struct Sample: Codable, Equatable, Sendable {
+        var t: Double
+        var x: Double
+        var y: Double
+    }
+    var samples: [Sample] = []
+    var clicks: [Sample] = []
+    /// The recorded area in points, for sizing the pointer.
+    var areaWidth: Double = 0
+    var areaHeight: Double = 0
+}
+
+/// Samples the pointer 60 times a second while recording for Studio. Clicks come from a global
+/// mouse monitor, which needs no extra permission.
+@MainActor
+final class CursorTracker {
+    private let area: CGRect
+    private var track = CursorTrack()
+    private var timer: Timer?
+    private var monitors: [Any] = []
+    private var start = Date()
+
+    init(area: CGRect) {
+        self.area = area
+        track.areaWidth = Double(area.width)
+        track.areaHeight = Double(area.height)
+    }
+
+    func start() {
+        start = Date()
+        sample()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.sample() }
+        }
+        let handler: (NSEvent) -> Void = { [weak self] _ in
+            MainActor.assumeIsolated { self?.click() }
+        }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: handler) {
+            monitors.append(global)
+        }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { event in
+            handler(event)
+            return event
+        }) {
+            monitors.append(local)
+        }
+    }
+
+    private func point() -> CursorTrack.Sample {
+        let p = NSEvent.mouseLocation
+        return CursorTrack.Sample(t: Date().timeIntervalSince(start),
+                                  x: Double((p.x - area.minX) / max(area.width, 1)),
+                                  y: Double((area.maxY - p.y) / max(area.height, 1)))
+    }
+
+    private func sample() { track.samples.append(point()) }
+
+    private func click() { track.clicks.append(point()) }
+
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+        for monitor in monitors { NSEvent.removeMonitor(monitor) }
+        monitors.removeAll()
+    }
+
+    func finish() -> CursorTrack {
+        stop()
+        return track
     }
 }

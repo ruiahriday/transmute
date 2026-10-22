@@ -149,16 +149,20 @@ final class DragWheelController {
 enum EditorWindow {
     private static var windows: [NSWindow] = []
 
-    static func open(_ url: URL, startOnMarkup: Bool = false) {
+    static func open(_ url: URL, startOnMarkup: Bool = false, initialEdit: ImageEdit? = nil, projectURL: URL? = nil,
+                     saveFolder: URL? = nil) {
         let queue = JobQueue.shared
         guard let id = queue.add([url]).first, let job = queue.job(id),
               let mode = EditRequest.editMode(for: job.kind) else { return }
         var request = EditRequest(job: job, mode: mode)
         request.startOnMarkup = startOnMarkup
+        request.initialEdit = initialEdit
+        request.projectURL = projectURL
+        request.saveFolder = saveFolder
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 920, height: 660),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                               backing: .buffered, defer: false)
-        window.title = "Edit \(url.lastPathComponent)"
+        window.title = projectURL.map { "Edit \($0.lastPathComponent)" } ?? "Edit \(url.lastPathComponent)"
         window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: EditorHost(request: request) { [weak window] in

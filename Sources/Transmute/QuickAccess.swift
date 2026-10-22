@@ -27,34 +27,55 @@ struct QuickActions {
     var pin: () -> Void = {}
     var frame: () -> Void = {}
     var gif: () -> Void = {}
+    var text: () -> Void = {}
+    var studio: () -> Void = {}
+    var share: (NSView?) -> Void = { _ in }
     var close: () -> Void = {}
     var hover: (Bool) -> Void = { _ in }
 }
 
 /// Small floating cards in a corner of the screen after each capture: drag one into another app,
-/// or copy, save, annotate or pin it. They tidy themselves away after a while.
+/// or copy, save, annotate, pin, frame, read or share it. They tidy themselves away after a while,
+/// stay on the display the capture came from, can be swiped away, hidden for a while, and the last
+/// one closed can be brought back.
 @MainActor
-final class QuickAccess {
+final class QuickAccess: ObservableObject {
     static let shared = QuickAccess()
-    static let cardSize = CGSize(width: 264, height: 206)
+    static let cardSize = CGSize(width: 300, height: 214)
 
     private final class Card {
         let result: CaptureResult
         let panel: KeyPanel
+        let screenID: CGDirectDisplayID?
         var hideTask: Task<Void, Never>?
 
-        init(result: CaptureResult, panel: KeyPanel) {
+        init(result: CaptureResult, panel: KeyPanel, screenID: CGDirectDisplayID?) {
             self.result = result
             self.panel = panel
+            self.screenID = screenID
         }
     }
 
     private var cards: [Card] = []
+    /// The most recently closed card, for Restore.
+    @Published private(set) var lastClosed: CaptureResult?
+    /// All cards are tucked away until shown again.
+    @Published private(set) var hidden = false
+
+    var count: Int { cards.count }
 
     func show(_ result: CaptureResult) {
-        let panel = KeyPanel.floating(NSRect(origin: .zero, size: Self.cardSize), level: .statusBar)
-        let card = Card(result: result, panel: panel)
-        panel.contentView = FirstClickHostingView(rootView: QuickAccessCard(result: result, actions: actions(for: result)))
+        if hidden { setHidden(false) }
+        let size = Self.scaledSize
+        let panel = KeyPanel.floating(NSRect(origin: .zero, size: size), level: .statusBar)
+        let screen = ScreenGrabber.screenUnderMouse ?? NSScreen.main
+        let card = Card(result: result, panel: panel, screenID: screen.map { ScreenGrabber.displayID(of: $0) })
+        let host = SwipeHostingView(rootView: QuickAccessCard(result: result, actions: actions(for: result))
+            .scaleEffect(CaptureSettings.overlayScale, anchor: .topLeading)
+            .frame(width: size.width, height: size.height, alignment: .topLeading))
+        let id = result.id
+        host.onSwipe = { [weak self] direction in self?.swipeAway(id, direction: direction) }
+        panel.contentView = host
         panel.onEscape = { [weak self] in self?.dismiss(result.id) }
         cards.insert(card, at: 0)
         while cards.count > 5 {
@@ -73,9 +94,15 @@ final class QuickAccess {
         scheduleHide(card)
     }
 
+    static var scaledSize: CGSize {
+        let scale = CaptureSettings.overlayScale
+        return CGSize(width: (cardSize.width * scale).rounded(), height: (cardSize.height * scale).rounded())
+    }
+
     func dismiss(_ id: UUID) {
         guard let index = cards.firstIndex(where: { $0.result.id == id }) else { return }
         let card = cards.remove(at: index)
+        lastClosed = card.result
         card.hideTask?.cancel()
         let panel = card.panel
         NSAnimationContext.runAnimationGroup({ context in
@@ -90,15 +117,66 @@ final class QuickAccess {
         layout()
     }
 
-    private func layout() {
-        guard let screen = ScreenGrabber.screenUnderMouse ?? NSScreen.main else { return }
-        let visible = screen.visibleFrame
-        let size = Self.cardSize
-        let x = CaptureSettings.overlayOnRight ? visible.maxX - size.width - 10 : visible.minX + 10
-        for (index, card) in cards.enumerated() {
-            let y = visible.minY + 10 + CGFloat(index) * (size.height - 4)
-            card.panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+    /// A swipe slides the card off the way it went.
+    private func swipeAway(_ id: UUID, direction: CGFloat) {
+        guard let card = cards.first(where: { $0.result.id == id }) else { return }
+        var frame = card.panel.frame
+        frame.origin.x += direction > 0 ? frame.width : -frame.width
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.16
+            card.panel.animator().setFrame(frame, display: true)
         }
+        dismiss(id)
+    }
+
+    /// Brings back the card closed last, if its file is still there.
+    func restoreLast() {
+        guard let result = lastClosed, FileManager.default.fileExists(atPath: result.url.path) else {
+            Toast.show("Nothing to restore", detail: "Closed capture cards can be brought back here.", symbol: "exclamationmark.triangle.fill")
+            return
+        }
+        lastClosed = nil
+        show(CaptureResult(url: result.url, kind: result.kind, savedToFolder: result.savedToFolder,
+                           pixelSize: result.pixelSize, duration: result.duration))
+    }
+
+    /// Tucks every card away (or brings them back) without closing them.
+    func setHidden(_ hide: Bool) {
+        hidden = hide
+        for card in cards {
+            if hide {
+                card.hideTask?.cancel()
+                card.panel.orderOut(nil)
+            } else {
+                card.panel.orderFrontRegardless()
+                scheduleHide(card)
+            }
+        }
+    }
+
+    /// Cards stack in the chosen corner of the display each capture came from.
+    private func layout() {
+        let size = Self.scaledSize
+        var stacks: [CGDirectDisplayID: Int] = [:]
+        for card in cards {
+            let screen = NSScreen.screens.first { ScreenGrabber.displayID(of: $0) == card.screenID }
+                ?? ScreenGrabber.screenUnderMouse ?? NSScreen.main
+            guard let screen else { continue }
+            let id = ScreenGrabber.displayID(of: screen)
+            let index = stacks[id, default: 0]
+            stacks[id] = index + 1
+            card.panel.setFrame(Self.frame(index: index, size: size, in: screen.visibleFrame,
+                                           right: CaptureSettings.overlayOnRight, top: CaptureSettings.overlayOnTop),
+                                display: true)
+        }
+    }
+
+    /// Where the card at `index` in a stack goes.
+    static func frame(index: Int, size: CGSize, in visible: CGRect, right: Bool, top: Bool) -> CGRect {
+        let x = right ? visible.maxX - size.width - 10 : visible.minX + 10
+        let step = CGFloat(index) * (size.height - 4)
+        let y = top ? visible.maxY - size.height - 10 - step : visible.minY + 10 + step
+        return CGRect(x: x, y: y, width: size.width, height: size.height)
     }
 
     private func scheduleHide(_ card: Card) {
@@ -149,9 +227,39 @@ final class QuickAccess {
                 self?.dismiss(id)
                 coordinator.makeGIF(from: url)
             },
+            text: {
+                coordinator.recognizeText(inFile: url)
+            },
+            studio: { [weak self] in
+                self?.dismiss(id)
+                StudioWindow.open(url)
+            },
+            share: { view in
+                let picker = NSSharingServicePicker(items: [url])
+                if let view { picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY) }
+            },
             close: { [weak self] in self?.dismiss(id) },
             hover: { [weak self] inside in self?.hover(id, inside) })
     }
+}
+
+/// Size on disk, for the card's info line.
+enum FileInfo {
+    static func size(of url: URL) -> String? {
+        guard let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize else { return nil }
+        return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+}
+
+/// An invisible view that hands its NSView to a closure, so the share menu knows where to appear.
+struct ShareAnchor: NSViewRepresentable {
+    let onMake: (NSView) -> Void
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onMake(view) }
+        return view
+    }
+    func updateNSView(_ view: NSView, context: Context) {}
 }
 
 struct QuickAccessCard: View {
@@ -159,6 +267,7 @@ struct QuickAccessCard: View {
     let actions: QuickActions
     var forceHover = false
     @State private var hovering = false
+    @State private var shareView: NSView?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -169,7 +278,7 @@ struct QuickAccessCard: View {
                 .overlay(alignment: .bottomLeading) {
                     HStack(spacing: 4) {
                         Image(systemName: result.kind.symbol)
-                        Text(result.detail).monospacedDigit()
+                        Text(infoText).monospacedDigit()
                     }
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(.white)
@@ -201,12 +310,16 @@ struct QuickAccessCard: View {
                 tool("square.and.arrow.down", "Save", action: actions.save)
                 if result.isVideo {
                     tool("scissors", "Trim", action: actions.annotate)
+                    tool("wand.and.stars", "Studio", action: actions.studio)
                     tool("photo.stack", "GIF", action: actions.gif)
                 } else {
-                    tool("pencil.tip.crop.circle", "Annotate", action: actions.annotate)
+                    tool("pencil.tip.crop.circle", "Markup", action: actions.annotate)
                     tool("pin", "Pin", action: actions.pin)
                     tool("photo.artframe", "Frame", action: actions.frame)
+                    tool("text.viewfinder", "Text", action: actions.text)
                 }
+                tool("square.and.arrow.up", "Share") { actions.share(shareView) }
+                    .background(ShareAnchor { shareView = $0 })
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 5)
@@ -222,6 +335,12 @@ struct QuickAccessCard: View {
             actions.hover(inside)
         }
         .animation(.easeOut(duration: 0.15), value: hovering)
+    }
+
+    /// "1280×720 · 245 KB"
+    private var infoText: String {
+        guard let size = FileInfo.size(of: result.url) else { return result.detail }
+        return "\(result.detail) · \(size)"
     }
 
     private func tool(_ symbol: String, _ title: String, action: @escaping () -> Void) -> some View {

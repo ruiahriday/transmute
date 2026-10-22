@@ -571,6 +571,32 @@ struct VideoEditorView: View {
                 } label: {
                     Label("Take Snapshot", systemImage: "camera")
                 }
+                Button {
+                    copyFrameText()
+                } label: {
+                    Label("Copy Text", systemImage: "text.viewfinder")
+                }
+                .help("Reads the text in the frame you're on and copies it")
+                Button {
+                    StudioWindow.open(url)
+                } label: {
+                    Label("Studio", systemImage: "wand.and.stars")
+                }
+                .help("Zooms, background, pointer and shape for sharing")
+            }
+        }
+    }
+
+    /// OCR of the frame on screen.
+    private func copyFrameText() {
+        let url = self.url, seconds = playhead
+        Task {
+            do {
+                let result = try await TextRecognizer.recognize(videoAt: url, seconds: seconds)
+                TextRecognizer.deliver(result)
+                if !result.isEmpty { CaptureCoordinator.shared.keepText(result.clipboardText) }
+            } catch {
+                Toast.show("Couldn't read text", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
             }
         }
     }

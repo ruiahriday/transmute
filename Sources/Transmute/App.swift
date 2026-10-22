@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 import Darwin
 import ServiceManagement
 import SwiftUI
@@ -68,9 +69,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HotkeyCenter.shared.start()
         let days = CaptureSettings.historyDays
         if days > 0 { CaptureHistory.shared.prune(keepingDays: days) }
+        DesktopPicture.refresh()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        // spinform:// links, handled here so SwiftUI doesn't open another window for them.
+        NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(handleURLEvent(_:withReply:)),
+                                                     forEventClass: AEEventClass(kInternetEventClass),
+                                                     andEventID: AEEventID(kAEGetURL))
+    }
+
+    @objc private func handleURLEvent(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        guard let text = event.paramDescriptor(forKeyword: keyDirectObject)?.stringValue, let url = URL(string: text) else { return }
+        handle(url)
+    }
+
+    /// .spinform projects opened from Finder, and links.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls { handle(url) }
+    }
+
+    private func handle(_ url: URL) {
+        if url.isFileURL {
+            if url.pathExtension.lowercased() == SpinformProject.fileExtension { ProjectOpener.open(url) }
+            return
+        }
+        guard let command = AutomationCommand.parse(url) else {
+            Toast.show("Unknown Spinform link", detail: url.absoluteString, symbol: "exclamationmark.triangle.fill")
+            return
+        }
+        command.run()
+    }
 }
 
 struct MenuContent: View {
@@ -368,11 +399,13 @@ struct SettingsView: View {
 /// The capture tools in the menu bar menu, with their shortcuts.
 struct CaptureMenuItems: View {
     @ObservedObject private var recorder = ScreenRecorder.shared
+    @ObservedObject private var quickAccess = QuickAccess.shared
 
     var body: some View {
         if recorder.isActive {
             Button("Stop Recording") { recorder.stop() }
         }
+        item(.allInOne)
         item(.area)
         item(.window)
         item(.fullscreen)
@@ -384,12 +417,22 @@ struct CaptureMenuItems: View {
             item(.recordWindow)
             item(.recordScreen)
         }
+        Button("Open in Studio…") { StudioWindow.choose() }
+        Button("Open Markup Project…") { ProjectOpener.choose() }
         Button("Pin Image…") { PinController.choose() }
         if PinController.lockedCount > 0 {
             Button("Unlock Pinned Images") { PinController.unlockAll() }
         }
         if !PinController.all.isEmpty {
             Button("Close Pinned Images") { PinController.closeAll() }
+        }
+        if quickAccess.lastClosed != nil {
+            Button("Restore Last Capture Card") { quickAccess.restoreLast() }
+        }
+        if quickAccess.hidden {
+            Button("Show Capture Cards") { quickAccess.setHidden(false) }
+        } else if quickAccess.count > 0 {
+            Button("Hide Capture Cards") { quickAccess.setHidden(true) }
         }
         item(.history)
     }

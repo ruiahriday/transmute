@@ -5,7 +5,7 @@ import SwiftUI
 
 struct HistoryItem: Codable, Identifiable, Equatable, Hashable {
     enum Kind: String, Codable, CaseIterable {
-        case screenshot, scrolling, recording, gif
+        case screenshot, scrolling, recording, gif, text
 
         var label: String {
             switch self {
@@ -13,6 +13,7 @@ struct HistoryItem: Codable, Identifiable, Equatable, Hashable {
             case .scrolling: "Scrolling capture"
             case .recording: "Recording"
             case .gif: "GIF"
+            case .text: "Text"
             }
         }
 
@@ -22,6 +23,7 @@ struct HistoryItem: Codable, Identifiable, Equatable, Hashable {
             case .scrolling: "arrow.up.and.down.text.horizontal"
             case .recording: "video.fill"
             case .gif: "photo.stack"
+            case .text: "text.viewfinder"
             }
         }
 
@@ -183,6 +185,27 @@ struct ThumbnailView: View {
     }
 }
 
+/// The start of a text capture, in place of a thumbnail.
+struct TextSnippetView: View {
+    let url: URL
+    @State private var text = ""
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            Theme.surfaceRaised
+            Text(text.isEmpty ? " " : text)
+                .font(.system(size: 10.5, design: .monospaced))
+                .foregroundStyle(Theme.textSecondary)
+                .lineLimit(7)
+                .padding(EdgeInsets(top: 26, leading: 9, bottom: 6, trailing: 9))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .task(id: url) {
+            text = (try? String(contentsOf: url, encoding: .utf8)).map { String($0.prefix(400)) } ?? ""
+        }
+    }
+}
+
 // MARK: - Window
 
 @MainActor
@@ -217,24 +240,28 @@ struct HistoryView: View {
     @State private var confirmClear = false
 
     enum Filter: String, CaseIterable, Identifiable {
-        case all = "All", screenshots = "Screenshots", recordings = "Recordings"
+        case all = "All", screenshots = "Screenshots", recordings = "Recordings", text = "Text"
         var id: String { rawValue }
         var symbol: String {
             switch self {
             case .all: "square.grid.2x2"
             case .screenshots: "camera.viewfinder"
             case .recordings: "video"
+            case .text: "text.viewfinder"
+            }
+        }
+
+        func includes(_ kind: HistoryItem.Kind) -> Bool {
+            switch self {
+            case .all: true
+            case .screenshots: kind == .screenshot || kind == .scrolling
+            case .recordings: kind == .recording || kind == .gif
+            case .text: kind == .text
             }
         }
     }
 
-    private var shown: [HistoryItem] {
-        switch filter {
-        case .all: history.items
-        case .screenshots: history.items.filter { $0.kind == .screenshot || $0.kind == .scrolling }
-        case .recordings: history.items.filter { $0.kind == .recording || $0.kind == .gif }
-        }
-    }
+    private var shown: [HistoryItem] { history.items.filter { filter.includes($0.kind) } }
 
     private var days: [(title: String, items: [HistoryItem])] {
         let calendar = Calendar.current
@@ -347,7 +374,13 @@ struct HistoryCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            ThumbnailView(url: url)
+            Group {
+                if item.kind == .text {
+                    TextSnippetView(url: url)
+                } else {
+                    ThumbnailView(url: url)
+                }
+            }
                 .frame(height: 112)
                 .frame(maxWidth: .infinity)
                 .clipped()
@@ -387,7 +420,7 @@ struct HistoryCard: View {
             Button("Open") { NSWorkspace.shared.open(url) }
             Button(item.kind.isVideo ? "Trim in Video Editor" : "Annotate") { CaptureCoordinator.shared.edit(url) }
             Button("Copy") { CaptureCoordinator.shared.copy(url) }
-            if !item.kind.isVideo {
+            if !item.kind.isVideo && item.kind != .text {
                 Button("Pin to Screen") { PinController.open(url: url) }
                 Button("Add Background Frame") { FrameToolWindow.open(url) }
             }
@@ -399,6 +432,7 @@ struct HistoryCard: View {
 
     private var detail: String {
         if let duration = item.duration { return Self.time(duration) }
+        if item.kind == .text { return FileInfo.size(of: url) ?? "" }
         return "\(item.width)×\(item.height)"
     }
 
@@ -411,11 +445,13 @@ struct HistoryCard: View {
         ZStack {
             Color.black.opacity(0.45)
             HStack(spacing: 6) {
-                iconButton(item.kind.isVideo ? "scissors" : "pencil.tip.crop.circle", item.kind.isVideo ? "Trim" : "Annotate") {
-                    CaptureCoordinator.shared.edit(url)
+                if item.kind != .text {
+                    iconButton(item.kind.isVideo ? "scissors" : "pencil.tip.crop.circle", item.kind.isVideo ? "Trim" : "Annotate") {
+                        CaptureCoordinator.shared.edit(url)
+                    }
                 }
                 iconButton("doc.on.doc", "Copy") { CaptureCoordinator.shared.copy(url) }
-                if !item.kind.isVideo {
+                if !item.kind.isVideo && item.kind != .text {
                     iconButton("pin", "Pin to screen") { PinController.open(url: url) }
                 }
                 iconButton("square.and.arrow.down", "Save to the capture folder") { restore() }

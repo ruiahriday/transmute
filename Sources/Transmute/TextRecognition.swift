@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import CoreImage
 import PDFKit
 import Vision
@@ -20,19 +21,85 @@ enum TextRecognizer {
         var wordCount: Int { text.split(whereSeparator: { $0.isWhitespace }).count }
     }
 
-    static func recognize(_ image: CGImage) throws -> Result {
-        Result(text: try text(in: image), qrCodes: qrCodes(in: image))
+    /// How text is read: which language to expect (nil: work it out) and whether to keep line breaks.
+    struct Options: Equatable, Sendable {
+        var language: String? = nil
+        var keepLineBreaks = true
+
+        static var fromSettings: Options {
+            let defaults = UserDefaults.standard
+            let language = defaults.string(forKey: Prefs.ocrLanguage) ?? ""
+            return Options(language: language.isEmpty ? nil : language,
+                           keepLineBreaks: defaults.object(forKey: Prefs.ocrKeepLineBreaks) as? Bool ?? true)
+        }
+    }
+
+    /// Languages this Mac's Vision can read, as codes ("en-US", "fr-FR", "zh-Hans", …).
+    static var supportedLanguages: [String] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        return (try? request.supportedRecognitionLanguages()) ?? ["en-US"]
+    }
+
+    /// "French (France)" for "fr-FR".
+    static func languageName(_ code: String) -> String {
+        Locale.current.localizedString(forIdentifier: code) ?? code
+    }
+
+    static func recognize(_ image: CGImage, options: Options = .fromSettings) throws -> Result {
+        Result(text: try text(in: image, options: options), qrCodes: qrCodes(in: image))
+    }
+
+    /// Where the lines of text are (normalized, top-left origin), for the highlighter. Fast and rough.
+    static func lineBoxes(in image: CGImage) -> [NormRect] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .fast
+        request.usesLanguageCorrection = false
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        guard (try? handler.perform([request])) != nil else { return [] }
+        return (request.results ?? []).map { observation in
+            let box = observation.boundingBox
+            return NormRect(x: Double(box.minX), y: Double(1 - box.maxY), width: Double(box.width), height: Double(box.height))
+        }
+    }
+
+    /// Joins lines into one paragraph per block when line breaks aren't wanted (a blank line still separates blocks).
+    static func strippingLineBreaks(_ text: String) -> String {
+        text.components(separatedBy: "\n\n").map { block in
+            block.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
+        }.joined(separator: "\n\n")
+    }
+
+    /// One frame of a video, read for text.
+    static func recognize(videoAt url: URL, seconds: Double, options: Options = .fromSettings) async throws -> Result {
+        let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
+        generator.appliesPreferredTrackTransform = true
+        generator.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 30)
+        generator.requestedTimeToleranceAfter = CMTime(value: 1, timescale: 30)
+        let frame: CGImage
+        do {
+            frame = try await generator.image(at: CMTime(seconds: max(0, seconds), preferredTimescale: 600)).image
+        } catch {
+            throw ConversionError("Couldn't read that frame: \(error.localizedDescription)")
+        }
+        let box = ImageEditEngine.PreviewImage(image: frame, originalSize: .zero)
+        return try await Task.detached(priority: .userInitiated) { try recognize(box.image, options: options) }.value
     }
 
     /// Lines of text top to bottom, words left to right.
-    static func text(in image: CGImage) throws -> String {
+    static func text(in image: CGImage, options: Options = .fromSettings) throws -> String {
         var source = image
         // Vision reads tiny text (a single line from a non-Retina screen) better a little larger.
         if min(image.width, image.height) < 120, let larger = upscaled(image, by: 2) { source = larger }
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
-        request.automaticallyDetectsLanguage = true
+        if let language = options.language {
+            request.recognitionLanguages = [language]
+            request.automaticallyDetectsLanguage = false
+        } else {
+            request.automaticallyDetectsLanguage = true
+        }
         let handler = VNImageRequestHandler(cgImage: source, options: [:])
         do {
             try handler.perform([request])
@@ -43,7 +110,8 @@ enum TextRecognizer {
             guard let candidate = observation.topCandidates(1).first else { return nil }
             return (observation.boundingBox, candidate.string)
         }
-        return assemble(pieces)
+        let text = assemble(pieces)
+        return options.keepLineBreaks ? text : strippingLineBreaks(text)
     }
 
     /// Groups Vision's boxes (normalized, bottom-left origin) into lines.

@@ -9,6 +9,8 @@ final class CaptureCoordinator: ObservableObject {
     static let shared = CaptureCoordinator()
 
     @Published private(set) var busy = false
+    /// The history copy made by the last store(), so Studio can find a recording's pointer path from either copy.
+    private var lastHistoryURL: URL?
     private static let previousAreaKey = "capturePreviousArea"
 
     func perform(_ action: CaptureAction) {
@@ -43,6 +45,8 @@ final class CaptureCoordinator: ObservableObject {
     private func run(_ action: CaptureAction) async {
         do {
             switch action {
+            case .allInOne:
+                try await allInOne()
             case .area:
                 if let image = try await pickAndCapture(mode: .area) { deliver(image, kind: .screenshot) }
             case .window:
@@ -70,10 +74,30 @@ final class CaptureCoordinator: ObservableObject {
         }
     }
 
+    // MARK: All-in-one
+
+    private func allInOne() async throws {
+        guard let choice = await CaptureChooser.choose() else { return }
+        // Let the chooser leave the screen before anything is captured.
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        switch choice {
+        case .action(let action):
+            if action == .history || action == .allInOne {
+                HistoryWindow.show()
+            } else {
+                await run(action)
+            }
+        case .exactSize(let size):
+            if let image = try await pickAndCapture(mode: .area, constraint: .fixedSize(size)) { deliver(image, kind: .screenshot) }
+        case .lockedAspect(let ratio):
+            if let image = try await pickAndCapture(mode: .area, constraint: .aspect(ratio)) { deliver(image, kind: .screenshot) }
+        }
+    }
+
     // MARK: Picking
 
     /// Freezes the screens, lets the user choose, then returns what to keep.
-    private func choose(mode: SelectionMode, hint: String? = nil) async throws -> SelectionOutcome? {
+    private func choose(mode: SelectionMode, hint: String? = nil, constraint: SelectionConstraint? = nil) async throws -> SelectionOutcome? {
         let hideIcons = CaptureSettings.hideDesktopIcons
         if hideIcons {
             DesktopIconHider.show()
@@ -87,13 +111,14 @@ final class CaptureCoordinator: ObservableObject {
             if hideIcons { DesktopIconHider.hide() }
             throw error
         }
-        let outcome = await SelectionOverlay.select(mode: mode, shots: shots, windows: windows, hint: hint)
+        let outcome = await SelectionOverlay.select(mode: mode, shots: shots, windows: windows, hint: hint,
+                                                    constraint: constraint, look: .fromSettings)
         if hideIcons && outcome == nil { DesktopIconHider.hide() }
         return outcome
     }
 
-    private func pickAndCapture(mode: SelectionMode) async throws -> CGImage? {
-        guard let outcome = try await choose(mode: mode) else { return nil }
+    private func pickAndCapture(mode: SelectionMode, constraint: SelectionConstraint? = nil) async throws -> CGImage? {
+        guard let outcome = try await choose(mode: mode, constraint: constraint) else { return nil }
         defer { DesktopIconHider.hide() }
         let timer = CaptureSettings.selfTimer
         switch outcome {
@@ -103,13 +128,41 @@ final class CaptureCoordinator: ObservableObject {
                 await Countdown.run(seconds: timer, centredOn: rect)
                 return try await ScreenGrabber.captureArea(rect, excludingSelf: false)
             }
+            if !CaptureSettings.freezeScreen {
+                // The screen wasn't frozen, so take what's there now that the crosshair has gone.
+                try? await Task.sleep(nanoseconds: 120_000_000)
+                return try await ScreenGrabber.captureArea(rect, excludingSelf: true)
+            }
             return ScreenGrabber.crop(shot, to: rect)
         case .window(let window):
             // Give the overlay a moment to leave the screen.
             try? await Task.sleep(nanoseconds: 120_000_000)
             if timer > 0 { await Countdown.run(seconds: timer, centredOn: window.frame) }
-            return try await ScreenGrabber.captureWindow(window, shadow: CaptureSettings.windowShadow)
+            return try await captureWindowWithBackdrop(window)
         }
+    }
+
+    /// A window as Settings asks: on transparency with or without its shadow, or on a background.
+    private func captureWindowWithBackdrop(_ window: WindowInfo) async throws -> CGImage? {
+        let backdrop = CaptureSettings.windowBackdrop
+        let image = try await ScreenGrabber.captureWindow(window, shadow: backdrop == .shadow)
+        guard backdrop.usesBackground else { return image }
+        DesktopPicture.refresh()
+        let style = Self.backdropStyle(backdrop, color: CaptureSettings.windowBackdropColor,
+                                       picture: CaptureSettings.windowBackdropImage, padding: CaptureSettings.windowPadding)
+        let box = ImageEditEngine.PreviewImage(image: image, originalSize: .zero)
+        return try await Task.detached(priority: .userInitiated) { try FrameRenderer.render(box.image, style: style) }.value
+    }
+
+    /// The frame look for a window backdrop: the background, padding and a soft shadow, no extra rounding.
+    nonisolated static func backdropStyle(_ backdrop: WindowBackdrop, color: UInt32, picture: URL?, padding: Double) -> FrameStyle {
+        let background: FrameStyle.Background
+        switch backdrop {
+        case .image: background = picture.map { .image($0.path) } ?? .desktop
+        case .color: background = .solid(color)
+        default: background = .desktop
+        }
+        return FrameStyle(background: background, padding: min(max(padding, 0), 0.25), corners: 0, shadow: 0.7, aspect: .auto)
     }
 
     private func captureFullScreen() async throws -> CGImage? {
@@ -176,6 +229,7 @@ final class CaptureCoordinator: ObservableObject {
         let box = ImageEditEngine.PreviewImage(image: image, originalSize: .zero)
         let result = try await Task.detached(priority: .userInitiated) { try TextRecognizer.recognize(box.image) }.value
         TextRecognizer.deliver(result)
+        if !result.isEmpty { keepText(result.clipboardText) }
     }
 
     /// Copy Text from an image or PDF file instead of the screen.
@@ -185,13 +239,33 @@ final class CaptureCoordinator: ObservableObject {
         panel.allowedContentTypes = [.image, .pdf]
         panel.prompt = "Copy Text"
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        recognizeText(inFile: url)
+    }
+
+    /// Copies the text in an image or PDF (a quick access card's Text button, the URL scheme).
+    func recognizeText(inFile url: URL) {
         Task {
             do {
                 let result = try await Task.detached(priority: .userInitiated) { try TextRecognizer.recognize(fileAt: url) }.value
                 TextRecognizer.deliver(result)
+                if !result.isEmpty { keepText(result.clipboardText) }
             } catch {
                 Toast.show("Couldn't read text", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
             }
+        }
+    }
+
+    /// Recognised text goes into the history too (as a .txt), so it can be found again.
+    func keepText(_ text: String) {
+        let days = CaptureSettings.historyDays
+        guard days > 0, let data = text.data(using: .utf8) else { return }
+        let temp = OutputPaths.temporaryURL(ext: "txt")
+        do {
+            try data.write(to: temp, options: .atomic)
+            try CaptureHistory.shared.add(file: temp, kind: .text, width: 0, height: 0)
+            try? FileManager.default.removeItem(at: temp)
+        } catch {
+            try? FileManager.default.removeItem(at: temp)
         }
     }
 
@@ -238,12 +312,18 @@ final class CaptureCoordinator: ObservableObject {
     }
 
     /// A finished recording (or GIF) at a temporary location.
-    func deliverRecording(_ temp: URL, kind: HistoryItem.Kind, size: CGSize, duration: Double) {
+    func deliverRecording(_ temp: URL, kind: HistoryItem.Kind, size: CGSize, duration: Double,
+                          track: CursorTrack? = nil, openStudio: Bool = false) {
         do {
             let data = try Data(contentsOf: temp, options: .mappedIfSafe)
             let file = try store(data, ext: temp.pathExtension, name: CaptureFiles.baseName("Spinform Recording"),
                                  kind: kind, size: size, duration: duration)
             try? FileManager.default.removeItem(at: temp)
+            if let track { StudioTracks.save(track, for: [file.url] + (lastHistoryURL.map { [$0] } ?? [])) }
+            if openStudio {
+                StudioWindow.open(file.url)
+                return
+            }
             if CaptureSettings.copyToClipboard { CaptureFiles.copyFile(file.url) }
             present(CaptureResult(url: file.url, kind: kind, savedToFolder: file.saved, pixelSize: size, duration: duration))
         } catch {
@@ -259,6 +339,7 @@ final class CaptureCoordinator: ObservableObject {
             saved = try CaptureFiles.write(data, ext: ext, name: name, to: CaptureSettings.folder)
         }
         var kept: URL?
+        lastHistoryURL = nil
         let days = CaptureSettings.historyDays
         if days > 0 {
             let source: URL
@@ -272,6 +353,7 @@ final class CaptureCoordinator: ObservableObject {
                                                      duration: duration)
             if saved == nil { try? FileManager.default.removeItem(at: source) }
             kept = CaptureHistory.shared.url(for: item)
+            lastHistoryURL = kept
             CaptureHistory.shared.prune(keepingDays: days)
         }
         if let saved { return (saved, true) }
@@ -295,7 +377,11 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: Actions on results
 
     func copy(_ url: URL) {
-        if CaptureFiles.isVideo(url) {
+        if url.pathExtension.lowercased() == "txt", let text = try? String(contentsOf: url, encoding: .utf8) {
+            let board = NSPasteboard.general
+            board.clearContents()
+            board.setString(text, forType: .string)
+        } else if CaptureFiles.isVideo(url) {
             CaptureFiles.copyFile(url)
         } else {
             CaptureFiles.copyImage(at: url)

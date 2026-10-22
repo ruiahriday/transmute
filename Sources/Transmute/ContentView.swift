@@ -410,7 +410,8 @@ struct EditorHost: View {
         let id = request.jobID
         switch request.mode {
         case .image:
-            ImageEditorView(url: request.url, startOnMarkup: request.startOnMarkup, onSave: { edit in
+            ImageEditorView(url: request.url, startOnMarkup: request.startOnMarkup, initialEdit: request.initialEdit,
+                            projectURL: request.projectURL, onSave: { edit in
                 close()
                 run(id, .editImage(edit))
             }, onCancel: close)
@@ -435,7 +436,9 @@ struct EditorHost: View {
     }
 
     private func run(_ id: UUID, _ operation: JobOperation) {
-        JobQueue.shared.start([(id, operation)], options: .fromDefaults(),
+        var options = ConversionOptions.fromDefaults()
+        if let folder = request.saveFolder { options.outputFolder = folder }
+        JobQueue.shared.start([(id, operation)], options: options,
                               reveal: UserDefaults.standard.bool(forKey: Prefs.revealWhenDone))
     }
 }
@@ -450,6 +453,10 @@ struct EditRequest: Identifiable {
     let mode: Mode
     /// Open the photo editor on its Markup tools (for screenshots).
     var startOnMarkup = false
+    /// A reopened .spinform project: the edit to start from, the project to save back to and where results go.
+    var initialEdit: ImageEdit? = nil
+    var projectURL: URL? = nil
+    var saveFolder: URL? = nil
 
     init(job: Job, mode: Mode) {
         jobID = job.id

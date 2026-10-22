@@ -3,6 +3,26 @@ import SwiftUI
 
 enum SelectionMode { case area, window }
 
+/// Limits on the area being chosen (from the all-in-one chooser).
+enum SelectionConstraint: Equatable {
+    /// A box of exactly this many pixels follows the pointer; a click takes it.
+    case fixedSize(CGSize)
+    /// Dragging keeps this width ÷ height.
+    case aspect(CGFloat)
+}
+
+/// How the crosshair looks, from Settings.
+struct SelectionLook {
+    var frozen = true
+    var crosshair = true
+    var magnifier = true
+
+    @MainActor static var fromSettings: SelectionLook {
+        SelectionLook(frozen: CaptureSettings.freezeScreen, crosshair: CaptureSettings.showCrosshair,
+                      magnifier: CaptureSettings.showMagnifier)
+    }
+}
+
 enum SelectionOutcome {
     /// A rectangle in global AppKit points, and the frozen picture of its screen.
     case area(CGRect, DisplayShot)
@@ -18,25 +38,30 @@ final class SelectionOverlay {
 
     /// nil when the user pressed Esc.
     static func select(mode: SelectionMode, shots: [DisplayShot], windows: [WindowInfo],
-                       hint: String? = nil) async -> SelectionOutcome? {
+                       hint: String? = nil, constraint: SelectionConstraint? = nil,
+                       look: SelectionLook = SelectionLook()) async -> SelectionOutcome? {
         active?.finish(nil)
         let overlay = SelectionOverlay()
         active = overlay
         return await withCheckedContinuation { (continuation: CheckedContinuation<SelectionOutcome?, Never>) in
             overlay.continuation = continuation
-            overlay.show(mode: mode, shots: shots, windows: windows, hint: hint)
+            overlay.show(mode: mode, shots: shots, windows: windows, hint: hint, constraint: constraint, look: look)
         }
     }
 
-    private func show(mode: SelectionMode, shots: [DisplayShot], windows: [WindowInfo], hint: String?) {
+    private func show(mode: SelectionMode, shots: [DisplayShot], windows: [WindowInfo], hint: String?,
+                      constraint: SelectionConstraint?, look: SelectionLook) {
         let mouse = NSEvent.mouseLocation
         for shot in shots {
             let panel = KeyPanel.floating(shot.frame, level: .screenSaver)
-            panel.isOpaque = true
-            panel.backgroundColor = .black
+            // Frozen: the picture taken a moment ago covers the screen. Live: the real screen shows through.
+            panel.isOpaque = look.frozen
+            panel.backgroundColor = look.frozen ? .black : .clear
             panel.acceptsMouseMovedEvents = true
             let view = SelectionView(frame: NSRect(origin: .zero, size: shot.frame.size), shot: shot, mode: mode,
                                      windows: windows, hint: hint)
+            view.constraint = constraint
+            view.look = look
             view.onFinish = { [weak self] outcome in self?.finish(outcome) }
             panel.contentView = view
             panel.onEscape = { [weak self] in self?.finish(nil) }
@@ -72,6 +97,8 @@ final class SelectionOverlay {
 /// Draws the frozen screen, the dimmed surroundings, the selection with its size, and a magnifier.
 final class SelectionView: NSView {
     var onFinish: ((SelectionOutcome?) -> Void)?
+    var constraint: SelectionConstraint?
+    var look = SelectionLook()
 
     private let shot: DisplayShot
     private let picture: NSImage
@@ -126,7 +153,27 @@ final class SelectionView: NSView {
         return windows.first { $0.frame.contains(g) }
     }
 
+    /// The fixed-size box around the pointer, in view points.
+    private var fixedBox: CGRect? {
+        guard case .fixedSize(let pixels) = constraint, let mouse else { return nil }
+        let s = max(1, shot.scale)
+        let size = CGSize(width: min(pixels.width / s, bounds.width), height: min(pixels.height / s, bounds.height))
+        let x = min(max(mouse.x - size.width / 2, 0), bounds.width - size.width)
+        let y = min(max(mouse.y - size.height / 2, 0), bounds.height - size.height)
+        return CGRect(origin: CGPoint(x: x, y: y), size: size)
+    }
+
+    /// A drag end point moved so the box keeps the chosen shape.
+    static func constrained(start a: CGPoint, end b: CGPoint, ratio: CGFloat) -> CGPoint {
+        guard ratio > 0 else { return b }
+        let dx = b.x - a.x, dy = b.y - a.y
+        var w = abs(dx), h = abs(dy)
+        if h == 0 || w / h > ratio { h = w / ratio } else { w = h * ratio }
+        return CGPoint(x: a.x + (dx < 0 ? -w : w), y: a.y + (dy < 0 ? -h : h))
+    }
+
     private var selection: CGRect? {
+        if let fixedBox { return fixedBox }
         guard let a = dragStart, let b = dragCurrent else { return nil }
         let r = CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
         let clipped = r.intersection(bounds)
@@ -172,14 +219,21 @@ final class SelectionView: NSView {
 
     override func mouseDragged(with event: NSEvent) {
         NSCursor.crosshair.set()
-        let p = convert(event.locationInWindow, from: nil)
+        var p = convert(event.locationInWindow, from: nil)
+        if case .aspect(let ratio) = constraint, let start = dragStart {
+            p = Self.constrained(start: start, end: p, ratio: ratio)
+        }
         dragCurrent = CGPoint(x: min(max(p.x, 0), bounds.width), y: min(max(p.y, 0), bounds.height))
-        mouse = dragCurrent
+        if case .fixedSize = constraint { mouse = p } else { mouse = dragCurrent }
         needsDisplay = true
     }
 
     override func mouseUp(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
+        if let fixedBox {
+            onFinish?(.area(globalRect(snap(fixedBox)), shot))
+            return
+        }
         let start = dragStart ?? p
         let moved = abs(start.x - p.x) > 3 || abs(start.y - p.y) > 3
         if moved, let selection {
@@ -224,7 +278,12 @@ final class SelectionView: NSView {
     // MARK: Drawing
 
     override func draw(_ dirtyRect: NSRect) {
-        picture.draw(in: bounds, from: .zero, operation: .copy, fraction: 1, respectFlipped: true, hints: nil)
+        if look.frozen {
+            picture.draw(in: bounds, from: .zero, operation: .copy, fraction: 1, respectFlipped: true, hints: nil)
+        } else {
+            NSColor.clear.setFill()
+            bounds.fill(using: .copy)
+        }
         let dim = NSColor.black.withAlphaComponent(0.4)
         if let selection {
             fill(dim, outside: selection)
@@ -244,10 +303,10 @@ final class SelectionView: NSView {
         } else {
             NSColor.black.withAlphaComponent(0.16).setFill()
             bounds.fill()
-            if let mouse { drawGuides(at: mouse) }
+            if let mouse, look.crosshair { drawGuides(at: mouse) }
         }
-        if mode == .area, let mouse { drawMagnifier(at: mouse) }
-        if dragStart == nil || selection == nil { drawHint() }
+        if mode == .area, look.magnifier, let mouse { drawMagnifier(at: mouse) }
+        if dragStart == nil || selection == nil || fixedBox != nil { drawHint() }
     }
 
     private func fill(_ color: NSColor, outside r: CGRect) {
@@ -324,7 +383,10 @@ final class SelectionView: NSView {
         } else {
             first = mode == .area ? "Drag to capture an area" : "Click a window to capture it"
         }
-        let second = mode == .area ? "Space: pick a window" : "Space: drag an area"
+        var second = mode == .area ? "Space: pick a window" : "Space: drag an area"
+        if case .fixedSize(let size) = constraint {
+            second = "Click to take \(Int(size.width)) × \(Int(size.height))"
+        }
         let (attributed, size) = pill("\(first)   ·   \(second)   ·   Esc: cancel", font: .systemFont(ofSize: 13, weight: .medium))
         drawPill(attributed, size: size, at: CGPoint(x: (bounds.width - size.width) / 2, y: 36))
     }

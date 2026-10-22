@@ -8,8 +8,8 @@ import Vision
 
 /// A new background for a picture. Vision finds the subject (any subject on macOS 14 and later,
 /// people only on macOS 13); everything around it is made transparent or replaced.
-struct BackgroundEdit: Equatable, Hashable, Sendable {
-    enum Fill: Equatable, Hashable, Sendable {
+struct BackgroundEdit: Equatable, Hashable, Sendable, Codable {
+    enum Fill: Equatable, Hashable, Sendable, Codable {
         /// Cut out: transparent around the subject.
         case transparent
         case color(RGBAColor)

@@ -8,8 +8,15 @@ final class ScrollStitcher {
         case first, appended(Int), unchanged, noMatch, full
     }
 
+    /// Which way the content scrolls. Sideways frames are turned a quarter turn, stitched like
+    /// vertical ones, and the result is turned back.
+    enum Axis: String, CaseIterable {
+        case vertical, horizontal
+    }
+
     static let columns = 32
 
+    let axis: Axis
     let maxHeight: Int
     private(set) var width = 0
     private(set) var height = 0
@@ -18,12 +25,19 @@ final class ScrollStitcher {
     private var slices: [CGImage] = []
     private var lastSignature: [Float] = []
 
-    init(maxHeight: Int = 30_000) {
+    init(maxHeight: Int = 30_000, axis: Axis = .vertical) {
         self.maxHeight = maxHeight
+        self.axis = axis
+    }
+
+    /// The stitched size the way it will be saved (wide for sideways captures).
+    var outputSize: CGSize {
+        axis == .vertical ? CGSize(width: width, height: height) : CGSize(width: height, height: width)
     }
 
     @discardableResult
-    func add(_ frame: CGImage) -> AddResult {
+    func add(_ input: CGImage) -> AddResult {
+        guard let frame = axis == .vertical ? input : Self.turn(input, clockwise: true) else { return .noMatch }
         guard let signature = Self.signature(frame) else { return .noMatch }
         if slices.isEmpty {
             width = frame.width
@@ -50,6 +64,28 @@ final class ScrollStitcher {
     }
 
     func makeImage() -> CGImage? {
+        guard let tall = makeTallImage() else { return nil }
+        return axis == .vertical ? tall : Self.turn(tall, clockwise: false)
+    }
+
+    /// A quarter turn: clockwise brings the right edge to the bottom, so content scrolling left moves up.
+    static func turn(_ image: CGImage, clockwise: Bool) -> CGImage? {
+        let w = image.width, h = image.height
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let ctx = CGContext(data: nil, width: h, height: w, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        // CoreGraphics is y-up: a clockwise turn on screen maps (x, y) to (y, w - x).
+        if clockwise {
+            ctx.concatenate(CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: CGFloat(w)))
+        } else {
+            ctx.concatenate(CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: CGFloat(h), ty: 0))
+        }
+        ctx.interpolationQuality = .none
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
+    }
+
+    private func makeTallImage() -> CGImage? {
         guard !slices.isEmpty, let space = CGColorSpace(name: CGColorSpace.sRGB),
               let ctx = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
@@ -149,9 +185,16 @@ final class ScrollCaptureSession: ObservableObject {
     @Published private(set) var pixelHeight = 0
     @Published private(set) var note = "Press Start, then scroll down slowly."
 
+    @Published var axis: ScrollStitcher.Axis = .vertical {
+        didSet { if !running { stitcher = ScrollStitcher(axis: axis); note = startNote } }
+    }
+
     private static var current: ScrollCaptureSession?
     private let rect: CGRect
-    private let stitcher = ScrollStitcher()
+    private var stitcher = ScrollStitcher()
+
+    private var startNote: String { axis == .vertical ? "Press Start, then scroll down slowly." : "Press Start, then scroll right slowly." }
+    private var runningNote: String { axis == .vertical ? "Scroll down slowly. Press Done at the end." : "Scroll right slowly. Press Done at the end." }
     private var areaFrame: AreaFrame?
     private var controls: KeyPanel?
     private var loop: Task<Void, Never>?
@@ -174,7 +217,7 @@ final class ScrollCaptureSession: ObservableObject {
 
     private func showUI() {
         areaFrame = AreaFrame(around: rect, dashed: true)
-        let size = CGSize(width: 420, height: 58)
+        let size = CGSize(width: 500, height: 58)
         let screen = ScreenGrabber.screen(containing: CGPoint(x: rect.midX, y: rect.midY))?.visibleFrame ?? rect
         var origin = CGPoint(x: rect.midX - size.width / 2, y: rect.minY - size.height - 12)
         if origin.y < screen.minY + 8 { origin.y = rect.maxY + 12 }
@@ -191,7 +234,7 @@ final class ScrollCaptureSession: ObservableObject {
     func start() {
         guard !running else { return }
         running = true
-        note = "Scroll down slowly. Press Done at the end."
+        note = runningNote
         loop = Task { [weak self] in await self?.captureLoop() }
     }
 
@@ -213,7 +256,7 @@ final class ScrollCaptureSession: ObservableObject {
                 switch stitcher.add(image) {
                 case .noMatch: note = "Lost the place: scroll a little slower."
                 case .full: note = "That's as tall as it gets. Press Done."
-                case .first, .appended: note = "Scroll down slowly. Press Done at the end."
+                case .first, .appended: note = runningNote
                 case .unchanged: break
                 }
                 frames = stitcher.framesUsed
@@ -247,7 +290,7 @@ struct ScrollControlsView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.accentText)
             VStack(alignment: .leading, spacing: 1) {
-                Text(session.running ? "Capturing · \(session.pixelHeight) px tall" : "Scrolling capture")
+                Text(session.running ? "Capturing · \(session.pixelHeight) px \(session.axis == .vertical ? "tall" : "wide")" : "Scrolling capture")
                     .font(Theme.Fonts.bodyStrong)
                     .foregroundStyle(Theme.textPrimary)
                     .monospacedDigit()
@@ -257,6 +300,16 @@ struct ScrollControlsView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 4)
+            if !session.running {
+                Picker("Direction", selection: $session.axis) {
+                    Image(systemName: "arrow.up.and.down").tag(ScrollStitcher.Axis.vertical)
+                    Image(systemName: "arrow.left.and.right").tag(ScrollStitcher.Axis.horizontal)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 80)
+                .help("Which way the content scrolls")
+            }
             Button("Cancel") { session.cancel() }
                 .buttonStyle(ChipButtonStyle())
             if session.running {

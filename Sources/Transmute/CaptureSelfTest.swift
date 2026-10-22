@@ -270,9 +270,9 @@ extension SelfTest {
             }
             return [framed, g]
         }
-        await check("Background frame: 12 presets, custom presets saved and removed") {
+        await check("Background frame: 20 presets, custom presets saved and removed") {
             let ids = Set(FramePreset.builtIn.map(\.id))
-            guard FramePreset.builtIn.count == 12, ids.count == 12 else { throw ConversionError("\(FramePreset.builtIn.count) presets") }
+            guard FramePreset.builtIn.count == 20, ids.count == 20 else { throw ConversionError("\(FramePreset.builtIn.count) presets") }
             guard let defaults = UserDefaults(suiteName: "spinform.selftest.frames.\(UUID().uuidString)") else { throw ConversionError("defaults") }
             let style = FrameStyle(background: .gradient(0x123456, 0x654321), padding: 0.2, corners: 0.01, shadow: 0.3, aspect: .wide)
             let preset = FramePresetStore.add(name: "Launch", style: style, defaults: defaults)
@@ -504,6 +504,7 @@ extension SelfTest {
             skipped += 2
             print("SKIP  Recording: GIF and audio mixing need ffmpeg and the clip.mp4 / tone.wav fixtures")
         }
+        await moreCaptureChecks(dir: dir, options: options)
     }
 
     /// Records the screen straight through StreamWriter, without any of the on-screen controls.
@@ -621,5 +622,6 @@ extension Snapshots {
                 .formStyle(.grouped)
                 .tint(Theme.accent)
         }
+        await moreCaptureShots(suffix: suffix, output: output, art: art, fixtures: fixtures, screenshotURL: screenshotURL)
     }
 }

@@ -91,7 +91,7 @@ enum FileKind: String, CaseIterable, Identifiable, Sendable {
     var canStripMetadata: Bool { [.image, .video, .audio, .pdf].contains(self) }
 }
 
-enum OutputFormat: String, CaseIterable, Identifiable, Sendable {
+enum OutputFormat: String, CaseIterable, Identifiable, Sendable, Codable {
     case jpeg, png, heic, webp, tiff, bmp, gif, svg, pdf
     case mp4, mov, mkv, avi, wmv, webm
     case mp3, m4a, wav, flac, ogg, opus, aiff

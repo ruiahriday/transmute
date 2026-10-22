@@ -9,7 +9,7 @@ import UniformTypeIdentifiers
 // MARK: - Shared geometry (also used by the video editor)
 
 /// A point in normalized image coordinates: 0…1 on both axes, origin at the top-left.
-struct NormPoint: Equatable, Hashable, Sendable {
+struct NormPoint: Equatable, Hashable, Sendable, Codable {
     var x: Double
     var y: Double
 
@@ -18,7 +18,7 @@ struct NormPoint: Equatable, Hashable, Sendable {
 
 /// A rectangle in normalized image coordinates: 0…1 on both axes, origin at the top-left.
 /// Editors store positions this way so they don't depend on the preview's size.
-struct NormRect: Equatable, Hashable, Sendable {
+struct NormRect: Equatable, Hashable, Sendable, Codable {
     var x: Double
     var y: Double
     var width: Double
@@ -75,7 +75,7 @@ extension NormRect {
 }
 
 /// An sRGB colour with components in 0…1.
-struct RGBAColor: Equatable, Hashable, Sendable {
+struct RGBAColor: Equatable, Hashable, Sendable, Codable {
     var red: Double
     var green: Double
     var blue: Double
@@ -112,9 +112,10 @@ struct RGBAColor: Equatable, Hashable, Sendable {
 
 /// Everything the photo editor can do to one image. Positions are normalized to the
 /// original image after its EXIF orientation is applied (what the user sees), origin top-left.
-struct ImageEdit: Equatable, Sendable {
-    enum RedactionStyle: String, CaseIterable, Identifiable, Sendable {
-        case blackout, pixelate, blur
+struct ImageEdit: Equatable, Sendable, Codable {
+    enum RedactionStyle: String, CaseIterable, Identifiable, Sendable, Codable {
+        /// pixelate scrambles each block a little so it can't be reversed; secureBlur scrambles, then blurs.
+        case blackout, pixelate, blur, secureBlur
 
         var id: String { rawValue }
 
@@ -122,7 +123,8 @@ struct ImageEdit: Equatable, Sendable {
             switch self {
             case .blackout: "Black box"
             case .pixelate: "Pixelate"
-            case .blur: "Blur"
+            case .blur: "Smooth blur"
+            case .secureBlur: "Secure blur"
             }
         }
 
@@ -131,17 +133,49 @@ struct ImageEdit: Equatable, Sendable {
             case .blackout: "rectangle.fill"
             case .pixelate: "squareshape.split.3x3"
             case .blur: "drop"
+            case .secureBlur: "drop.halffull"
             }
         }
     }
 
-    struct Redaction: Equatable, Sendable, Identifiable {
+    struct Redaction: Equatable, Sendable, Identifiable, Codable {
         var id = UUID()
         var rect: NormRect
         var style: RedactionStyle
     }
 
-    enum AnnotationKind: Equatable, Sendable {
+    /// How an arrow looks. The plain filled arrow is `.arrow`; the others are `.styledArrow`.
+    enum ArrowStyle: String, CaseIterable, Identifiable, Sendable, Codable {
+        case solid, open, double, curved
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .solid: "Solid"
+            case .open: "Open"
+            case .double: "Double"
+            case .curved: "Curved"
+            }
+        }
+    }
+
+    /// Text looks. Bold is `.text`; the others are `.styledText`.
+    enum TextStyle: String, CaseIterable, Identifiable, Sendable, Codable {
+        case bold, outline, label, shadow, marker, mono, headline
+        var id: String { rawValue }
+        var label: String {
+            switch self {
+            case .bold: "Bold"
+            case .outline: "Outline"
+            case .label: "Label"
+            case .shadow: "Shadow"
+            case .marker: "Marker"
+            case .mono: "Mono"
+            case .headline: "Headline"
+            }
+        }
+    }
+
+    enum AnnotationKind: Equatable, Sendable, Codable {
         /// `at` is the top-left corner of the text.
         case text(String, at: NormPoint)
         case rectangle(NormRect)
@@ -155,9 +189,16 @@ struct ImageEdit: Equatable, Sendable {
         case step(Int, at: NormPoint)
         /// Dims everything outside the rectangle.
         case spotlight(NormRect)
+        case styledArrow(from: NormPoint, to: NormPoint, style: ArrowStyle)
+        case styledText(String, at: NormPoint, style: TextStyle)
+        /// A freehand stroke, already smoothed (see StrokeSmoothing).
+        case pencil([NormPoint])
+        case filledRectangle(NormRect)
+        /// Another picture placed on top; the string is its file path.
+        case picture(String, NormRect)
     }
 
-    struct Annotation: Equatable, Sendable, Identifiable {
+    struct Annotation: Equatable, Sendable, Identifiable, Codable {
         var id = UUID()
         var kind: AnnotationKind
         var color: RGBAColor
@@ -485,33 +526,78 @@ enum ImageEditEngine {
 
     /// Covers each rectangle with black, a pixelated or a blurred copy of what's under it.
     /// Block size and blur radius scale with the image, so the preview looks like the result.
+    /// Pixelation shifts every block's colour by a random amount, so it can't be undone by
+    /// guessing what was there; secure blur blurs a scrambled copy, so nothing sharp is left to recover.
     static func redact(_ image: CIImage, _ redactions: [ImageEdit.Redaction], width: Int, height: Int) -> CIImage {
         var result = image
         let longest = Double(max(width, height))
+        let context = CIContext(options: [.cacheIntermediates: false])
         for redaction in redactions {
             let px = redaction.rect.pixelRect(width: width, height: height)
             // CoreImage's origin is bottom-left.
             let box = CGRect(x: px.minX, y: CGFloat(height) - px.maxY, width: px.width, height: px.height)
+            guard box.width >= 1, box.height >= 1 else { continue }
             let shortSide = Double(min(px.width, px.height))
+            let black = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: box)
             let cover: CIImage
             switch redaction.style {
             case .blackout:
-                cover = CIImage(color: CIColor(red: 0, green: 0, blue: 0)).cropped(to: box)
+                cover = black
             case .pixelate:
-                let filter = CIFilter.pixellate()
-                filter.inputImage = result.clampedToExtent()
-                filter.center = box.origin // align the blocks with the box
-                filter.scale = Float(max(2, longest / 80, shortSide / 8))
-                cover = (filter.outputImage ?? CIImage(color: CIColor(red: 0, green: 0, blue: 0))).cropped(to: box)
+                let block = Int(max(2, longest / 80, shortSide / 8).rounded())
+                cover = scrambled(result, box: box, block: block, noise: 0.14, context: context) ?? black
             case .blur:
                 let filter = CIFilter.gaussianBlur()
                 filter.inputImage = result.clampedToExtent() // no dark fringe at the image edges
                 filter.radius = Float(max(2, longest / 100, shortSide / 4))
-                cover = (filter.outputImage ?? CIImage(color: CIColor(red: 0, green: 0, blue: 0))).cropped(to: box)
+                cover = (filter.outputImage ?? black).cropped(to: box)
+            case .secureBlur:
+                let block = Int(max(3, longest / 60, shortSide / 6).rounded())
+                if let blocks = scrambled(result, box: box, block: block, noise: 0.2, context: context) {
+                    let filter = CIFilter.gaussianBlur()
+                    filter.inputImage = blocks.composited(over: result).clampedToExtent()
+                    filter.radius = Float(Double(block) * 0.9)
+                    cover = (filter.outputImage ?? black).cropped(to: box)
+                } else {
+                    cover = black
+                }
             }
             result = cover.composited(over: result)
         }
         return result
+    }
+
+    /// Blocks of `block` pixels averaged from `image` inside `box` (CoreImage coordinates), each moved
+    /// up to ±`noise` (0…1) per channel at random.
+    static func scrambled(_ image: CIImage, box: CGRect, block: Int, noise: Double, context: CIContext) -> CIImage? {
+        let side = max(1, block)
+        let columns = max(1, Int((box.width / CGFloat(side)).rounded(.up)))
+        let rows = max(1, Int((box.height / CGFloat(side)).rounded(.up)))
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let source = context.createCGImage(image.clampedToExtent(), from: box, format: .RGBA8, colorSpace: space),
+              let small = CGContext(data: nil, width: columns, height: rows, bitsPerComponent: 8, bytesPerRow: columns * 4,
+                                    space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        small.interpolationQuality = .high
+        small.draw(source, in: CGRect(x: 0, y: 0, width: columns, height: rows))
+        guard let data = small.data else { return nil }
+        let bytes = data.bindMemory(to: UInt8.self, capacity: columns * rows * 4)
+        let reach = Int(noise * 255)
+        var generator = SystemRandomNumberGenerator()
+        for i in 0..<(columns * rows) {
+            let alpha = Int(bytes[i * 4 + 3])
+            for c in 0..<3 {
+                let shifted = Int(bytes[i * 4 + c]) + Int.random(in: -reach...reach, using: &generator)
+                bytes[i * 4 + c] = UInt8(min(max(shifted, 0), alpha))
+            }
+        }
+        guard let tiny = small.makeImage() else { return nil }
+        // Back up to full size with hard edges.
+        let scaleX = CGFloat(columns * side) / CGFloat(columns), scaleY = CGFloat(rows * side) / CGFloat(rows)
+        return CIImage(cgImage: tiny)
+            .samplingNearest()
+            .transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
+            .transformed(by: CGAffineTransform(translationX: box.minX, y: box.maxY - CGFloat(rows * side)))
+            .cropped(to: box)
     }
 
     static func adjustColors(_ image: CIImage, _ edit: ImageEdit) -> CIImage {
@@ -574,75 +660,169 @@ enum ImageEditEngine {
         }
 
         for annotation in annotations {
-            let color = annotation.color.cgColor
-            let lineWidth = max(1, CGFloat(annotation.size) * h)
-            ctx.saveGState()
-            switch annotation.kind {
-            case .spotlight:
-                break
-            case .ellipse(let r):
-                let box = rect(r)
-                if box.width > lineWidth && box.height > lineWidth {
-                    ctx.setStrokeColor(color)
-                    ctx.setLineWidth(lineWidth)
-                    ctx.strokeEllipse(in: box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2))
-                }
-            case .line(let from, let to):
-                ctx.setStrokeColor(color)
-                ctx.setLineWidth(lineWidth)
-                ctx.setLineCap(.round)
-                ctx.beginPath()
-                ctx.move(to: point(from))
-                ctx.addLine(to: point(to))
-                ctx.strokePath()
-            case .step(let number, let at):
-                let diameter = max(8, CGFloat(annotation.size) * h)
-                let centre = point(at)
-                let circle = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
-                ctx.setFillColor(color)
-                ctx.fillEllipse(in: circle)
-                ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.9))
-                ctx.setLineWidth(max(1, diameter * 0.06))
-                ctx.strokeEllipse(in: circle.insetBy(dx: diameter * 0.03, dy: diameter * 0.03))
-                drawCentredText("\(number)", centre: centre, fontSize: diameter * 0.56,
-                                color: stepTextColor(annotation.color).cgColor, in: ctx)
-            case .rectangle(let r):
-                let box = rect(r)
-                if box.width > lineWidth && box.height > lineWidth {
-                    // Stroke inside the box, matching SwiftUI's strokeBorder in the editor.
-                    ctx.setStrokeColor(color)
-                    ctx.setLineJoin(.miter)
-                    ctx.stroke(box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2), width: lineWidth)
-                } else {
-                    ctx.setFillColor(color)
-                    ctx.fill(box)
-                }
-            case .highlight(let r):
-                ctx.setFillColor(highlightColor(annotation.color).cgColor)
-                ctx.fill(rect(r))
-            case .arrow(let from, let to):
-                let start = point(from)
-                if let shape = arrowShape(from: start, to: point(to), lineWidth: lineWidth) {
-                    ctx.setStrokeColor(color)
-                    ctx.setFillColor(color)
-                    ctx.setLineWidth(lineWidth)
-                    ctx.setLineCap(.round)
-                    ctx.beginPath()
-                    ctx.move(to: start)
-                    ctx.addLine(to: shape.shaftEnd)
-                    ctx.strokePath()
-                    ctx.beginPath()
-                    ctx.addLines(between: shape.head)
-                    ctx.closePath()
-                    ctx.fillPath()
-                }
-            case .text(let string, let at):
-                drawText(string, topLeft: point(at), fontSize: max(4, CGFloat(annotation.size) * h), color: color, in: ctx)
-            }
-            ctx.restoreGState()
+            draw(annotation, in: ctx, width: w, height: h)
         }
         guard let result = ctx.makeImage() else { throw ConversionError("Couldn't draw the annotations.") }
         return result
+    }
+
+    /// Draws one annotation (not spotlights) on a y-up CoreGraphics canvas of `w` × `h`. The editor's
+    /// live overlay calls this too, through a flipped context, so what you see is what is saved.
+    static func draw(_ annotation: ImageEdit.Annotation, in ctx: CGContext, width w: CGFloat, height h: CGFloat) {
+        func point(_ p: NormPoint) -> CGPoint {
+            CGPoint(x: CGFloat(p.x) * w, y: (1 - CGFloat(p.y)) * h)
+        }
+        func rect(_ r: NormRect) -> CGRect {
+            let c = r.clamped
+            return CGRect(x: CGFloat(c.minX) * w, y: (1 - CGFloat(c.maxY)) * h,
+                          width: CGFloat(c.width) * w, height: CGFloat(c.height) * h)
+        }
+        let color = annotation.color.cgColor
+        let lineWidth = max(1, CGFloat(annotation.size) * h)
+        ctx.saveGState()
+        defer { ctx.restoreGState() }
+        switch annotation.kind {
+        case .spotlight:
+            break
+        case .ellipse(let r):
+            let box = rect(r)
+            if box.width > lineWidth && box.height > lineWidth {
+                ctx.setStrokeColor(color)
+                ctx.setLineWidth(lineWidth)
+                ctx.strokeEllipse(in: box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2))
+            }
+        case .line(let from, let to):
+            ctx.setStrokeColor(color)
+            ctx.setLineWidth(lineWidth)
+            ctx.setLineCap(.round)
+            ctx.beginPath()
+            ctx.move(to: point(from))
+            ctx.addLine(to: point(to))
+            ctx.strokePath()
+        case .step(let number, let at):
+            let diameter = max(8, CGFloat(annotation.size) * h)
+            let centre = point(at)
+            let circle = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
+            ctx.setFillColor(color)
+            ctx.fillEllipse(in: circle)
+            ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.9))
+            ctx.setLineWidth(max(1, diameter * 0.06))
+            ctx.strokeEllipse(in: circle.insetBy(dx: diameter * 0.03, dy: diameter * 0.03))
+            drawCentredText("\(number)", centre: centre, fontSize: diameter * 0.56,
+                            color: stepTextColor(annotation.color).cgColor, in: ctx)
+        case .rectangle(let r):
+            let box = rect(r)
+            if box.width > lineWidth && box.height > lineWidth {
+                // Stroke inside the box.
+                ctx.setStrokeColor(color)
+                ctx.setLineJoin(.miter)
+                ctx.stroke(box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2), width: lineWidth)
+            } else {
+                ctx.setFillColor(color)
+                ctx.fill(box)
+            }
+        case .filledRectangle(let r):
+            let box = rect(r)
+            let radius = min(box.width, box.height, lineWidth * 2) / 2
+            ctx.setFillColor(color)
+            ctx.addPath(CGPath(roundedRect: box, cornerWidth: radius, cornerHeight: radius, transform: nil))
+            ctx.fillPath()
+        case .highlight(let r):
+            ctx.setFillColor(highlightColor(annotation.color).cgColor)
+            ctx.setBlendMode(.multiply)
+            ctx.fill(rect(r))
+        case .arrow(let from, let to):
+            drawArrow(from: from, to: to, style: .solid, lineWidth: lineWidth, color: color, width: w, height: h, in: ctx)
+        case .styledArrow(let from, let to, let style):
+            drawArrow(from: from, to: to, style: style, lineWidth: lineWidth, color: color, width: w, height: h, in: ctx)
+        case .pencil(let points):
+            let mapped = points.map(point)
+            guard let first = mapped.first else { break }
+            ctx.setStrokeColor(color)
+            ctx.setFillColor(color)
+            ctx.setLineWidth(lineWidth)
+            ctx.setLineCap(.round)
+            ctx.setLineJoin(.round)
+            if mapped.count == 1 {
+                ctx.fillEllipse(in: CGRect(x: first.x - lineWidth / 2, y: first.y - lineWidth / 2, width: lineWidth, height: lineWidth))
+            } else {
+                ctx.addPath(StrokeSmoothing.path(through: mapped))
+                ctx.strokePath()
+            }
+        case .text(let string, let at):
+            drawText(string, topLeft: point(at), fontSize: max(4, CGFloat(annotation.size) * h), color: annotation.color,
+                     style: .bold, in: ctx)
+        case .styledText(let string, let at, let style):
+            drawText(string, topLeft: point(at), fontSize: max(4, CGFloat(annotation.size) * h), color: annotation.color,
+                     style: style, in: ctx)
+        case .picture(let path, let r):
+            if let picture = PictureCache.image(atPath: path) {
+                ctx.interpolationQuality = .high
+                ctx.draw(picture, in: rect(r))
+            }
+        }
+    }
+
+    /// The control point of a curved arrow: the bend sits to the left of the direction of travel, a
+    /// quarter of the length out. Worked out in pixels so it bends the same on any canvas shape.
+    static func curveControl(from a: NormPoint, to b: NormPoint, width w: CGFloat, height h: CGFloat) -> NormPoint {
+        let dx = (b.x - a.x) * Double(w), dy = (b.y - a.y) * Double(h)
+        let mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2
+        return NormPoint(x: mx + (dy * 0.25) / Double(max(w, 1)), y: my - (dx * 0.25) / Double(max(h, 1)))
+    }
+
+    private static func drawArrow(from: NormPoint, to: NormPoint, style: ImageEdit.ArrowStyle, lineWidth: CGFloat,
+                                  color: CGColor, width w: CGFloat, height h: CGFloat, in ctx: CGContext) {
+        func point(_ p: NormPoint) -> CGPoint { CGPoint(x: CGFloat(p.x) * w, y: (1 - CGFloat(p.y)) * h) }
+        let start = point(from), end = point(to)
+        ctx.setStrokeColor(color)
+        ctx.setFillColor(color)
+        ctx.setLineWidth(lineWidth)
+        ctx.setLineCap(.round)
+        ctx.setLineJoin(.round)
+        switch style {
+        case .solid:
+            guard let shape = arrowShape(from: start, to: end, lineWidth: lineWidth) else { return }
+            ctx.beginPath()
+            ctx.move(to: start)
+            ctx.addLine(to: shape.shaftEnd)
+            ctx.strokePath()
+            fillPolygon(shape.head, in: ctx)
+        case .double:
+            guard let forward = arrowShape(from: start, to: end, lineWidth: lineWidth),
+                  let backward = arrowShape(from: end, to: start, lineWidth: lineWidth) else { return }
+            ctx.beginPath()
+            ctx.move(to: backward.shaftEnd)
+            ctx.addLine(to: forward.shaftEnd)
+            ctx.strokePath()
+            fillPolygon(forward.head, in: ctx)
+            fillPolygon(backward.head, in: ctx)
+        case .open:
+            guard let shape = arrowShape(from: start, to: end, lineWidth: lineWidth) else { return }
+            ctx.beginPath()
+            ctx.move(to: start)
+            ctx.addLine(to: end)
+            ctx.move(to: shape.head[1])
+            ctx.addLine(to: end)
+            ctx.addLine(to: shape.head[2])
+            ctx.strokePath()
+        case .curved:
+            let control = point(curveControl(from: from, to: to, width: w, height: h))
+            // The head points along the curve's last stretch.
+            guard let shape = arrowShape(from: control, to: end, lineWidth: lineWidth) else { return }
+            ctx.beginPath()
+            ctx.move(to: start)
+            ctx.addQuadCurve(to: shape.shaftEnd, control: control)
+            ctx.strokePath()
+            fillPolygon(shape.head, in: ctx)
+        }
+    }
+
+    private static func fillPolygon(_ points: [CGPoint], in ctx: CGContext) {
+        ctx.beginPath()
+        ctx.addLines(between: points)
+        ctx.closePath()
+        ctx.fillPath()
     }
 
     /// Bold text centred on a point (CoreGraphics coordinates), for step numbers.
@@ -658,20 +838,88 @@ enum ImageEditEngine {
         CTLineDraw(line, ctx)
     }
 
-    /// One line of bold system text. `topLeft` is in CoreGraphics coordinates (y up),
-    /// so the baseline sits one ascent below it.
-    private static func drawText(_ string: String, topLeft: CGPoint, fontSize: CGFloat, color: CGColor, in ctx: CGContext) {
-        guard !string.isEmpty else { return }
-        let font = CTFontCreateUIFontForLanguage(.emphasizedSystem, fontSize, nil)
-            ?? CTFontCreateWithName("Helvetica-Bold" as CFString, fontSize, nil)
-        let attributes: [CFString: Any] = [kCTFontAttributeName: font, kCTForegroundColorAttributeName: color]
-        guard let attributed = CFAttributedStringCreate(nil, string as CFString, attributes as CFDictionary) else { return }
+    /// The font for a text style.
+    static func textFont(_ style: ImageEdit.TextStyle, size: CGFloat) -> CTFont {
+        func named(_ name: String) -> CTFont? {
+            let font = CTFontCreateWithName(name as CFString, size, nil)
+            // CoreText falls back to another font for a name it doesn't know.
+            return (CTFontCopyPostScriptName(font) as String) == name ? font : nil
+        }
+        let bold = CTFontCreateUIFontForLanguage(.emphasizedSystem, size, nil) ?? CTFontCreateWithName("Helvetica-Bold" as CFString, size, nil)
+        switch style {
+        case .bold, .outline, .label, .shadow:
+            return bold
+        case .marker:
+            return named("MarkerFelt-Wide") ?? named("Noteworthy-Bold") ?? bold
+        case .mono:
+            return named("Menlo-Bold") ?? CTFontCreateUIFontForLanguage(.userFixedPitch, size, nil) ?? bold
+        case .headline:
+            return NSFont.systemFont(ofSize: size, weight: .black) as CTFont
+        }
+    }
+
+    /// The size of one line of text in a style, and its ascent (for placing it).
+    static func textMetrics(_ string: String, fontSize: CGFloat, style: ImageEdit.TextStyle) -> (width: CGFloat, ascent: CGFloat, descent: CGFloat) {
+        let font = textFont(style, size: fontSize)
+        let attributes: [CFString: Any] = [kCTFontAttributeName: font]
+        guard let attributed = CFAttributedStringCreate(nil, string as CFString, attributes as CFDictionary) else { return (0, 0, 0) }
         let line = CTLineCreateWithAttributedString(attributed)
         var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
-        _ = CTLineGetTypographicBounds(line, &ascent, &descent, &leading)
+        let width = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, &leading))
+        return (width, ascent, descent)
+    }
+
+    /// One line of text in a style. `topLeft` is in CoreGraphics coordinates (y up), so the
+    /// baseline sits one ascent below it.
+    private static func drawText(_ string: String, topLeft: CGPoint, fontSize: CGFloat, color: RGBAColor,
+                                 style: ImageEdit.TextStyle, in ctx: CGContext) {
+        guard !string.isEmpty else { return }
+        let font = textFont(style, size: fontSize)
+        func line(_ fill: CGColor, stroke: CGFloat = 0) -> CTLine? {
+            var attributes: [CFString: Any] = [kCTFontAttributeName: font, kCTForegroundColorAttributeName: fill]
+            if stroke > 0 {
+                attributes[kCTStrokeWidthAttributeName] = stroke
+                attributes[kCTStrokeColorAttributeName] = fill
+            }
+            guard let attributed = CFAttributedStringCreate(nil, string as CFString, attributes as CFDictionary) else { return nil }
+            return CTLineCreateWithAttributedString(attributed)
+        }
+        let metrics = textMetrics(string, fontSize: fontSize, style: style)
+        let baseline = CGPoint(x: topLeft.x, y: topLeft.y - metrics.ascent)
         ctx.textMatrix = .identity
-        ctx.textPosition = CGPoint(x: topLeft.x, y: topLeft.y - ascent)
-        CTLineDraw(line, ctx)
+        ctx.saveGState()
+        defer { ctx.restoreGState() }
+        // A contrasting colour for outlines and labels: white, or black behind light colours.
+        let contrast = stepTextColor(color)
+        switch style {
+        case .outline:
+            if let halo = line((contrast == .white ? RGBAColor.white : RGBAColor.black).cgColor, stroke: 22) {
+                ctx.setLineJoin(.round)
+                ctx.textPosition = baseline
+                CTLineDraw(halo, ctx)
+            }
+        case .label:
+            let pad = fontSize * 0.28
+            let box = CGRect(x: topLeft.x - pad, y: baseline.y - metrics.descent - pad * 0.7,
+                             width: metrics.width + pad * 2, height: metrics.ascent + metrics.descent + pad * 1.4)
+            ctx.setFillColor(color.cgColor)
+            ctx.addPath(CGPath(roundedRect: box, cornerWidth: pad * 1.2, cornerHeight: pad * 1.2, transform: nil))
+            ctx.fillPath()
+            if let text = line(contrast.cgColor) {
+                ctx.textPosition = baseline
+                CTLineDraw(text, ctx)
+            }
+            return
+        case .shadow:
+            ctx.setShadow(offset: CGSize(width: 0, height: -fontSize * 0.06), blur: fontSize * 0.22,
+                          color: CGColor(gray: 0, alpha: 0.65))
+        default:
+            break
+        }
+        if let text = line(color.cgColor) {
+            ctx.textPosition = baseline
+            CTLineDraw(text, ctx)
+        }
     }
 
     /// The highlighter's see-through fill.
@@ -814,15 +1062,25 @@ struct ImageEditorView: View {
     let url: URL
     let onSave: (ImageEdit) -> Void
     let onCancel: () -> Void
+    /// The .spinform project this edit came from, saved back to by Save Project.
+    let projectURL: URL?
 
     /// `showcase` opens on the Background panel with that background chosen (for the window pictures).
     /// `startOnMarkup` opens on the Markup tools (for captures); `markup` adds annotations to start with.
+    /// `initialEdit` reopens a saved project with everything still editable.
     init(url: URL, showcase: BackgroundEdit? = nil, startOnMarkup: Bool = false, markup: [ImageEdit.Annotation] = [],
+         initialEdit: ImageEdit? = nil, projectURL: URL? = nil, markupTool: String? = nil,
          onSave: @escaping (ImageEdit) -> Void, onCancel: @escaping () -> Void) {
         self.url = url
         self.onSave = onSave
         self.onCancel = onCancel
-        if let showcase {
+        self.projectURL = projectURL
+        if let initialEdit {
+            _edit = State(initialValue: initialEdit)
+            _addedOrder = State(initialValue: initialEdit.redactions.map(\.id) + initialEdit.annotations.map(\.id))
+            _tool = State(initialValue: .annotate)
+            _markup = State(initialValue: .arrow)
+        } else if let showcase {
             var edit = ImageEdit()
             edit.background = showcase
             _edit = State(initialValue: edit)
@@ -834,6 +1092,10 @@ struct ImageEditorView: View {
             _addedOrder = State(initialValue: markup.map(\.id))
             _tool = State(initialValue: .annotate)
             _markup = State(initialValue: .arrow)
+        }
+        if let markupTool, let chosen = Markup(rawValue: markupTool) {
+            _tool = State(initialValue: .annotate)
+            _markup = State(initialValue: chosen)
         }
     }
 
@@ -870,7 +1132,7 @@ struct ImageEditorView: View {
     }
 
     private enum Markup: String, CaseIterable, Identifiable {
-        case arrow = "Arrow", rectangle = "Box", ellipse = "Oval", line = "Line",
+        case arrow = "Arrow", rectangle = "Box", filled = "Fill", ellipse = "Oval", line = "Line", pencil = "Pen",
              text = "Text", step = "Steps", highlight = "Highlight", spotlight = "Spotlight"
         var id: String { rawValue }
 
@@ -878,6 +1140,8 @@ struct ImageEditorView: View {
             switch self {
             case .arrow: "arrow.up.right"
             case .rectangle: "rectangle"
+            case .filled: "rectangle.fill"
+            case .pencil: "scribble"
             case .ellipse: "circle"
             case .line: "line.diagonal"
             case .text: "textformat"
@@ -893,6 +1157,8 @@ struct ImageEditorView: View {
         var current: NormPoint
         /// Set when a crop drag starts inside the crop box: the box moves instead of being redrawn.
         var movingCrop: NormRect?
+        /// Every point of a pencil stroke.
+        var points: [NormPoint] = []
     }
 
     /// What the rendered preview depends on; changing it re-renders (debounced).
@@ -934,6 +1200,15 @@ struct ImageEditorView: View {
     /// The subject found on `preview`, for the Background panel; found the first time it's needed.
     @State private var subjectMask: CGImage? = nil
     @State private var subjectStatus: SubjectStatus = .idle
+    @State private var arrowStyle: ImageEdit.ArrowStyle = .solid
+    @State private var textStyle: ImageEdit.TextStyle = .bold
+    /// The highlighter snaps to the lines of text under it.
+    @State private var fitHighlight = true
+    /// Lines of text found on the preview (normalized, top-left origin), for the highlighter.
+    @State private var textLines: [NormRect]? = nil
+    @State private var customColors: [RGBAColor] = MarkupPalette.colors()
+    @State private var pickerColor = CGColor(srgbRed: 0.93, green: 0.19, blue: 0.16, alpha: 1)
+    @State private var dropTargeted = false
     @FocusState private var textFieldFocused: Bool
 
     var body: some View {
@@ -955,7 +1230,10 @@ struct ImageEditorView: View {
         .task(id: url) { await loadPreview() }
         .task(id: previewKey) { await refreshRendered() }
         .task(id: wantsSubject) { await findSubject() }
+        .task(id: wantsTextLines) { await findTextLines() }
     }
+
+    private var wantsTextLines: Bool { tool == .annotate && markup == .highlight && fitHighlight && preview != nil }
 
     private var previewKey: PreviewKey {
         PreviewKey(redactions: edit.redactions, brightness: edit.brightness, contrast: edit.contrast,
@@ -1026,6 +1304,36 @@ struct ImageEditorView: View {
                 .onChanged { value in dragChanged(value, canvas: size) }
                 .onEnded { value in dragEnded(value, canvas: size) }
         )
+        .overlay {
+            if dropTargeted {
+                Rectangle().strokeBorder(Theme.accent, style: StrokeStyle(lineWidth: 3, dash: [8, 5]))
+            }
+        }
+        .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers, location in
+            dropPictures(providers, at: location, canvas: size)
+        }
+    }
+
+    /// Images dropped on the canvas are placed where they land, about a third of its width.
+    private func dropPictures(_ providers: [NSItemProvider], at location: CGPoint, canvas: CGSize) -> Bool {
+        for (index, provider) in providers.enumerated() {
+            let offset = CGFloat(index) * 24
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url, FileKind.of(url) == .image,
+                      let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                      let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+                      let pw = props[kCGImagePropertyPixelWidth] as? Int, let ph = props[kCGImagePropertyPixelHeight] as? Int,
+                      pw > 0, ph > 0 else { return }
+                let path = url.path
+                Task { @MainActor in
+                    let rect = PicturePlacement.rect(pictureSize: CGSize(width: pw, height: ph), canvas: canvas,
+                                                     centre: CGPoint(x: location.x + offset, y: location.y + offset))
+                    add(ImageEdit.Annotation(kind: .picture(path, rect), color: .black, size: 0))
+                    tool = .annotate
+                }
+            }
+        }
+        return !providers.isEmpty
     }
 
     private static func viewRect(_ r: NormRect, in size: CGSize) -> CGRect {
@@ -1087,6 +1395,9 @@ struct ImageEditorView: View {
             let box = NormRect(from: drag.start, to: drag.current)
             if tool == .redact {
                 outline(Self.viewRect(box, in: size), in: &context, shaded: true)
+            } else if tool == .annotate, markup == .pencil, !drag.points.isEmpty {
+                let draft = ImageEdit.Annotation(kind: .pencil(drag.points), color: color, size: sizeLevel * Self.lineScale)
+                drawAnnotation(draft, in: &context, size: size)
             } else if tool == .annotate, markup != .spotlight, let kind = draftKind(for: drag) {
                 let draft = ImageEdit.Annotation(kind: kind, color: color, size: annotationSize(for: kind))
                 drawAnnotation(draft, in: &context, size: size)
@@ -1094,10 +1405,10 @@ struct ImageEditorView: View {
         }
         if tool == .annotate, markup == .text, let pendingText {
             let p = Self.viewPoint(pendingText, in: size)
-            let fontSize = max(4, CGFloat(sizeLevel * Self.textScale) * size.height)
             let placeholder = textDraft.isEmpty ? "Type your text…" : textDraft
-            context.draw(Text(placeholder).font(.system(size: fontSize, weight: .bold)).foregroundColor(color.swiftUI.opacity(0.6)),
-                         at: p, anchor: .topLeading)
+            let preview = ImageEdit.Annotation(kind: .styledText(placeholder, at: pendingText, style: textStyle),
+                                               color: color.withAlpha(0.6), size: sizeLevel * Self.textScale)
+            drawAnnotation(preview, in: &context, size: size)
             var marker = Path()
             marker.addEllipse(in: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6))
             context.fill(marker, with: .color(Theme.accent))
@@ -1110,61 +1421,12 @@ struct ImageEditorView: View {
         context.stroke(Path(box), with: .color(.white), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
     }
 
-    /// Mirrors ImageEditEngine.drawAnnotations, in view coordinates (y down, so no flipping).
+    /// The same drawing as the saved image (ImageEditEngine.draw), through a flipped CoreGraphics context.
     private func drawAnnotation(_ annotation: ImageEdit.Annotation, in context: inout GraphicsContext, size: CGSize) {
-        let shade = annotation.color.swiftUI
-        let lineWidth = max(1, CGFloat(annotation.size) * size.height)
-        switch annotation.kind {
-        case .spotlight:
-            break
-        case .ellipse(let r):
-            let box = Self.viewRect(r.clamped, in: size)
-            if box.width > lineWidth && box.height > lineWidth {
-                context.stroke(Path(ellipseIn: box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)), with: .color(shade),
-                               lineWidth: lineWidth)
-            }
-        case .line(let from, let to):
-            var path = Path()
-            path.move(to: Self.viewPoint(from, in: size))
-            path.addLine(to: Self.viewPoint(to, in: size))
-            context.stroke(path, with: .color(shade), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-        case .step(let number, let at):
-            let diameter = max(8, CGFloat(annotation.size) * size.height)
-            let centre = Self.viewPoint(at, in: size)
-            let circle = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
-            context.fill(Path(ellipseIn: circle), with: .color(shade))
-            context.stroke(Path(ellipseIn: circle.insetBy(dx: diameter * 0.03, dy: diameter * 0.03)),
-                           with: .color(.white.opacity(0.9)), lineWidth: max(1, diameter * 0.06))
-            let textColor = ImageEditEngine.stepTextColor(annotation.color).swiftUI
-            context.draw(Text("\(number)").font(.system(size: diameter * 0.56, weight: .bold)).foregroundColor(textColor),
-                         at: centre, anchor: .center)
-        case .rectangle(let r):
-            let box = Self.viewRect(r.clamped, in: size)
-            if box.width > lineWidth && box.height > lineWidth {
-                context.stroke(Path(box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)), with: .color(shade),
-                               style: StrokeStyle(lineWidth: lineWidth, lineJoin: .miter))
-            } else {
-                context.fill(Path(box), with: .color(shade))
-            }
-        case .highlight(let r):
-            let fill = ImageEditEngine.highlightColor(annotation.color).swiftUI
-            context.fill(Path(Self.viewRect(r.clamped, in: size)), with: .color(fill))
-        case .arrow(let from, let to):
-            let start = Self.viewPoint(from, in: size)
-            guard let shape = ImageEditEngine.arrowShape(from: start, to: Self.viewPoint(to, in: size),
-                                                         lineWidth: lineWidth) else { return }
-            var shaft = Path()
-            shaft.move(to: start)
-            shaft.addLine(to: shape.shaftEnd)
-            context.stroke(shaft, with: .color(shade), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-            var head = Path()
-            head.addLines(shape.head)
-            head.closeSubpath()
-            context.fill(head, with: .color(shade))
-        case .text(let string, let at):
-            let fontSize = max(4, CGFloat(annotation.size) * size.height)
-            context.draw(Text(string).font(.system(size: fontSize, weight: .bold)).foregroundColor(shade),
-                         at: Self.viewPoint(at, in: size), anchor: .topLeading)
+        context.withCGContext { cg in
+            cg.translateBy(x: 0, y: size.height)
+            cg.scaleBy(x: 1, y: -1)
+            ImageEditEngine.draw(annotation, in: cg, width: size.width, height: size.height)
         }
     }
 
@@ -1177,6 +1439,12 @@ struct ImageEditorView: View {
             state.movingCrop = crop
         }
         state.current = current
+        if tool == .annotate && markup == .pencil {
+            if state.points.isEmpty { state.points.append(state.start) }
+            if let last = state.points.last, abs(last.x - current.x) + abs(last.y - current.y) > 0.0015 {
+                state.points.append(current)
+            }
+        }
         drag = state
         if tool == .crop { updateCrop(with: state) }
     }
@@ -1200,6 +1468,15 @@ struct ImageEditorView: View {
                 placeText(at: state.start)
             } else if markup == .step {
                 add(ImageEdit.Annotation(kind: .step(nextStep, at: state.current), color: color, size: sizeLevel * Self.stepScale))
+            } else if markup == .pencil {
+                var points = state.points
+                if points.isEmpty || points.last != end { points.append(end) }
+                let smooth = StrokeSmoothing.smooth(points)
+                add(ImageEdit.Annotation(kind: .pencil(smooth), color: color, size: sizeLevel * Self.lineScale))
+            } else if markup == .highlight, !isClick {
+                var area = box
+                if fitHighlight, let lines = textLines, let fitted = TextSnap.fit(box, to: lines) { area = fitted }
+                add(ImageEdit.Annotation(kind: .highlight(area), color: color, size: 0))
             } else if !isClick, let kind = draftKind(for: state) {
                 add(ImageEdit.Annotation(kind: kind, color: color, size: annotationSize(for: kind)))
             }
@@ -1212,7 +1489,10 @@ struct ImageEditorView: View {
         if let moving = state.movingCrop {
             let dx = min(max(state.current.x - state.start.x, -moving.minX), 1 - moving.maxX)
             let dy = min(max(state.current.y - state.start.y, -moving.minY), 1 - moving.maxY)
-            edit.crop = NormRect(x: moving.x + dx, y: moving.y + dy, width: moving.width, height: moving.height)
+            let moved = NormRect(x: moving.x + dx, y: moving.y + dy, width: moving.width, height: moving.height)
+            edit.crop = CropSnap.snapMove(moved)
+        } else if aspect == .free {
+            edit.crop = NormRect(from: state.start, to: CropSnap.snapPoint(state.current))
         } else {
             edit.crop = constrainedRect(from: state.start, to: state.current)
         }
@@ -1259,10 +1539,12 @@ struct ImageEditorView: View {
     private func draftKind(for state: DragState) -> ImageEdit.AnnotationKind? {
         let box = NormRect(from: state.start, to: state.current)
         switch markup {
-        case .text, .step:
+        case .text, .step, .pencil:
             return nil
         case .rectangle:
             return .rectangle(box)
+        case .filled:
+            return .filledRectangle(box)
         case .ellipse:
             return .ellipse(box)
         case .spotlight:
@@ -1274,15 +1556,17 @@ struct ImageEditorView: View {
             return .highlight(box)
         case .arrow:
             let dx = state.current.x - state.start.x, dy = state.current.y - state.start.y
-            return (dx * dx + dy * dy).squareRoot() > 0.005 ? .arrow(from: state.start, to: state.current) : nil
+            guard (dx * dx + dy * dy).squareRoot() > 0.005 else { return nil }
+            return arrowStyle == .solid ? .arrow(from: state.start, to: state.current)
+                : .styledArrow(from: state.start, to: state.current, style: arrowStyle)
         }
     }
 
     private func annotationSize(for kind: ImageEdit.AnnotationKind) -> Double {
         switch kind {
-        case .text: return sizeLevel * Self.textScale
+        case .text, .styledText: return sizeLevel * Self.textScale
         case .step: return sizeLevel * Self.stepScale
-        case .spotlight, .highlight: return 0
+        case .spotlight, .highlight, .picture: return 0
         default: return sizeLevel * Self.lineScale
         }
     }
@@ -1305,16 +1589,21 @@ struct ImageEditorView: View {
             pendingText = point
             textFieldFocused = true
         } else {
-            add(ImageEdit.Annotation(kind: .text(text, at: point), color: color, size: sizeLevel * Self.textScale))
+            add(textAnnotation(text, at: point))
             textDraft = ""
             pendingText = nil
         }
     }
 
+    private func textAnnotation(_ text: String, at point: NormPoint) -> ImageEdit.Annotation {
+        let kind: ImageEdit.AnnotationKind = textStyle == .bold ? .text(text, at: point) : .styledText(text, at: point, style: textStyle)
+        return ImageEdit.Annotation(kind: kind, color: color, size: sizeLevel * Self.textScale)
+    }
+
     private func commitPendingText() {
         let text = textDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let point = pendingText else { return }
-        add(ImageEdit.Annotation(kind: .text(text, at: point), color: color, size: sizeLevel * Self.textScale))
+        add(textAnnotation(text, at: point))
         textDraft = ""
         pendingText = nil
     }
@@ -1347,6 +1636,26 @@ struct ImageEditorView: View {
         edit.quarterTurns = (edit.turns + step) % 4
         // The saved image's shape flipped, so a locked aspect needs a fresh box.
         if aspect != .free, edit.crop != nil { fitCrop(to: aspect, within: .full) }
+    }
+
+    private func saveProject() {
+        let target: URL
+        if let projectURL {
+            target = projectURL
+        } else {
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [SpinformProject.contentType]
+            panel.nameFieldStringValue = url.deletingPathExtension().lastPathComponent + "." + SpinformProject.fileExtension
+            panel.directoryURL = url.deletingLastPathComponent()
+            guard panel.runModal() == .OK, let chosen = panel.url else { return }
+            target = chosen
+        }
+        do {
+            try SpinformProject.save(image: url, edit: edit, to: target)
+            Toast.show("Project saved", detail: target.lastPathComponent, symbol: "square.stack.3d.up")
+        } catch {
+            Toast.show("Couldn't save the project", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+        }
     }
 
     private func save() {
@@ -1406,6 +1715,14 @@ struct ImageEditorView: View {
         }
     }
 
+    /// Finds the lines of text on the preview once, for the highlighter.
+    private func findTextLines() async {
+        guard wantsTextLines, textLines == nil, let base = preview else { return }
+        let box = ImageEditEngine.PreviewImage(image: base, originalSize: .zero)
+        let lines = await Task.detached(priority: .userInitiated) { TextRecognizer.lineBoxes(in: box.image) }.value
+        textLines = lines
+    }
+
     // MARK: Bottom bar
 
     private var transformBar: some View {
@@ -1432,7 +1749,24 @@ struct ImageEditorView: View {
                 .font(Theme.Fonts.body)
                 .monospacedDigit()
                 .foregroundStyle(Theme.textSecondary)
+            dragOutHandle
         }
+    }
+
+    /// Drag this into Mail, Messages, Slack or Finder to drop the edited picture there.
+    private var dragOutHandle: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "hand.draw")
+            Text("Drag out")
+        }
+        .font(.system(size: 11.5, weight: .semibold))
+        .foregroundStyle(Theme.accentText)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 5)
+        .background(Theme.accent.opacity(0.12), in: Capsule())
+        .overlay(Capsule().strokeBorder(Theme.accent.opacity(0.5)))
+        .help("Drag the edited picture straight into another app")
+        .onDrag { EditedDrag.provider(for: url, edit: edit) }
     }
 
     private var outputSizeText: String {
@@ -1557,7 +1891,7 @@ struct ImageEditorView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            Text("Black boxes are the safest choice for text: blur and pixelation can sometimes be partly undone.")
+            Text("Pixelate and Secure blur scramble what they cover so it can't be undone. Smooth blur looks softer but may be partly reversible on text.")
                 .font(Theme.Fonts.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -1566,38 +1900,125 @@ struct ImageEditorView: View {
 
     private var annotateControls: some View {
         VStack(alignment: .leading, spacing: 10) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 5), spacing: 6) {
                 ForEach(Markup.allCases) { item in markupTile(item) }
             }
             hint(markupHint)
+            if markup == .arrow {
+                SectionLabel("Arrow style")
+                Picker("Arrow style", selection: $arrowStyle) {
+                    ForEach(ImageEdit.ArrowStyle.allCases) { Text($0.label).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
             if markup == .text {
                 TextField("Text", text: $textDraft)
                     .textFieldStyle(.roundedBorder)
                     .focused($textFieldFocused)
                     .onSubmit { commitPendingText() }
-            }
-            if markup != .spotlight {
-            SectionLabel("Colour")
-            HStack(spacing: 8) {
-                ForEach(RGBAColor.swatches, id: \.self) { swatch in
-                    Button { color = swatch } label: {
-                        Circle()
-                            .fill(swatch.swiftUI)
-                            .frame(width: 22, height: 22)
-                            .overlay {
-                                Circle().strokeBorder(swatch == color ? Theme.accent : Color.secondary.opacity(0.5),
-                                                      lineWidth: swatch == color ? 3 : 1)
-                            }
-                    }
-                    .buttonStyle(.plain)
+                SectionLabel("Text style")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+                    ForEach(ImageEdit.TextStyle.allCases) { style in textStyleTile(style) }
                 }
             }
+            if markup == .highlight {
+                Toggle("Fit to the text underneath", isOn: $fitHighlight)
+                    .font(Theme.Fonts.body)
+            }
+            if markup != .spotlight {
+                SectionLabel("Colour")
+                colourRow
             }
             if markup != .highlight && markup != .spotlight {
                 SectionLabel(markup == .text ? "Text size" : (markup == .step ? "Circle size" : "Line width"))
                 Slider(value: $sizeLevel, in: 1...10)
             }
+            Text("Drop other pictures on the canvas to combine them.")
+                .font(Theme.Fonts.caption)
+                .foregroundStyle(Theme.textSecondary)
         }
+    }
+
+    private var colourRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 7) {
+                ForEach(RGBAColor.swatches, id: \.self) { swatch in colourDot(swatch) }
+            }
+            HStack(spacing: 7) {
+                ForEach(customColors, id: \.self) { swatch in
+                    colourDot(swatch)
+                        .contextMenu {
+                            Button("Remove from My Colours") {
+                                MarkupPalette.remove(swatch)
+                                customColors = MarkupPalette.colors()
+                            }
+                        }
+                }
+                ColorPicker("", selection: Binding(get: { pickerColor }, set: { value in
+                    pickerColor = value
+                    if let picked = RGBAColor(cgColor: value) { color = picked }
+                }), supportsOpacity: false)
+                .labelsHidden()
+                .frame(width: 26)
+                .help("Any colour")
+                Button { sampleScreenColour() } label: { Image(systemName: "eyedropper") }
+                    .buttonStyle(.borderless)
+                    .help("Pick a colour from anywhere on the screen")
+                Button {
+                    MarkupPalette.add(color)
+                    customColors = MarkupPalette.colors()
+                } label: { Image(systemName: "plus.circle") }
+                    .buttonStyle(.borderless)
+                    .disabled(RGBAColor.swatches.contains(color) || customColors.contains(color))
+                    .help("Keep this colour in My Colours")
+            }
+        }
+    }
+
+    private func colourDot(_ swatch: RGBAColor) -> some View {
+        Button { color = swatch } label: {
+            Circle()
+                .fill(swatch.swiftUI)
+                .frame(width: 22, height: 22)
+                .overlay {
+                    Circle().strokeBorder(swatch == color ? Theme.accent : Color.secondary.opacity(0.5),
+                                          lineWidth: swatch == color ? 3 : 1)
+                }
+        }
+        .buttonStyle(.plain)
+        .help(swatch.hexString)
+    }
+
+    /// The system's screen colour sampler (no permission needed).
+    private func sampleScreenColour() {
+        NSColorSampler().show { picked in
+            guard let picked, let srgb = picked.usingColorSpace(.sRGB) else { return }
+            let sampled = RGBAColor(red: Double(srgb.redComponent), green: Double(srgb.greenComponent),
+                                    blue: Double(srgb.blueComponent))
+            Task { @MainActor in color = sampled }
+        }
+    }
+
+    private func textStyleTile(_ style: ImageEdit.TextStyle) -> some View {
+        let selected = textStyle == style
+        return Button { textStyle = style } label: {
+            VStack(spacing: 2) {
+                TextStyleSample(style: style, color: color)
+                    .frame(height: 22)
+                Text(style.label)
+                    .font(.system(size: 10, weight: selected ? .semibold : .medium))
+                    .foregroundStyle(selected ? Theme.accentText : Theme.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 5)
+            .background(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                .fill(selected ? Theme.accent.opacity(0.12) : Theme.surfaceRaised))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+        .help(style.label)
     }
 
     private func markupTile(_ item: Markup) -> some View {
@@ -1637,9 +2058,13 @@ struct ImageEditorView: View {
         case .arrow:
             return "Drag from where the arrow starts to what it points at."
         case .highlight:
-            return "Drag over something to highlight it."
+            return fitHighlight ? "Drag over text to highlight it; the mark fits the line." : "Drag over something to highlight it."
         case .ellipse:
             return "Drag to draw an oval around something."
+        case .filled:
+            return "Drag to cover something with a solid box."
+        case .pencil:
+            return "Draw freehand; the line is smoothed when you let go."
         case .line:
             return "Drag to draw a straight line."
         case .step:
@@ -1733,6 +2158,11 @@ struct ImageEditorView: View {
         case .line: return ("Line", "line.diagonal")
         case .step(let n, _): return ("Step \(n)", "\(min(max(n, 1), 50)).circle.fill")
         case .spotlight: return ("Spotlight", "light.max")
+        case .styledArrow(_, _, let style): return ("\(style.label) arrow", style == .curved ? "arrow.turn.up.right" : "arrow.up.right")
+        case .styledText(let string, _, _): return ("“\(string)”", "textformat")
+        case .pencil: return ("Pen stroke", "scribble")
+        case .filledRectangle: return ("Filled box", "rectangle.fill")
+        case .picture(let path, _): return ((path as NSString).lastPathComponent, "photo")
         }
     }
 
@@ -1755,6 +2185,9 @@ struct ImageEditorView: View {
                 Button("Cancel") { onCancel() }
                     .keyboardShortcut(.cancelAction)
                 Spacer()
+                Button { saveProject() } label: { Label("Project", systemImage: "square.stack.3d.up") }
+                    .disabled(preview == nil)
+                    .help("Save a .spinform project you can open later and keep editing")
                 Button("Save Copy") { save() }
                     .buttonStyle(.borderedProminent)
                     .keyboardShortcut("s", modifiers: .command)
@@ -1767,4 +2200,27 @@ struct ImageEditorView: View {
 
 fileprivate extension RGBAColor {
     var swiftUI: Color { Color(.sRGB, red: red, green: green, blue: blue, opacity: alpha) }
+}
+
+/// "Aa" drawn in a text style, with the renderer itself.
+struct TextStyleSample: View {
+    let style: ImageEdit.TextStyle
+    let color: RGBAColor
+
+    var body: some View {
+        Canvas { context, size in
+            let annotation = ImageEdit.Annotation(kind: .styledText("Aa", at: NormPoint(x: 0, y: 0), style: style),
+                                                  color: color, size: 0.62)
+            let metrics = ImageEditEngine.textMetrics("Aa", fontSize: size.height * 0.62, style: style)
+            let x = (size.width - metrics.width) / 2 / max(size.width, 1)
+            let y = (size.height - (metrics.ascent + metrics.descent)) / 2 / max(size.height, 1)
+            var placed = annotation
+            placed.kind = .styledText("Aa", at: NormPoint(x: x, y: y), style: style)
+            context.withCGContext { cg in
+                cg.translateBy(x: 0, y: size.height)
+                cg.scaleBy(x: 1, y: -1)
+                ImageEditEngine.draw(placed, in: cg, width: size.width, height: size.height)
+            }
+        }
+    }
 }

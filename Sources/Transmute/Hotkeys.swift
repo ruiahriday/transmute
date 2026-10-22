@@ -4,12 +4,13 @@ import SwiftUI
 
 /// Everything the capture tools can do from a shortcut, the menu bar or the Capture tab.
 enum CaptureAction: String, CaseIterable, Identifiable {
-    case area, window, fullscreen, previous, scrolling, text, recordArea, recordWindow, recordScreen, history
+    case allInOne, area, window, fullscreen, previous, scrolling, text, recordArea, recordWindow, recordScreen, history
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
+        case .allInOne: "All-in-One Capture"
         case .area: "Capture Area"
         case .window: "Capture Window"
         case .fullscreen: "Capture Full Screen"
@@ -26,6 +27,7 @@ enum CaptureAction: String, CaseIterable, Identifiable {
     /// Short name for tiles.
     var shortTitle: String {
         switch self {
+        case .allInOne: "All-in-One"
         case .area: "Area"
         case .window: "Window"
         case .fullscreen: "Full Screen"
@@ -41,6 +43,7 @@ enum CaptureAction: String, CaseIterable, Identifiable {
 
     var symbol: String {
         switch self {
+        case .allInOne: "square.grid.3x3.square"
         case .area: "rectangle.dashed"
         case .window: "macwindow"
         case .fullscreen: "display"
@@ -57,6 +60,7 @@ enum CaptureAction: String, CaseIterable, Identifiable {
     /// Control-Shift with the same numbers as macOS's ⌘⇧3/4/5, so nothing clashes.
     var defaultHotkey: Hotkey? {
         switch self {
+        case .allInOne: Hotkey(keyCode: 19, modifiers: [.control, .shift])
         case .fullscreen: Hotkey(keyCode: 20, modifiers: [.control, .shift])
         case .area: Hotkey(keyCode: 21, modifiers: [.control, .shift])
         case .recordArea: Hotkey(keyCode: 23, modifiers: [.control, .shift])
