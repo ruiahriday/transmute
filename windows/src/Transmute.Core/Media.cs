@@ -13,9 +13,19 @@ public static class MediaConverter
         var args = FfmpegArgs(format) ?? throw new ConversionException($"Can't convert media to {format.Label()}.");
         var output = OutputPaths.Destination(input, format.Extension(), null, options.OutputFolder);
         if (options.StripMetadata) args = [.. args, "-map_metadata", "-1"];
+        var streams = MediaStreams.Parse(await MediaInfo.Banner(input, token));
         try
         {
-            await RunFfmpeg(ffmpeg, input, args, output, progress, token);
+            try
+            {
+                await RunFfmpeg(ffmpeg, input, [.. streams.Maps(args), .. args], output, progress, token);
+            }
+            catch (ConversionException) when (!token.IsCancellationRequested && !args.Contains("-an"))
+            {
+                // A second go with plain stereo sound, which most failures on odd camera files come down to.
+                OutputPaths.TryDelete(output);
+                await RunFfmpeg(ffmpeg, input, [.. streams.Maps(args), .. args, "-ac", "2"], output, progress, token);
+            }
         }
         catch
         {
@@ -106,7 +116,8 @@ public static class MediaConverter
         var output = OutputPaths.Destination(input, outExt, "compressed", options.OutputFolder);
         try
         {
-            await RunFfmpeg(ffmpeg, input, args, output, progress, token);
+            var streams = MediaStreams.Parse(await MediaInfo.Banner(input, token));
+            await RunFfmpeg(ffmpeg, input, [.. streams.Maps(args), .. args], output, progress, token);
         }
         catch
         {
@@ -130,7 +141,8 @@ public static class MediaConverter
         var output = OutputPaths.Destination(input, Path.GetExtension(input).TrimStart('.'), "clean", options.OutputFolder);
         try
         {
-            await Shell.Check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-i", input, "-map", "0", "-map_metadata", "-1",
+            var maps = MediaStreams.Parse(await MediaInfo.Banner(input, token)).CopyMaps();
+            await Shell.Check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-i", input, .. maps, "-map_metadata", "-1",
                 "-map_chapters", "-1", "-c", "copy", output], token);
         }
         catch
@@ -139,6 +151,105 @@ public static class MediaConverter
             throw;
         }
         return output;
+    }
+}
+
+/// The tracks in a media file as ffmpeg lists them, so a conversion can pick ones ffmpeg can decode.
+/// Recent iPhones add a spatial-audio track (APAC) next to the normal one, which ffmpeg can't decode.
+public sealed class MediaStreams
+{
+    public sealed record Track(string Type, string Codec, int? Channels, bool IsDefault, bool AttachedPicture);
+
+    public IReadOnlyList<Track> Tracks { get; init; } = [];
+
+    /// Codecs ffmpeg lists but can't decode.
+    public static readonly HashSet<string> Undecodable = ["none", "apac"];
+
+    static readonly Regex StreamLine = new(@"Stream #0:\d+(?:\[0x[0-9a-fA-F]+\])?(?:\([^)]*\))?: (\w+): (.*)");
+
+    /// Reads lines like "Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp (default)".
+    public static MediaStreams Parse(string banner)
+    {
+        var tracks = new List<Track>();
+        foreach (var line in banner.Split('\n', '\r'))
+        {
+            var m = StreamLine.Match(line);
+            if (!m.Success) continue;
+            var type = m.Groups[1].Value;
+            var details = m.Groups[2].Value.Trim();
+            var codec = new string(details.TakeWhile(c => c != ' ' && c != ',').ToArray()).ToLowerInvariant();
+            int? channels = null;
+            if (type == "Audio") channels = MediaInfo.ParseSoundTrack(line)?.Channels;
+            tracks.Add(new Track(type, codec, channels, line.Contains("(default)"), line.Contains("attached pic")));
+        }
+        return new MediaStreams { Tracks = tracks };
+    }
+
+    Track? BestAudio
+    {
+        get
+        {
+            var audio = Tracks.Where(t => t.Type == "Audio" && !Undecodable.Contains(t.Codec)).ToList();
+            return audio.FirstOrDefault(t => t.IsDefault) ?? audio.FirstOrDefault();
+        }
+    }
+
+    /// "0:a:1": the default sound track if ffmpeg can decode it, otherwise the first one it can.
+    public string? AudioSpec
+    {
+        get
+        {
+            if (BestAudio is not { } best) return null;
+            var index = Tracks.Where(t => t.Type == "Audio").ToList().IndexOf(best);
+            return index < 0 ? null : $"0:a:{index}";
+        }
+    }
+
+    /// "0:V:0": the first real video track (not cover art).
+    public string? VideoSpec
+    {
+        get
+        {
+            var videos = Tracks.Where(t => t.Type == "Video" && !t.AttachedPicture).ToList();
+            var index = videos.FindIndex(t => !Undecodable.Contains(t.Codec));
+            return index < 0 ? null : $"0:V:{index}";
+        }
+    }
+
+    public int? AudioChannels => BestAudio?.Channels;
+
+    /// "-map 0" without the tracks ffmpeg can't read, for copying a file's tracks as they are.
+    public string[] CopyMaps()
+    {
+        var maps = new List<string> { "-map", "0" };
+        foreach (var (type, prefix) in new[] { ("Video", "v"), ("Audio", "a"), ("Subtitle", "s"), ("Data", "d"), ("Attachment", "t") })
+        {
+            var same = Tracks.Where(t => t.Type == type).ToList();
+            for (var i = 0; i < same.Count; i++)
+                if (Undecodable.Contains(same[i].Codec)) maps.AddRange(["-map", $"-0:{prefix}:{i}"]);
+        }
+        return [.. maps];
+    }
+
+    static readonly HashSet<string> TwoChannelCodecs = ["libmp3lame", "wmav2", "libopus"];
+
+    /// -map arguments for these encoder arguments (which say "-vn" for sound only, "-an" for no sound).
+    /// Empty when the file couldn't be read, which leaves the choice to ffmpeg.
+    public string[] Maps(IReadOnlyList<string> args)
+    {
+        if (Tracks.Count == 0) return [];
+        var maps = new List<string>();
+        if (!args.Contains("-vn") && VideoSpec is { } v) maps.AddRange(["-map", v]);
+        if (!args.Contains("-an") && AudioSpec is { } a) maps.AddRange(["-map", a]);
+        if (maps.Count == 0) return [];
+        // MP3 and WMA hold at most two channels, and Opus refuses camera surround layouts like
+        // 5.1(side): surround and spatial sound is mixed down to stereo for those.
+        var codecAt = args.ToList().IndexOf("-c:a");
+        if (AudioChannels > 2 && codecAt >= 0 && codecAt + 1 < args.Count && TwoChannelCodecs.Contains(args[codecAt + 1]))
+            maps.AddRange(["-ac", "2"]);
+        // Files with sparse tracks otherwise stop with "Too many packets buffered for output stream".
+        maps.AddRange(["-max_muxing_queue_size", "4096"]);
+        return [.. maps];
     }
 }
 

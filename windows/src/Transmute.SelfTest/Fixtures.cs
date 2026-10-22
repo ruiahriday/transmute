@@ -56,6 +56,32 @@ static class Fixtures
         await Ff("-f", "lavfi", "-i", "testsrc=duration=3:size=320x240:rate=25", "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", P("clip.mp4"));
         await Ff("-i", P("clip.mp4"), "-c", "copy", P("movie.mkv"));
+        // A camcorder-style file with 5.1 sound, which MP3, WMA and Opus can't take as it is.
+        await Ff("-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=25", "-f", "lavfi", "-i", "sine=frequency=330:duration=2",
+            "-filter_complex", "[1]pan=5.1(side)|c0=c0|c1=c0|c2=c0|c3=c0|c4=c0|c5=c0[a]", "-map", "0", "-map", "[a]",
+            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "ac3", "-f", "mpegts", P("surround.mts"));
+        // Like a recent iPhone video: a normal stereo track plus a default spatial-audio (APAC) track
+        // ffmpeg can't decode. The second track is made as AAC and relabelled.
+        await Ff("-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=30", "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
+            "-f", "lavfi", "-i", "sine=frequency=220:duration=2", "-filter_complex", "[2]pan=quad|c0=c0|c1=c0|c2=c0|c3=c0[q]",
+            "-map", "0", "-map", "1", "-map", "[q]", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-ac:a:0", "2",
+            "-disposition:a:0", "0", "-disposition:a:1", "default", P("spatial-src.mov"));
+        var movie = await File.ReadAllBytesAsync(P("spatial-src.mov"));
+        static int Find(byte[] data, string tag, int from, bool last = false)
+        {
+            var t = System.Text.Encoding.ASCII.GetBytes(tag);
+            int found = -1;
+            for (var i = from; i <= data.Length - 4; i++)
+                if (data[i] == t[0] && data[i + 1] == t[1] && data[i + 2] == t[2] && data[i + 3] == t[3]) { found = i; if (!last) break; }
+            return found;
+        }
+        var trak = Find(movie, "trak", 0, last: true);
+        var sampleEntry = Find(movie, "mp4a", trak);
+        var esds = Find(movie, "esds", sampleEntry);
+        System.Text.Encoding.ASCII.GetBytes("apac").CopyTo(movie, sampleEntry);
+        System.Text.Encoding.ASCII.GetBytes("free").CopyTo(movie, esds);
+        await File.WriteAllBytesAsync(P("spatial.mov"), movie);
+        File.Delete(P("spatial-src.mov"));
         await Ff("-f", "lavfi", "-i", "sine=frequency=440:duration=3", P("tone.wav"));
         await Ff("-i", P("tone.wav"), "-c:a", "libmp3lame", P("song.mp3"));
 

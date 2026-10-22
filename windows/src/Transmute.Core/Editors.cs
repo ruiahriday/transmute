@@ -343,6 +343,8 @@ public static class VideoEditEngine
         else segments = [new(start, stop, "edited")];
 
         var keepAudio = !edit.Mute && MediaInfo.StreamLines(banner, "Audio").Any();
+        // The sound track ffmpeg can decode (iPhones add a spatial-audio one it can't).
+        var audioMap = MediaStreams.Parse(banner).AudioSpec ?? "0:a:0";
         var videoChain = string.Join(",", VideoFilters(edit, speed));
         var audioChain = string.Join(",", AudioFilters(edit, speed));
         var totalWork = segments.Sum(s => s.Length(sourceLength));
@@ -364,7 +366,7 @@ public static class VideoEditEngine
                 args.AddRange(["-i", input, "-map", "0:V:0"]);
                 if (keepAudio)
                 {
-                    args.AddRange(["-map", "0:a:0"]);
+                    args.AddRange(["-map", audioMap]);
                     if (audioChain.Length > 0) args.AddRange(["-af", audioChain]);
                 }
                 else args.Add("-an");
@@ -593,6 +595,8 @@ public static class AudioEditEngine
         var track = MediaInfo.ParseSoundTrack(banner) ?? throw new ConversionException($"{Path.GetFileName(input)} has no sound to edit.");
         var format = FormatFor(edit, input);
         var plan = FilterGraph(edit, MediaInfo.ParseDuration(banner) ?? 0, track);
+        if (MediaStreams.Parse(banner).AudioSpec is { } spec && spec != "0:a:0")
+            plan.Graph = plan.Graph.Replace("[0:a:0]", $"[{spec}]");
         var output = OutputPaths.Destination(input, format.Extension(), "edited", options.OutputFolder);
         var args = new List<string> { "-hide_banner", "-nostdin", "-y", "-progress", "pipe:1", "-nostats", "-i", input,
             "-filter_complex", plan.Graph, "-map", $"[{OutputLabel}]", "-vn", "-map_chapters", "-1" };
@@ -684,8 +688,10 @@ public static class AudioEditEngine
         var raw = OutputPaths.TempFile("pcm");
         try
         {
-            if (await MediaInfo.Sound(input, token) is null) throw new ConversionException($"{Path.GetFileName(input)} has no sound.");
-            await Shell.Check(ffmpeg, ["-hide_banner", "-nostdin", "-nostats", "-loglevel", "error", "-i", input, "-map", "0:a:0", "-vn",
+            var banner = await MediaInfo.Banner(input, token);
+            if (MediaInfo.ParseSoundTrack(banner) is null) throw new ConversionException($"{Path.GetFileName(input)} has no sound.");
+            var audioMap = MediaStreams.Parse(banner).AudioSpec ?? "0:a:0";
+            await Shell.Check(ffmpeg, ["-hide_banner", "-nostdin", "-nostats", "-loglevel", "error", "-i", input, "-map", audioMap, "-vn",
                 "-af", "aresample=async=1:first_pts=0", "-f", "s16le", "-ac", "1", "-ar", "8000", "-"], token, stdoutFile: raw);
             return Peaks(await File.ReadAllBytesAsync(raw, token), Math.Max(1, buckets));
         }
