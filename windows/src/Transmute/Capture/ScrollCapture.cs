@@ -196,12 +196,12 @@ sealed class ScrollCapture
             {
                 case StitchStep.Unchanged: still++; break;
                 case StitchStep.Lost: lost++; still = 0; break;
-                case StitchStep.Full: Update("Longest it can get"); await Finish(true); return;
+                case StitchStep.Full: Update("Longest it can get"); grabbing = false; await Finish(true); return;
                 default: still = 0; break;
             }
             if (auto.IsChecked == true || Scroller is not null)
             {
-                if (still >= 6) { auto.IsChecked = false; if (Scroller is not null) { await Finish(true); return; } }
+                if (still >= 6) { auto.IsChecked = false; if (Scroller is not null) { grabbing = false; await Finish(true); return; } }
                 else if (step != StitchStep.Lost || lost % 3 == 0) Scroll(); // after a miss, look again before moving on
             }
             Update();
@@ -233,9 +233,14 @@ sealed class ScrollCapture
         SendInput(1, [input], Marshal.SizeOf<INPUT>());
     }
 
-    async Task Finish(bool keep)
+    Task? finishing;
+
+    /// Ends the capture once; later calls wait for the same ending. (Tick clears grabbing before
+    /// calling this, since its own frame is already joined.)
+    Task Finish(bool keep) => finishing ??= FinishOnce(keep);
+
+    async Task FinishOnce(bool keep)
     {
-        if (finished.Task.IsCompleted) return;
         timer.Stop();
         border.Close();
         bar.Close();
