@@ -136,7 +136,7 @@ sealed class ShakeDetector
 
 enum FileAction { Float, Copy, CopyPath, Terminal, Move, ShowInFolder }
 
-sealed record WheelItem(string Label, string Glyph, JobOperation? Operation = null, BatchTool? Batch = null, FileAction? Action = null);
+sealed record WheelItem(string Label, string Glyph, JobOperation? Operation = null, BatchTool? Batch = null, FileAction? Action = null, bool Edit = false);
 
 static class WheelItems
 {
@@ -149,6 +149,7 @@ static class WheelItems
         if (WheelLayout.Format(id) is { } format) return new(format.Label(), Glyph(format), new JobOperation.Convert(format));
         return id switch
         {
+            "tool:edit" => new("Edit", "✎", Edit: true),
             "tool:half" => new("Half size", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.5))),
             "tool:quarter" => new("Quarter", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.25))),
             "tool:clean" => new("Clean", "⌀", new JobOperation.StripMetadata()),
@@ -174,6 +175,7 @@ static class WheelItems
         if (WheelLayout.Format(id) is { } format) return format == OutputFormat.Extract ? "Extract" : $"Convert to {format.Label()}";
         return id switch
         {
+            "tool:edit" => "Edit (opens the photo, video or audio editor)",
             "tool:half" => "Compress to half size",
             "tool:quarter" => "Compress to a quarter",
             "tool:clean" => "Remove metadata",
@@ -221,6 +223,12 @@ static class WheelItems
             _ = queue.RunBatch(tool, jobs, reveal);
         }
         else if (item.Action is { } action) Perform(action, paths);
+        else if (item.Edit && paths.FirstOrDefault(p => Editors.CanEdit(Kinds.Of(p))) is { } path)
+        {
+            // Straight into the editor, without opening Transmute and adding the file first.
+            var job = queue.Add([path]).FirstOrDefault();
+            if (job is not null) Editors.Open(job, null);
+        }
     }
 
     static void Perform(FileAction action, IReadOnlyList<string> paths)

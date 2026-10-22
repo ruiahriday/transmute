@@ -4,14 +4,14 @@ public enum WheelKind { Convert, Tools, Actions }
 
 /// Which bubbles each drag wheel shows, and where. A layout is a list of item ids going clockwise
 /// from the top; "gap" leaves a position empty so the others stay where the user put them.
-/// Ids: "convert:pdf", "tool:half" (and quarter, clean, split, merge, topdf, qr, zip),
+/// Ids: "convert:pdf", "tool:edit" (and half, quarter, clean, split, merge, topdf, qr, zip),
 /// "action:float" (and copy, copypath, terminal, move, show). Any item can go on any wheel.
 public static class WheelLayout
 {
     public const string Gap = "gap";
     public const int MaxSlots = 12;
 
-    public static readonly string[] Tools = ["half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"];
+    public static readonly string[] Tools = ["edit", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"];
     public static readonly string[] Actions = ["float", "copy", "copypath", "terminal", "move", "show"];
 
     /// Where a customized layout is kept in settings: "convert.document", "tools.image"…
@@ -27,7 +27,7 @@ public static class WheelLayout
     {
         WheelKind.Convert => kind.ConvertTargets().Take(10).Select(ConvertId).ToList(),
         WheelKind.Tools => Tools.Where(t => ToolFits(t, [kind], 2)).Select(t => "tool:" + t).ToList(),
-        _ => Actions.Select(a => "action:" + a).ToList(),
+        _ => [.. ToolFits("edit", [kind], 1) ? ["tool:edit"] : Array.Empty<string>(), .. Actions.Select(a => "action:" + a)],
     };
 
     /// Everything that can go on a wheel for this kind of file, formats first, then tools, then actions.
@@ -55,6 +55,7 @@ public static class WheelLayout
         "merge" => kinds.All(k => k == FileKind.Pdf) && count > 1,
         "topdf" or "qr" => kinds.All(k => k == FileKind.Image),
         "zip" => true,
+        "edit" => kinds.All(k => k is FileKind.Image or FileKind.Video or FileKind.Audio),
         _ => false,
     };
 

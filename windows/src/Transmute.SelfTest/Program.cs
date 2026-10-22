@@ -620,6 +620,10 @@ static class Tests
             Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf], null), "tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:zip");
             Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Pdf, FileKind.Pdf], null), "tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:merge", "tool:zip");
             Same(WheelLayout.Resolve(WheelKind.Convert, [FileKind.Image, FileKind.Video], null), "convert:gif");
+            // Edit opens the editor straight from the wheel, first on the tools and actions wheels.
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Image], null).Take(2), "tool:edit", "tool:half");
+            Same(WheelLayout.Resolve(WheelKind.Actions, [FileKind.Video], null).Take(1), "tool:edit");
+            Same(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Image, FileKind.Pdf], null).Where(id => id == "tool:edit"));
             return Done();
         });
         await Check("Drag wheel: a customized layout keeps its order, spaces and mixed-in items", () =>

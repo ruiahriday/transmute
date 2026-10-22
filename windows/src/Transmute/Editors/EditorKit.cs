@@ -9,7 +9,7 @@ namespace Transmute.App;
 /// Opens the right editor for a file. Editors save a copy; the original is never changed.
 static class Editors
 {
-    public static void Open(Job job, Window owner)
+    public static void Open(Job job, Window? owner)
     {
         Window window = job.Kind switch
         {
@@ -18,9 +18,13 @@ static class Editors
             FileKind.Audio => new AudioEditorWindow(job),
             _ => throw new InvalidOperationException(),
         };
-        window.Owner = owner;
+        if (owner is not null) window.Owner = owner;
+        else window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         window.Show();
+        window.Activate();
     }
+
+    public static bool CanEdit(FileKind kind) => kind is FileKind.Image or FileKind.Video or FileKind.Audio;
 
     public static void Run(Job job, JobOperation operation) =>
         _ = JobQueue.Shared.Start([(job, operation)], Settings.Current.RevealWhenDone);

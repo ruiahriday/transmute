@@ -167,6 +167,14 @@ static class SmokeTest
                 await Wait(3);
                 return Application.Current.Windows.OfType<MetadataWindow>().Single();
             });
+            await Step("wheel edit opens the photo editor", async () =>
+            {
+                foreach (var w in Application.Current.Windows.OfType<ImageEditorWindow>().ToList()) w.Close();
+                if (!WheelItems.For(WheelKind.Tools, [photo]).Any(i => i?.Edit == true)) throw new Exception("no Edit bubble on the tools wheel");
+                WheelItems.Run(WheelItems.Item("tool:edit")!, [photo]);
+                await Wait(4);
+                return Application.Current.Windows.OfType<ImageEditorWindow>().Single();
+            });
 
             DragProbe();
         }
