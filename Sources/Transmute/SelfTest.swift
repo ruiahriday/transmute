@@ -1004,7 +1004,8 @@ enum SelfTest {
             let image = try ImageConverter.loadCGImage(out)
             guard image.width == 400, image.height == 300 else { throw ConversionError("size \(image.width)×\(image.height)") }
             let found = try corners(out)
-            guard found.allSatisfy({ $0.alpha > 0.99 && $0.blue < 0.9 }) else {
+            // The studio photo is warm; the circle picture's own background is blue.
+            guard found.allSatisfy({ $0.alpha > 0.99 && $0.red > 0.5 && $0.red > $0.blue }) else {
                 throw ConversionError("corners should show the picture: \(found.map(describe))")
             }
             return result.outputs
