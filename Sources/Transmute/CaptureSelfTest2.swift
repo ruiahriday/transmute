@@ -486,7 +486,7 @@ extension SelfTest {
 
 extension Snapshots {
     static func moreCaptureShots(suffix: String, output: URL, art: URL, fixtures: URL, screenshotURL: URL) async {
-        await shoot("capture-chooser-\(suffix)", output, size: CGSize(width: 540, height: 350), wait: 1.5, clear: true) {
+        await shoot("capture-chooser-\(suffix)", output, size: CGSize(width: 600, height: 350), wait: 1.5, clear: true) {
             CaptureChooserView()
         }
 

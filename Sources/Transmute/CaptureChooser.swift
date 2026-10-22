@@ -54,7 +54,7 @@ final class CaptureChooser {
         finish(nil)
         return await withCheckedContinuation { (continuation: CheckedContinuation<CaptureChoice?, Never>) in
             self.continuation = continuation
-            let size = CGSize(width: 520, height: 330)
+            let size = CGSize(width: 580, height: 330)
             let screen = ScreenGrabber.screenUnderMouse?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
             let frame = NSRect(x: screen.midX - size.width / 2, y: screen.midY - size.height / 2 + 60,
                                width: size.width, height: size.height)
@@ -137,7 +137,7 @@ struct CaptureChooserView: View {
                 Spacer()
                 Button("Cancel") { onChoose(nil) }
                     .buttonStyle(ChipButtonStyle())
-                Button { choose(.action(last)) } label: { Label(last.shortTitle, systemImage: last.symbol) }
+                Button { choose(.action(last)) } label: { Label(last.shortTitle, systemImage: last.symbol).lineLimit(1).fixedSize() }
                     .buttonStyle(GlowButtonStyle())
                     .keyboardShortcut(.defaultAction)
             }
