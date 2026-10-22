@@ -51,7 +51,7 @@ struct ContentView: View {
             }
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(item: $editing) { request in editor(for: request) }
+        .sheet(item: $editing) { request in EditorHost(request: request, close: { editing = nil }) }
         .frame(minWidth: 600, minHeight: 460)
     }
 
@@ -118,36 +118,6 @@ struct ContentView: View {
 
     // MARK: Editors
 
-    @ViewBuilder
-    private func editor(for request: EditRequest) -> some View {
-        let id = request.jobID
-        let close = { editing = nil }
-        switch request.mode {
-        case .image:
-            ImageEditorView(url: request.url, onSave: { edit in
-                close()
-                run(id, .editImage(edit))
-            }, onCancel: close)
-        case .video:
-            VideoEditorView(url: request.url, onSave: { edit in
-                close()
-                run(id, .editVideo(edit))
-            }, onSnapshot: { seconds in
-                run(id, .snapshot(seconds: seconds))
-            }, onCancel: close)
-        case .audio:
-            AudioEditorView(url: request.url, onSave: { edit in
-                close()
-                run(id, .editAudio(edit))
-            }, onCancel: close)
-        case .info:
-            MetadataEditorView(url: request.url, onSave: { edit in
-                close()
-                run(id, .writeMetadata(edit))
-            }, onCancel: close)
-        }
-    }
-
     private func editAction(for job: Job) -> (() -> Void)? {
         guard let mode = EditRequest.editMode(for: job.kind) else { return nil }
         return { editing = EditRequest(job: job, mode: mode) }
@@ -156,10 +126,6 @@ struct ContentView: View {
     private func infoAction(for job: Job) -> (() -> Void)? {
         guard EditRequest.hasInfo(job.kind) else { return nil }
         return { editing = EditRequest(job: job, mode: .info) }
-    }
-
-    private func run(_ id: UUID, _ operation: JobOperation) {
-        queue.start([(id, operation)], options: .fromDefaults(), reveal: revealWhenDone)
     }
 
     // MARK: Controls
@@ -301,6 +267,46 @@ struct ContentView: View {
         .buttonStyle(.borderedProminent)
         .keyboardShortcut(.defaultAction)
         .disabled(queue.jobs.isEmpty || queue.isRunning)
+    }
+}
+
+/// The photo, video, audio or info editor for one file, shown as a sheet in the main window or
+/// in its own window when opened from the drag wheel.
+struct EditorHost: View {
+    let request: EditRequest
+    let close: () -> Void
+
+    var body: some View {
+        let id = request.jobID
+        switch request.mode {
+        case .image:
+            ImageEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editImage(edit))
+            }, onCancel: close)
+        case .video:
+            VideoEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editVideo(edit))
+            }, onSnapshot: { seconds in
+                run(id, .snapshot(seconds: seconds))
+            }, onCancel: close)
+        case .audio:
+            AudioEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .editAudio(edit))
+            }, onCancel: close)
+        case .info:
+            MetadataEditorView(url: request.url, onSave: { edit in
+                close()
+                run(id, .writeMetadata(edit))
+            }, onCancel: close)
+        }
+    }
+
+    private func run(_ id: UUID, _ operation: JobOperation) {
+        JobQueue.shared.start([(id, operation)], options: .fromDefaults(),
+                              reveal: UserDefaults.standard.bool(forKey: Prefs.revealWhenDone))
     }
 }
 

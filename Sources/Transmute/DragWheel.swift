@@ -135,7 +135,44 @@ final class DragWheelController {
             HUDController.shared.finishWhenDone(ids: ids)
         case .file(let action):
             action.perform(on: urls)
+        case .edit:
+            if let url = urls.first(where: { EditRequest.editMode(for: FileKind.of($0)) != nil }) {
+                EditorWindow.open(url)
+            }
         }
+    }
+}
+
+/// An editor in a window of its own, for the drag wheel's Edit bubble: no need to open
+/// Transmute and add the file first. The result is saved as a copy, as from the main window.
+@MainActor
+enum EditorWindow {
+    private static var windows: [NSWindow] = []
+
+    static func open(_ url: URL) {
+        let queue = JobQueue.shared
+        guard let id = queue.add([url]).first, let job = queue.job(id),
+              let mode = EditRequest.editMode(for: job.kind) else { return }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 920, height: 660),
+                              styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                              backing: .buffered, defer: false)
+        window.title = "Edit \(url.lastPathComponent)"
+        window.titlebarAppearsTransparent = true
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(rootView: EditorHost(request: EditRequest(job: job, mode: mode)) { [weak window] in
+            window?.close()
+        })
+        window.center()
+        windows.append(window)
+        var token: NSObjectProtocol?
+        token = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { _ in
+            MainActor.assumeIsolated {
+                windows.removeAll { $0 === window }
+                if let token { NotificationCenter.default.removeObserver(token) }
+            }
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
     }
 }
 
@@ -220,6 +257,8 @@ struct WheelItem: Identifiable {
         case job(JobOperation)
         case batch(BatchTool)
         case file(FileAction)
+        /// Opens the photo, video or audio editor on the file.
+        case edit
     }
 
     let id = UUID()
@@ -249,6 +288,7 @@ struct WheelItem: Identifiable {
         case "tool:topdf": self.init(label: "To PDF", symbol: "doc.richtext", action: .batch(.imagesToPDF))
         case "tool:qr": self.init(label: "QR", symbol: "qrcode.viewfinder", action: .job(.readQR))
         case "tool:zip": self.init(label: "Zip", symbol: "archivebox", action: .batch(.archive(.zip)))
+        case "tool:edit": self.init(label: "Edit", symbol: "wand.and.stars", action: .edit)
         default:
             guard id.hasPrefix("action:"),
                   let action = FileAction.allCases.first(where: { "action:" + $0.id == id }) else { return nil }
@@ -269,6 +309,7 @@ struct WheelItem: Identifiable {
         case "tool:topdf": return "Images to one PDF"
         case "tool:qr": return "Read QR code"
         case "tool:zip": return "Zip"
+        case "tool:edit": return "Edit (opens the photo, video or audio editor)"
         case "action:airdrop": return "AirDrop"
         case "action:float": return "Float (floating files)"
         case "action:copy": return "Copy"

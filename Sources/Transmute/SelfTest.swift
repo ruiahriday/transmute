@@ -838,6 +838,12 @@ enum SelfTest {
         same("two PDFs get Merge", WheelLayout.resolve(.tools, [.pdf, .pdf], custom: nil),
              ["tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:merge", "tool:zip"])
         same("mixed files share formats", WheelLayout.resolve(.convert, [.image, .video], custom: nil), ["convert:gif"])
+        same("images get Edit first on the tools wheel", Array(WheelLayout.resolve(.tools, [.image], custom: nil).prefix(2)),
+             ["tool:edit", "tool:half"])
+        same("videos get Edit first on the actions wheel", Array(WheelLayout.resolve(.actions, [.video], custom: nil).prefix(1)),
+             ["tool:edit"])
+        same("a photo and a PDF have no Edit", WheelLayout.resolve(.tools, [.image, .pdf], custom: nil).filter { $0 == "tool:edit" }, [])
+        same("Edit has a bubble", [WheelItem(id: "tool:edit")?.label ?? "-"], ["Edit"])
         var custom = ["convert.document": ["gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip"]]
         same("customized order, spaces and mixed-in items", WheelLayout.resolve(.convert, [.document], custom: custom),
              ["gap", "convert:pdf", "gap", "convert:docx", "action:float", "tool:zip"])
