@@ -37,7 +37,7 @@ struct ContentView: View {
         ZStack {
             AuroraBackground()
             VStack(spacing: 14) {
-                header
+                header.layoutPriority(1)
                 Group {
                     if queue.jobs.isEmpty {
                         emptyState.transition(.opacity.combined(with: .scale(scale: 0.97)))
@@ -45,8 +45,8 @@ struct ContentView: View {
                         fileList.transition(.opacity)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                controls.glassCard(radius: 20, padding: 16)
+                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                controls.glassCard(radius: 20, padding: 16).layoutPriority(1)
             }
             .padding(.horizontal, 18)
             .padding(.bottom, 18)

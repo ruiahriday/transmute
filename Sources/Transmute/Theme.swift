@@ -261,13 +261,13 @@ struct DropHero: View {
     ]
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             ZStack {
                 orbit
                 rings
                 core
             }
-            .frame(width: 210, height: 190)
+            .frame(width: 210, height: 160)
             VStack(spacing: 6) {
                 Text(targeted ? "Let go to add" : "Drop anything here")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -291,7 +291,8 @@ struct DropHero: View {
                     .background(Capsule().fill(Color.primary.opacity(0.05)))
             }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -348,7 +349,7 @@ struct DropHero: View {
     private func orbitOffset(index: Int, time: Double) -> CGSize {
         let angle = Double(index) / Double(chips.count) * 2 * .pi + time / 9
         let radius = targeted ? 104.0 : 94.0
-        return CGSize(width: cos(angle) * radius, height: sin(angle) * radius * 0.8)
+        return CGSize(width: cos(angle) * radius, height: sin(angle) * radius * 0.68)
     }
 
     private func chipView(_ label: String, _ kind: FileKind) -> some View {
