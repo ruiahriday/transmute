@@ -84,6 +84,30 @@ jobs:
         run: |
           TRANSMUTE_NO_FFMPEG=1 ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest-noffmpeg.log
 
+      - name: Window pictures (for checking the look)
+        id: snapshots
+        continue-on-error: true
+        run: |
+          ./build/Transmute.app/Contents/MacOS/Transmute --snapshots "$RUNNER_TEMP/fixtures" "$RUNNER_TEMP/snapshots" 2>&1 | tee logs/snapshots.log &
+          PID=$!
+          for i in $(seq 1 120); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+          kill $PID 2>/dev/null || true
+          ls -la "$RUNNER_TEMP/snapshots" || true
+
+      # Pictures and logs go to the mac-ci branch, which can be read without downloading artifacts.
+      - name: Publish pictures and logs to the mac-ci branch
+        if: always()
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p "$RUNNER_TEMP/ci" && cd "$RUNNER_TEMP/ci"
+          git init -q && git checkout -q -b mac-ci
+          cp -R "$RUNNER_TEMP/snapshots/." . 2>/dev/null || true
+          cp "$GITHUB_WORKSPACE"/logs/*.log . 2>/dev/null || true
+          git add -A
+          git -c user.name="build server" -c user.email="actions@github.com" commit -q -m "Mac build ${{ github.run_number }} (${{ github.ref_name }})"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" mac-ci
+
       # Raw logs need a download; annotations can be read straight from the API.
       - name: Report results as annotations
         if: always()

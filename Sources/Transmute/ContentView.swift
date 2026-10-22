@@ -22,18 +22,36 @@ struct ContentView: View {
     enum Mode: String, CaseIterable, Identifiable {
         case convert = "Convert", compress = "Compress", tools = "Tools"
         var id: String { rawValue }
+        var symbol: String {
+            switch self {
+            case .convert: "arrow.triangle.2.circlepath"
+            case .compress: "arrow.down.right.and.arrow.up.left"
+            case .tools: "wrench.and.screwdriver"
+            }
+        }
     }
 
     enum CompressBy { case percent, size }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Group {
-                if queue.jobs.isEmpty { emptyState } else { fileList }
+        ZStack {
+            AuroraBackground()
+            VStack(spacing: 14) {
+                header
+                Group {
+                    if queue.jobs.isEmpty {
+                        emptyState.transition(.opacity.combined(with: .scale(scale: 0.97)))
+                    } else {
+                        fileList.transition(.opacity)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                controls.glassCard(radius: 20, padding: 16)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            Divider()
-            controls.padding(16)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 18)
+            .padding(.top, 6)
+            .animation(Theme.spring, value: queue.jobs.isEmpty)
         }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             load(providers)
@@ -52,58 +70,92 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(item: $editing) { request in EditorHost(request: request, close: { editing = nil }) }
-        .frame(minWidth: 600, minHeight: 460)
+        .frame(minWidth: 640, minHeight: 520)
+    }
+
+    // MARK: Header
+
+    private var header: some View {
+        HStack(spacing: 12) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 38, height: 38)
+                .shadow(color: Theme.blue.opacity(0.35), radius: 8, y: 3)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Transmute")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.brand)
+                Text("Drop. Pick a format. Done.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if !queue.jobs.isEmpty {
+                summaryChip.transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+
+    private var summaryChip: some View {
+        let done = queue.jobs.filter { if case .done = $0.state { return true } else { return false } }.count
+        let total = queue.jobs.count
+        return HStack(spacing: 6) {
+            if queue.isRunning {
+                ProgressView().controlSize(.small)
+            } else {
+                Image(systemName: done == total ? "checkmark.seal.fill" : "square.stack.3d.up.fill")
+                    .foregroundStyle(done == total ? Theme.teal : Theme.blue)
+            }
+            Text(done > 0 ? "\(done) of \(total) done" : "\(total) file\(total == 1 ? "" : "s")")
+                .font(.system(size: 12, weight: .semibold))
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08)))
+        .animation(Theme.spring, value: done)
     }
 
     // MARK: File list
 
     private var emptyState: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "arrow.down.doc")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            Text("Drop files or folders here")
-                .font(.title2.weight(.semibold))
-            Text("Images, video, audio, PDFs, documents, e-books, spreadsheets, presentations, subtitles and archives")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("Choose Files…") { showImporter = true }
-                .controlSize(.large)
-            if WheelKind.convert.key != .off {
-                Text("Tip: hold \(WheelKind.convert.key.label) while dragging a file anywhere to convert it on the spot.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 8)
-            }
-        }
-        .padding(40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [8]))
-                .foregroundStyle(dropTargeted ? Color.accentColor : Color.secondary.opacity(0.4))
-                .padding(20)
+        DropHero(
+            targeted: dropTargeted,
+            wheelHint: WheelKind.convert.key == .off ? nil
+                : "Tip: hold \(WheelKind.convert.key.label) while dragging a file anywhere to convert it on the spot",
+            onChoose: { showImporter = true }
         )
+        .glassCard(radius: 24, padding: 0)
     }
 
     private var fileList: some View {
-        List {
-            ForEach(queue.jobs) { job in
-                JobRow(
-                    job: job,
-                    onEdit: editAction(for: job),
-                    onInfo: infoAction(for: job),
-                    onRemove: { queue.remove(job.id) }
-                )
+        ScrollView {
+            LazyVStack(spacing: 8) {
+                ForEach(queue.jobs) { job in
+                    JobRow(
+                        job: job,
+                        onEdit: editAction(for: job),
+                        onInfo: infoAction(for: job),
+                        onRemove: { withAnimation(Theme.spring) { queue.remove(job.id) } }
+                    )
+                    .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity),
+                                            removal: .scale(scale: 0.9).combined(with: .opacity)))
+                }
             }
+            .padding(.vertical, 4)
+            .animation(Theme.spring, value: queue.jobs.map(\.id))
         }
+        .scrollContentBackground(.hidden)
         .overlay {
             if dropTargeted {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.accentColor, lineWidth: 3)
-                    .padding(4)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Theme.brand, lineWidth: 3)
+                    .background(Theme.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .transition(.opacity)
             }
         }
+        .animation(.easeOut(duration: 0.2), value: dropTargeted)
     }
 
     private func load(_ providers: [NSItemProvider]) {
@@ -132,18 +184,19 @@ struct ContentView: View {
 
     private var controls: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Picker("Mode", selection: $mode) {
-                ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            SlidingPicker(options: Mode.allCases, selection: $mode, title: \.rawValue, symbol: \.symbol)
 
-            switch mode {
-            case .convert: convertControls
-            case .compress: compressControls
-            case .tools: toolsControls
+            Group {
+                switch mode {
+                case .convert: convertControls
+                case .compress: compressControls
+                case .tools: toolsControls.buttonStyle(ChipButtonStyle())
+                }
             }
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .id(mode)
         }
+        .animation(Theme.spring, value: mode)
     }
 
     private var convertControls: some View {
@@ -260,11 +313,12 @@ struct ContentView: View {
     private func actionButtons(title: String, action: @escaping () -> Void) -> some View {
         if queue.isRunning {
             Button("Cancel") { queue.cancelAll() }
+                .buttonStyle(ChipButtonStyle())
         }
         Button(action: action) {
-            Text(title).frame(minWidth: 80)
+            Label(title, systemImage: "sparkles").frame(minWidth: 90)
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(GlowButtonStyle())
         .keyboardShortcut(.defaultAction)
         .disabled(queue.jobs.isEmpty || queue.isRunning)
     }
@@ -345,27 +399,32 @@ struct JobRow: View {
     var onInfo: (() -> Void)?
     let onRemove: () -> Void
 
+    @State private var hovering = false
+    @State private var shake = 0.0
+
     var body: some View {
-        HStack(spacing: 10) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: job.url.path))
-                .resizable()
-                .frame(width: 30, height: 30)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(job.url.lastPathComponent).lineLimit(1).truncationMode(.middle)
+        HStack(spacing: 12) {
+            KindBadge(kind: job.kind)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(job.url.lastPathComponent)
+                    .font(.system(size: 13, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 Text("\(job.kind.title) · \(job.size.formattedSize)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if case .done(let result) = job.state, let message = result.message {
-                    Text(message).font(.caption).textSelection(.enabled).lineLimit(3)
+                    Text(message).font(.caption).foregroundStyle(Theme.teal).textSelection(.enabled).lineLimit(3)
                 }
                 if case .failed(let message) = job.state {
                     Text(message).font(.caption).foregroundStyle(.red).textSelection(.enabled).lineLimit(3)
                 }
             }
-            Spacer()
+            Spacer(minLength: 8)
             status
             if let onEdit {
-                Button("Edit…", action: onEdit)
+                Button(action: onEdit) { Label("Edit", systemImage: "wand.and.stars") }
+                    .buttonStyle(ChipButtonStyle())
                     .disabled(isRunning)
                     .help("Open in the editor; the result is saved as a copy")
             }
@@ -378,9 +437,24 @@ struct JobRow: View {
             Button(action: onRemove) { Image(systemName: "xmark.circle.fill") }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
+                .opacity(hovering ? 1 : 0.5)
                 .help("Remove from list")
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(hovering ? Theme.tint(job.kind).opacity(0.6) : Color.primary.opacity(0.07), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(hovering ? 0.14 : 0.06), radius: hovering ? 12 : 6, y: hovering ? 6 : 3)
+        .scaleEffect(hovering ? 1.008 : 1)
+        .modifier(Shake(amount: shake))
+        .onHover { hovering = $0 }
+        .animation(.easeOut(duration: 0.18), value: hovering)
+        .onChange(of: job.state.isFailed) { failed in
+            if failed { withAnimation(.linear(duration: 0.4)) { shake += 1 } }
+        }
     }
 
     private var isRunning: Bool {
@@ -392,21 +466,47 @@ struct JobRow: View {
     private var status: some View {
         switch job.state {
         case .queued:
-            Text("Ready").font(.caption).foregroundStyle(.secondary)
+            Text("Ready")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(Color.primary.opacity(0.06)))
         case .running(let fraction):
-            ProgressView(value: fraction).frame(width: 100)
-        case .done(let result):
-            if !result.outputs.isEmpty {
-                Button {
-                    NSWorkspace.shared.activateFileViewerSelecting(result.outputs)
-                } label: {
-                    Label("Show", systemImage: "magnifyingglass")
-                }
-                .buttonStyle(.borderless)
+            HStack(spacing: 8) {
+                GlowProgressBar(value: fraction, tint: Theme.tint(job.kind)).frame(width: 110)
+                Text("\(Int(fraction * 100))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .frame(width: 34, alignment: .trailing)
             }
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+        case .done(let result):
+            HStack(spacing: 8) {
+                if !result.outputs.isEmpty {
+                    Button {
+                        NSWorkspace.shared.activateFileViewerSelecting(result.outputs)
+                    } label: {
+                        Label("Show", systemImage: "magnifyingglass")
+                    }
+                    .buttonStyle(ChipButtonStyle())
+                }
+                PopCheck()
+            }
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
         }
+    }
+}
+
+/// Shakes a view sideways once each time `amount` goes up by one.
+struct Shake: GeometryEffect {
+    var amount: Double
+    var animatableData: Double {
+        get { amount }
+        set { amount = newValue }
+    }
+
+    func effectValue(size: CGSize) -> ProjectionTransform {
+        ProjectionTransform(CGAffineTransform(translationX: 6 * sin(amount * .pi * 6), y: 0))
     }
 }

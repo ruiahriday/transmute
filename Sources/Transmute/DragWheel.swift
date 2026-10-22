@@ -400,6 +400,7 @@ struct WheelView: View {
     let onDrop: (WheelItem) -> Void
 
     @State private var targeted: UUID?
+    @State private var appeared = false
 
     private let radius: CGFloat = 128
 
@@ -411,11 +412,16 @@ struct WheelView: View {
             caption
             ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 if let item {
-                    bubbleView(item).offset(WheelGeometry.position(of: index, count: items.count, radius: radius))
+                    bubbleView(item)
+                        .offset(appeared ? WheelGeometry.position(of: index, count: items.count, radius: radius) : .zero)
+                        .scaleEffect(appeared ? 1 : 0.3)
+                        .opacity(appeared ? 1 : 0)
+                        .animation(.spring(response: 0.38, dampingFraction: 0.72).delay(Double(index) * 0.025), value: appeared)
                 }
             }
         }
         .frame(width: Self.size, height: Self.size)
+        .onAppear { appeared = true }
     }
 
     private var bubble: CGFloat { WheelGeometry.bubbleSize(count: items.count, radius: radius, largest: 66) }
@@ -424,8 +430,14 @@ struct WheelView: View {
         let diameter: CGFloat = (radius + 33 + 10) * 2
         return Circle()
             .fill(.ultraThinMaterial)
-            .overlay(Circle().strokeBorder(Color.primary.opacity(0.1)))
+            .overlay(Circle().fill(RadialGradient(colors: [Theme.teal.opacity(0.18), Theme.blue.opacity(0.05), .clear],
+                                                  center: .center, startRadius: 10, endRadius: diameter / 2)))
+            .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 2).opacity(0.7))
+            .shadow(color: Theme.blue.opacity(0.35), radius: 24)
             .frame(width: diameter, height: diameter)
+            .scaleEffect(appeared ? 1 : 0.6)
+            .opacity(appeared ? 1 : 0)
+            .animation(.spring(response: 0.35, dampingFraction: 0.8), value: appeared)
     }
 
     private var caption: some View {
@@ -443,9 +455,12 @@ struct WheelView: View {
         }
         .foregroundStyle(isTargeted ? Color.white : Color.primary)
         .frame(width: bubble, height: bubble)
-        .background(Circle().fill(isTargeted ? Color.accentColor : Color(nsColor: .windowBackgroundColor)))
-        .shadow(radius: isTargeted ? 6 : 2)
-        .scaleEffect(isTargeted ? 1.15 : 1)
+        .background(
+            Circle().fill(isTargeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Color(nsColor: .windowBackgroundColor)))
+        )
+        .overlay(Circle().strokeBorder(Color.primary.opacity(isTargeted ? 0 : 0.08)))
+        .shadow(color: isTargeted ? Theme.blue.opacity(0.6) : .black.opacity(0.2), radius: isTargeted ? 12 : 3)
+        .scaleEffect(isTargeted ? 1.18 : 1)
         .animation(.spring(response: 0.25), value: isTargeted)
         .onDrop(of: [.fileURL], isTargeted: Binding(
             get: { targeted == item.id },

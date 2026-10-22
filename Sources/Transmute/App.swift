@@ -11,6 +11,10 @@ enum Launcher {
         if let flag = args.firstIndex(of: "--selftest"), flag + 1 < args.count {
             SelfTest.start(inputDir: URL(fileURLWithPath: args[flag + 1], isDirectory: true))
         }
+        if let flag = args.firstIndex(of: "--snapshots"), flag + 2 < args.count {
+            Snapshots.start(fixtures: URL(fileURLWithPath: args[flag + 1], isDirectory: true),
+                            output: URL(fileURLWithPath: args[flag + 2], isDirectory: true))
+        }
         TransmuteApp.main()
     }
 }

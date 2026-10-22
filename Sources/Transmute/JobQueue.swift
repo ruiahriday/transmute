@@ -96,6 +96,9 @@ final class JobQueue: ObservableObject {
         return false
     }
 
+    /// Puts a job in a given state without running it, for the window pictures (Snapshots.swift).
+    func showcase(_ id: UUID, _ state: JobState) { setState(id, state) }
+
     private func setState(_ id: UUID, _ state: JobState) {
         guard let index = jobs.firstIndex(where: { $0.id == id }) else { return }
         jobs[index].state = state
