@@ -179,7 +179,7 @@ sealed class ScrollCapture
             if (auto.IsChecked == true || Scroller is not null)
             {
                 if (still >= 6) { auto.IsChecked = false; if (Scroller is not null) { await Finish(true); return; } }
-                else Scroll();
+                else if (step != StitchStep.Lost || lost % 3 == 0) Scroll(); // after a miss, look again before moving on
             }
             Update();
         }

@@ -22,7 +22,7 @@ public partial class SettingsWindow
         // Shortcuts
         s.Add(Sub("Shortcuts"));
         var grid = new Grid { Margin = new Thickness(0, 2, 0, 0) };
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(170) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(232) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var row = 0;

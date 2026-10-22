@@ -202,7 +202,8 @@ public sealed class ScrollStitcher
         staticTop = staticBottom = 0;
         var equal = 0;
         for (var y = 0; y < h; y++) if (hp[y] == hn[y]) equal++;
-        if (equal == h) return 0;
+        // All (or all but a few flickering) rows in place: nothing scrolled.
+        if (equal >= h - Math.Max(1, h / 30)) return 0;
         while (staticTop < h && hp[staticTop] == hn[staticTop]) staticTop++;
         while (staticBottom < h - staticTop && hp[h - 1 - staticBottom] == hn[h - 1 - staticBottom]) staticBottom++;
         // Never let "still" edges take more than 40% each: in a long blank stretch everything matches.
@@ -227,6 +228,8 @@ public sealed class ScrollStitcher
             if (score > bestScore + 1e-9) { bestScore = score; best = d; }
             if (score == 1 && considered >= minOverlap) break; // a perfect fit: the smallest move wins
         }
-        return bestScore >= 0.9 ? best : null;
+        // Apps re-draw a few rows differently as they scroll (text at the edge, a blinking caret),
+        // so a strong majority is enough; a wrong offset matches almost nothing.
+        return bestScore >= 0.8 ? best : null;
     }
 }

@@ -113,6 +113,26 @@ static partial class Tests
             Expect(SameImage(result, expected), $"got {result.Width}×{result.Height}, expected {expected.Width}×{expected.Height}");
             return None();
         });
+        await Check("Scrolling capture: rows that re-draw at the edge don't stop it", () =>
+        {
+            // Apps redraw text at the bottom edge a little differently each time; the page still joins up.
+            var page = Page(300, 1400, 11);
+            var stitcher = new ScrollStitcher();
+            var random = new Random(5);
+            BgraImage Shot(int top)
+            {
+                var frame = page.Crop(0, top, 300, 320);
+                for (var y = 314; y < 320; y++) for (var x = 0; x < 260; x += 2) frame.Pixels[(y * 300 + x) * 4 + 1] ^= (byte)random.Next(1, 255);
+                return frame;
+            }
+            var steps = new List<StitchStep>();
+            for (var top = 0; top <= 1080; top += 90) steps.Add(stitcher.Add(Shot(top)));
+            steps.Add(stitcher.Add(Shot(1080)));
+            Expect(steps.Count(s => s == StitchStep.Lost) == 0, $"steps: {string.Join(", ", steps)}");
+            Expect(steps[^1] == StitchStep.Unchanged, $"the same spot again is unchanged, got {steps[^1]}");
+            Expect(Math.Abs(stitcher.Length - 1400) <= 2, $"length {stitcher.Length}");
+            return None();
+        });
         await Check("Scrolling capture: sideways, and a jump too far is refused", () =>
         {
             var wide = Page(900, 260, 3).Transposed().Crop(0, 0, 260, 900).Transposed(); // 900 wide, 260 tall, unique columns
