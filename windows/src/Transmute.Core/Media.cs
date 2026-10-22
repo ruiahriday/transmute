@@ -20,11 +20,13 @@ public static class MediaConverter
             {
                 await RunFfmpeg(ffmpeg, input, [.. streams.Maps(args), .. args], output, progress, token);
             }
-            catch (ConversionException) when (!token.IsCancellationRequested && !args.Contains("-an"))
+            catch (ConversionException e) when (!token.IsCancellationRequested && !args.Contains("-an"))
             {
-                // A second go with plain stereo sound, which most failures on odd camera files come down to.
+                // A second go without a track ffmpeg named as unreadable, and with plain stereo
+                // sound, which most failures on odd camera files come down to.
                 OutputPaths.TryDelete(output);
-                await RunFfmpeg(ffmpeg, input, [.. streams.Maps(args), .. args, "-ac", "2"], output, progress, token);
+                var retry = streams.Excluding(e.Message) ?? streams;
+                await RunFfmpeg(ffmpeg, input, [.. retry.Maps(args), .. args, "-ac", "2"], output, progress, token);
             }
         }
         catch
@@ -162,8 +164,8 @@ public sealed class MediaStreams
 
     public IReadOnlyList<Track> Tracks { get; init; } = [];
 
-    /// Codecs ffmpeg lists but can't decode.
-    public static readonly HashSet<string> Undecodable = ["none", "apac"];
+    /// Codecs ffmpeg lists but can't decode. ffmpeg 7.1 and later call Apple's spatial audio "apple_apac".
+    public static readonly HashSet<string> Undecodable = ["none", "apac", "apple_apac"];
 
     static readonly Regex StreamLine = new(@"Stream #0:\d+(?:\[0x[0-9a-fA-F]+\])?(?:\([^)]*\))?: (\w+): (.*)");
 
@@ -217,6 +219,17 @@ public sealed class MediaStreams
     }
 
     public int? AudioChannels => BestAudio?.Channels;
+
+    /// The same tracks with the codec ffmpeg named in "no decoder found for: x" treated as unreadable,
+    /// or null when the error isn't about a missing decoder.
+    public MediaStreams? Excluding(string errorText)
+    {
+        var at = errorText.IndexOf("no decoder found for: ", StringComparison.Ordinal);
+        if (at < 0) return null;
+        var codec = new string(errorText[(at + 22)..].TakeWhile(c => !char.IsWhiteSpace(c)).ToArray()).ToLowerInvariant();
+        if (codec.Length == 0 || !Tracks.Any(t => t.Codec == codec)) return null;
+        return new MediaStreams { Tracks = Tracks.Select(t => t.Codec == codec ? t with { Codec = "none" } : t).ToList() };
+    }
 
     /// "-map 0" without the tracks ffmpeg can't read, for copying a file's tracks as they are.
     public string[] CopyMaps()
