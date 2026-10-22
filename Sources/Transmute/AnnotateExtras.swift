@@ -63,7 +63,8 @@ enum StrokeSmoothing {
         keep[0] = true
         keep[points.count - 1] = true
         var stack = [(0, points.count - 1)]
-        while let (first, last) = stack.popLast() {
+        while let pair = stack.popLast() {
+            let first = pair.0, last = pair.1
             guard last > first + 1 else { continue }
             var worst = 0.0
             var index = first
