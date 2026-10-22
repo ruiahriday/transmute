@@ -65,7 +65,7 @@ public static class Engine
                 if (kind != FileKind.Video) throw new ConversionException("Snapshots can only be taken from videos.");
                 return JobResult.Of(await VideoEditEngine.Snapshot(input, s.Seconds, options, token));
         }
-        throw new ConversionException("Transmute doesn't know how to do that.");
+        throw new ConversionException("Spinform doesn't know how to do that.");
     }
 
     public static async Task<JobResult> Convert(string input, FileKind kind, OutputFormat format, ConversionOptions options,

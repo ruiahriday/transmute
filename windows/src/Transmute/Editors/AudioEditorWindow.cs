@@ -122,7 +122,7 @@ sealed class AudioEditorWindow : Window
         status.Text = "Reading the sound…";
         try
         {
-            if (Tools.Ffmpeg is null) throw new ConversionException("ffmpeg is missing, so audio can't be edited. Reinstalling Transmute brings it back.");
+            if (Tools.Ffmpeg is null) throw new ConversionException("ffmpeg is missing, so audio can't be edited. Reinstalling Spinform brings it back.");
             duration = await MediaInfo.Duration(job.Path);
             if (duration <= 0) throw new ConversionException("Couldn't tell how long this recording is.");
             levels = await AudioEditEngine.Waveform(job.Path, 600, default);

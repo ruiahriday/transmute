@@ -1,4 +1,4 @@
-name: Build Transmute for Windows
+name: Build Spinform for Windows
 
 on:
   push:
@@ -93,7 +93,7 @@ jobs:
       - name: Smoke test the app (x64)
         if: always() && steps.selftest.outcome != 'skipped'
         run: |
-          $p = Start-Process -FilePath ".\out\publish\x64\Transmute.exe" -ArgumentList "--smoke-test", "`"$PWD\out\fixtures`"", "`"$PWD\out\smoke-x64`"" -PassThru
+          $p = Start-Process -FilePath ".\out\publish\x64\Spinform.exe" -ArgumentList "--smoke-test", "`"$PWD\out\fixtures`"", "`"$PWD\out\smoke-x64`"" -PassThru
           if (-not $p.WaitForExit(240000)) { $p.Kill(); Write-Host "::error title=Smoke test (x64)::the app didn't finish within 4 minutes" }
           $log = Get-Content out\smoke-x64\smoke-test.log -ErrorAction SilentlyContinue
           $log | ForEach-Object { Write-Host $_ }
@@ -110,23 +110,84 @@ jobs:
           $ErrorActionPreference = "Stop"
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           foreach ($arch in "universal", "x64", "arm64") {
-            $name = if ($arch -eq "universal") { "Transmute-Setup" } else { "Transmute-Setup-$arch" }
-            & $iscc /Q "/DArch=$arch" "/DVersion=$env:VERSION" "/DSourceRoot=$PWD\out\publish" "/DOutputName=$name" installer\Transmute.iss
+            $name = if ($arch -eq "universal") { "Spinform-Setup" } else { "Spinform-Setup-$arch" }
+            & $iscc /Q "/DArch=$arch" "/DVersion=$env:VERSION" "/DSourceRoot=$PWD\out\publish" "/DOutputName=$name" installer\Spinform.iss
             if ($LASTEXITCODE -ne 0) { throw "installer $arch failed" }
           }
           Get-ChildItem out\installers | ForEach-Object { Write-Host ("{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)); Write-Host ("::notice title=Installer::{0} {1:N1} MB" -f $_.Name, ($_.Length / 1MB)) }
 
-      - name: Install with the installer and launch (x64)
+      - name: Update the last beta with the installer, launch, uninstall (x64)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $p = Start-Process -FilePath ".\out\installers\Transmute-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/TASKS=contextmenu", "/LOG=`"$PWD\out\logs\install-x64.log`"" -PassThru -Wait
-          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
-          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (x64)::Transmute.exe not found after installing"; exit 1 }
-          if (-not (Test-Path "$env:LOCALAPPDATA\Programs\Transmute\ffmpeg\ffmpeg.exe")) { Write-Host "::error title=Install (x64)::ffmpeg missing after installing"; exit 1 }
+          # Spinform used to be called Transmute. Install whatever the current beta is (Transmute or Spinform),
+          # then this build over it, and check the update moved everything to the new name.
+          $failed = $false
+          $report = New-Object System.Collections.Generic.List[string]
+          function Check($ok, $what) { if ($ok) { $report.Add("PASS $what") } else { $report.Add("FAIL $what"); Write-Host "::error title=Update (x64)::$what"; $script:failed = $true } }
+          New-Item -ItemType Directory -Force out\previous, out\logs | Out-Null
+          $old = $null
+          foreach ($name in "Transmute-Setup-x64.exe", "Spinform-Setup-x64.exe") {
+            gh release download windows-beta -R "${{ github.repository }}" -p $name -D out\previous --clobber 2>$null
+            if (Test-Path "out\previous\$name") { $old = $name; break }
+          }
+          $fromTransmute = $old -like "Transmute*"
+          $programs = "$env:LOCALAPPDATA\Programs"
+          $menu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+          $sendto = "$env:APPDATA\Microsoft\Windows\SendTo"
+          $run = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+          if ($old) {
+            $report.Add("Updating $old")
+            Start-Process -FilePath "out\previous\$old" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/TASKS=contextmenu", "/LOG=`"$PWD\out\logs\install-previous-x64.log`"" -Wait
+            if ($fromTransmute) {
+              Check (Test-Path "$programs\Transmute\Transmute.exe") "the old Transmute beta installed"
+              # A tester's settings and "start when I sign in" from Transmute's Settings window.
+              New-Item -ItemType Directory -Force "$env:APPDATA\Transmute" | Out-Null
+              '{ "ImageQuality": 0.42, "WheelLayouts": { "convert.image": [ "convert:png", "convert:jpg" ] } }' | Set-Content "$env:APPDATA\Transmute\settings.json"
+              New-ItemProperty -Path $run -Name "Transmute" -Value "`"$programs\Transmute\Transmute.exe`" --background" -Force | Out-Null
+            }
+          } else { $report.Add("No earlier beta to update; installing fresh") }
+          $setupArgs = @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\out\logs\install-x64.log`"")
+          if (-not $old) { $setupArgs += "/TASKS=contextmenu" }
+          Start-Process -FilePath ".\out\installers\Spinform-Setup.exe" -ArgumentList $setupArgs -Wait
+          $dir = "$programs\Spinform"
+          $exe = "$dir\Spinform.exe"
+          Check (Test-Path $exe) "Spinform.exe installed in $dir"
+          Check (Test-Path "$dir\ffmpeg\ffmpeg.exe") "ffmpeg installed"
+          Check (Test-Path "$menu\Spinform.lnk") "Start menu shortcut Spinform"
+          Check (Test-Path "$sendto\Spinform.lnk") "Send to › Spinform"
+          Check (Test-Path -LiteralPath 'HKCU:\Software\Classes\*\shell\Spinform\command') "right-click Convert with Spinform"
+          $entries = @(Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall, HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall -ErrorAction SilentlyContinue | Get-ItemProperty | Where-Object { $_.DisplayName -match "Transmute|Spinform" })
+          Check ($entries.Count -eq 1 -and $entries[0].DisplayName -eq "Spinform") ("one entry in Installed apps, named Spinform (found: " + (($entries | ForEach-Object { $_.DisplayName }) -join ", ") + ")")
+          if ($fromTransmute) {
+            Check (-not (Test-Path "$programs\Transmute")) "the old Transmute folder is gone"
+            Check (-not (Test-Path "$menu\Transmute.lnk")) "the old Start menu shortcut is gone"
+            Check (-not (Test-Path "$sendto\Transmute.lnk")) "the old Send to shortcut is gone"
+            Check (-not (Test-Path -LiteralPath 'HKCU:\Software\Classes\*\shell\Transmute')) "the old right-click entry is gone"
+            $values = Get-ItemProperty -Path $run
+            Check ($null -eq $values.Transmute -and $values.Spinform -like "*Spinform\Spinform.exe*") "start when I sign in moved to Spinform ($($values.Spinform))"
+          }
           $app = Start-Process -FilePath $exe -PassThru
           Start-Sleep -Seconds 8
-          if ($app.HasExited) { Write-Host "::error title=Launch (x64)::Transmute quit by itself (exit code $($app.ExitCode))"; exit 1 }
-          Stop-Process -Id $app.Id -Force
-          Write-Host "::notice title=Install (x64)::installed and kept running"
+          Check (-not $app.HasExited) "Spinform keeps running after launch"
+          if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+          if ($fromTransmute) {
+            $settings = Get-Content "$env:APPDATA\Spinform\settings.json" -Raw -ErrorAction SilentlyContinue
+            Check ($settings -match "0\.42" -and $settings -match "convert\.image") "settings and wheel layouts carried over from Transmute"
+          }
+          Start-Sleep -Seconds 2
+          # The uninstaller hands over to a copy of itself and returns at once, so wait for the files to go.
+          Start-Process -FilePath "$dir\unins000.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+          for ($i = 0; $i -lt 60 -and (Test-Path $exe); $i++) { Start-Sleep -Seconds 1 }
+          Start-Sleep -Seconds 2
+          Check (-not (Test-Path $exe)) "uninstalling removes Spinform"
+          Check (-not (Test-Path "$menu\Spinform.lnk")) "uninstalling removes the Start menu shortcut"
+          Check ($null -eq (Get-ItemProperty -Path $run).Spinform) "uninstalling removes start when I sign in"
+          $report | ForEach-Object { Write-Host $_ }
+          $report | Set-Content out\logs\update-x64.log
+          if ($failed) { exit 1 }
+          Write-Host "::notice title=Update (x64)::$($report[0]); all checks passed"
+          exit 0
 
       - name: Keep pictures and logs on the windows-ci branch
         if: always()
@@ -179,19 +240,19 @@ jobs:
       - name: Install (the universal installer should pick ARM64)
         run: |
           New-Item -ItemType Directory -Force logs | Out-Null
-          Start-Process -FilePath ".\installers\Transmute-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\logs\install-arm64.log`"" -Wait
-          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
-          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (ARM64)::Transmute.exe not found after installing"; exit 1 }
+          Start-Process -FilePath ".\installers\Spinform-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\logs\install-arm64.log`"" -Wait
+          $exe = "$env:LOCALAPPDATA\Programs\Spinform\Spinform.exe"
+          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (ARM64)::Spinform.exe not found after installing"; exit 1 }
           [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exe)
           $pe = [BitConverter]::ToInt32($bytes, 0x3C)
           $type = [BitConverter]::ToUInt16($bytes, $pe + 4)
-          Write-Host ("Installed Transmute.exe machine type: 0x{0:X4} (0xAA64 is ARM64)" -f $type)
+          Write-Host ("Installed Spinform.exe machine type: 0x{0:X4} (0xAA64 is ARM64)" -f $type)
           if ($type -ne 0xAA64) { Write-Host ("::error title=Install (ARM64)::installed the wrong build (machine 0x{0:X4})" -f $type); exit 1 }
 
       - name: Self-test every conversion (ARM64)
         id: selftest
         run: |
-          $env:TRANSMUTE_FFMPEG = "$env:LOCALAPPDATA\Programs\Transmute\ffmpeg\ffmpeg.exe"
+          $env:TRANSMUTE_FFMPEG = "$env:LOCALAPPDATA\Programs\Spinform\ffmpeg\ffmpeg.exe"
           Copy-Item -Recurse kit\fixtures run
           & .\kit\selftest\arm64\Transmute.SelfTest.exe run 2>&1 | Tee-Object logs\selftest-arm64.log
           $code = $LASTEXITCODE
@@ -203,7 +264,7 @@ jobs:
       - name: Smoke test the installed app (ARM64)
         if: always() && steps.selftest.outcome != 'skipped'
         run: |
-          $exe = "$env:LOCALAPPDATA\Programs\Transmute\Transmute.exe"
+          $exe = "$env:LOCALAPPDATA\Programs\Spinform\Spinform.exe"
           $p = Start-Process -FilePath $exe -ArgumentList "--smoke-test", "`"$PWD\kit\fixtures`"", "`"$PWD\smoke-arm64`"" -PassThru
           if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "::error title=Smoke test (ARM64)::the app didn't finish within 5 minutes" }
           $log = Get-Content smoke-arm64\smoke-test.log -ErrorAction SilentlyContinue
@@ -243,9 +304,11 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<'EOF'
-          **Transmute for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs.
+          **Spinform for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs. Spinform is the new name for Transmute.
 
-          **Download [Transmute-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Transmute-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
+          **Download [Spinform-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Spinform-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
+
+          Already have Transmute? Spinform replaces it: your settings and wheel layouts come along, and Transmute's shortcuts and folder are tidied away. If you pinned Transmute to the taskbar, pin Spinform instead.
 
           Windows may say "Windows protected your PC" because this beta isn't signed yet: click **More info**, then **Run anyway**.
 
@@ -253,6 +316,6 @@ jobs:
           EOF
           # Same tag and file names every time, so the download link never changes.
           gh release delete windows-beta --cleanup-tag --yes >/dev/null 2>&1 || true
-          gh release create windows-beta --title "Transmute for Windows (beta)" --notes-file notes.md --prerelease --target "${{ github.sha }}"
+          gh release create windows-beta --title "Spinform for Windows (beta)" --notes-file notes.md --prerelease --target "${{ github.sha }}"
           gh release upload windows-beta installers/*.exe --clobber
-          echo "::notice title=Download::https://github.com/${GH_REPO}/releases/download/windows-beta/Transmute-Setup.exe"
+          echo "::notice title=Download::https://github.com/${GH_REPO}/releases/download/windows-beta/Spinform-Setup.exe"

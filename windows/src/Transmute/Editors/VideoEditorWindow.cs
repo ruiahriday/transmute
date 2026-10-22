@@ -102,7 +102,7 @@ sealed class VideoEditorWindow : Window
         status.Text = "Loading…";
         try
         {
-            if (Tools.Ffmpeg is null) throw new ConversionException("ffmpeg is missing, so videos can't be edited. Reinstalling Transmute brings it back.");
+            if (Tools.Ffmpeg is null) throw new ConversionException("ffmpeg is missing, so videos can't be edited. Reinstalling Spinform brings it back.");
             duration = await MediaInfo.Duration(job.Path);
             if (duration <= 0) throw new ConversionException("Couldn't tell how long this video is.");
             scrub.Maximum = duration;

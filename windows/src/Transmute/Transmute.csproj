@@ -10,14 +10,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>Transmute.App</RootNamespace>
-    <AssemblyName>Transmute</AssemblyName>
+    <!-- The app is called Spinform (it used to be Transmute); projects and namespaces keep the old name. -->
+    <AssemblyName>Spinform</AssemblyName>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Version>1.0.0</Version>
     <InformationalVersion>1.0 beta</InformationalVersion>
-    <Product>Transmute</Product>
-    <Company>Transmute</Company>
-    <Description>Transmute file converter</Description>
+    <Product>Spinform</Product>
+    <Title>Spinform</Title>
+    <Company>Spinform</Company>
+    <Description>Spinform file converter</Description>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
@@ -28,6 +30,7 @@
   <ItemGroup>
     <Resource Include="Assets\icon256.png" />
     <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\mark.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Transmute.Core\Transmute.Core.csproj" />

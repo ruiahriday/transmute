@@ -15,8 +15,8 @@ public static class Slides
         {
             "pptx" => ReadPptx(path),
             "odp" => ReadOdp(path),
-            "ppt" => throw new ConversionException("Old PowerPoint files (.ppt) need Microsoft PowerPoint or the free LibreOffice installed. Transmute uses them automatically when they're there."),
-            _ => throw new ConversionException($"Transmute can't read {ext.ToUpperInvariant()} presentations."),
+            "ppt" => throw new ConversionException("Old PowerPoint files (.ppt) need Microsoft PowerPoint or the free LibreOffice installed. Spinform uses them automatically when they're there."),
+            _ => throw new ConversionException($"Spinform can't read {ext.ToUpperInvariant()} presentations."),
         };
     }
 

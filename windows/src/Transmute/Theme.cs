@@ -4,14 +4,17 @@ using System.Windows.Media.Animation;
 
 namespace Transmute.App;
 
-/// Transmute's look in code: the teal-to-blue brand gradient, a colour per kind of file, and
-/// small helpers for the springy animations.
+/// Spinform's look in code: the indigo-violet-pink brand gradient from the icon, a colour per
+/// kind of file, and small helpers for the springy animations.
 static class Theme
 {
-    public static readonly Color Teal = Color.FromRgb(0x43, 0xC6, 0xAC);
-    public static readonly Color Blue = Color.FromRgb(0x2A, 0x5F, 0xD8);
+    public static readonly Color Indigo = Color.FromRgb(0x43, 0x38, 0xCA);
+    public static readonly Color Violet = Color.FromRgb(0x8B, 0x5C, 0xF6);
+    public static readonly Color Pink = Color.FromRgb(0xEC, 0x48, 0x99);
 
-    public static LinearGradientBrush Brand { get; } = Frozen(new LinearGradientBrush(Teal, Blue, new Point(0, 0), new Point(1, 1)));
+    public static LinearGradientBrush Brand { get; } = Frozen(new LinearGradientBrush(
+        new GradientStopCollection { new GradientStop(Indigo, 0), new GradientStop(Violet, 0.55), new GradientStop(Pink, 1) },
+        new Point(0, 0), new Point(1, 1)));
 
     public static Color Tint(FileKind kind) => kind switch
     {

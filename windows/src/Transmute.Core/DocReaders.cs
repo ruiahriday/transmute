@@ -25,8 +25,8 @@ public static class DocReaders
             "odt" => ReadOdt(path),
             "epub" => ReadEpub(path),
             "pdf" => ReadPdf(path),
-            "doc" => throw new ConversionException("Old Word files (.doc) need Microsoft Word or the free LibreOffice installed. Transmute uses them automatically when they're there."),
-            _ => throw new ConversionException($"Transmute can't read {ext.ToUpperInvariant()} documents."),
+            "doc" => throw new ConversionException("Old Word files (.doc) need Microsoft Word or the free LibreOffice installed. Spinform uses them automatically when they're there."),
+            _ => throw new ConversionException($"Spinform can't read {ext.ToUpperInvariant()} documents."),
         };
         doc.Title ??= OutputPaths.BaseName(path);
         return doc;

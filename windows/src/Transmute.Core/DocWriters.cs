@@ -507,7 +507,7 @@ public static class DocWriters
         var title = DocWriters.Escape(doc.GuessTitle(""));
         var meta = $"""
             <?xml version="1.0" encoding="UTF-8"?>
-            <office:document-meta {ns}><office:meta><meta:generator>Transmute</meta:generator><dc:title>{title}</dc:title></office:meta></office:document-meta>
+            <office:document-meta {ns}><office:meta><meta:generator>Spinform</meta:generator><dc:title>{title}</dc:title></office:meta></office:document-meta>
             """;
         var manifest = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<manifest:manifest xmlns:manifest=\"urn:oasis:names:tc:opendocument:xmlns:manifest:1.0\" manifest:version=\"1.3\">");
         manifest.Append("<manifest:file-entry manifest:full-path=\"/\" manifest:version=\"1.3\" manifest:media-type=\"application/vnd.oasis.opendocument.text\"/>");

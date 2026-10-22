@@ -8,10 +8,10 @@ namespace Transmute.App;
 
 public partial class App : Application
 {
-    static string InstanceName => $"Transmute-{Environment.UserName}-{System.Diagnostics.Process.GetCurrentProcess().SessionId}";
+    static string InstanceName => $"Spinform-{Environment.UserName}-{System.Diagnostics.Process.GetCurrentProcess().SessionId}";
 
     Mutex? instance;
-    // A fixed name the installer looks for, so it can ask to close Transmute before updating.
+    // A fixed name the installer looks for, so it can ask to close Spinform before updating.
     Mutex? installerSignal;
     Forms.NotifyIcon? tray;
     DragWatcher? watcher;
@@ -41,8 +41,9 @@ public partial class App : Application
             return;
         }
 
-        installerSignal = new Mutex(false, "TransmuteRunning");
+        installerSignal = new Mutex(false, "SpinformRunning");
         Settings.Load();
+        Settings.MoveOldLoginItem();
         Listen();
         SetUpTray();
         watcher = new DragWatcher();
@@ -95,7 +96,7 @@ public partial class App : Application
     {
         tray = new Forms.NotifyIcon
         {
-            Text = "Transmute",
+            Text = "Spinform",
             Visible = true,
         };
         try
@@ -113,7 +114,7 @@ public partial class App : Application
     void BuildMenu(Forms.ContextMenuStrip menu)
     {
         menu.Items.Clear();
-        menu.Items.Add("Open Transmute", null, (_, _) => ShowMain());
+        menu.Items.Add("Open Spinform", null, (_, _) => ShowMain());
         menu.Items.Add("Show Floating Files", null, (_, _) => Shelf.Shared.Toggle());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Send Feedback…", null, (_, _) => Feedback.OpenForm());
@@ -127,7 +128,7 @@ public partial class App : Application
                 menu.Items.Add(new Forms.ToolStripMenuItem($"Hold {settings.KeyFor(kind).Label()} while dragging for {kind.Hint()}") { Enabled = false });
         }
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Quit Transmute", null, (_, _) => Quit());
+        menu.Items.Add("Quit Spinform", null, (_, _) => Quit());
     }
 
     // One copy at a time: later launches (Send To, Open With, the context menu) pass their files here.
@@ -166,7 +167,7 @@ public partial class App : Application
                     Thread.Sleep(500);
                 }
             }
-        }) { IsBackground = true, Name = "Transmute hand-over" };
+        }) { IsBackground = true, Name = "Spinform hand-over" };
         thread.Start();
     }
 
@@ -187,7 +188,7 @@ public partial class App : Application
             return;
         }
         MessageBox.Show($"Something went wrong: {e.Exception.Message}\n\nThe details are saved in {Path.Combine(Settings.Folder, "errors.log")}.",
-            "Transmute", MessageBoxButton.OK, MessageBoxImage.Warning);
+            "Spinform", MessageBoxButton.OK, MessageBoxImage.Warning);
         e.Handled = true;
     }
 }

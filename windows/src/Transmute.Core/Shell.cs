@@ -3,13 +3,13 @@ using System.Text;
 
 namespace Transmute;
 
-/// Finds the helper programs Transmute uses.
+/// Finds the helper programs Spinform uses.
 public static class Tools
 {
     static string? cachedFfmpeg;
     static bool searched;
 
-    /// ffmpeg.exe shipped next to Transmute, or one on the PATH.
+    /// ffmpeg.exe shipped next to Spinform, or one on the PATH.
     public static string? Ffmpeg
     {
         get
@@ -83,7 +83,7 @@ public static class Tools
     }
 
     public static string RequireFfmpeg(string what) =>
-        Ffmpeg ?? throw new ConversionException($"{what} needs ffmpeg, which comes with Transmute. Reinstall Transmute to put it back.");
+        Ffmpeg ?? throw new ConversionException($"{what} needs ffmpeg, which comes with Spinform. Reinstall Spinform to put it back.");
 }
 
 public static class Shell

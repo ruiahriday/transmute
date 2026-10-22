@@ -64,7 +64,7 @@ public static class MetadataTool
             FileKind.Image => await Task.Run(() => WriteImage(edit, input, options), token),
             FileKind.Video or FileKind.Audio => await WriteMedia(edit, input, options, token),
             FileKind.Pdf => await Task.Run(() => PdfTools.WriteInfo(input, edit.Changes, options), token),
-            _ => throw new ConversionException("Transmute can only change the details of photos, video, audio and PDFs."),
+            _ => throw new ConversionException("Spinform can only change the details of photos, video, audio and PDFs."),
         };
     }
 
@@ -182,7 +182,7 @@ public static class MetadataTool
     static string WriteImage(MetadataEdit edit, string input, ConversionOptions options)
     {
         if (!CanWriteImage(input))
-            throw new ConversionException($"Transmute can show the details of {Path.GetExtension(input).TrimStart('.').ToUpperInvariant()} pictures but not change them. Convert it to JPEG or PNG first.");
+            throw new ConversionException($"Spinform can show the details of {Path.GetExtension(input).TrimStart('.').ToUpperInvariant()} pictures but not change them. Convert it to JPEG or PNG first.");
         var output = OutputPaths.Destination(input, Path.GetExtension(input).TrimStart('.'), "edited", options.OutputFolder);
         using var image = new MagickImage(input);
         var quality = image.Quality;
@@ -209,7 +209,7 @@ public static class MetadataTool
                     }
                     else
                     {
-                        var date = ExifDate(value) ?? throw new ConversionException($"\"{value}\" isn't a date Transmute understands. Write it like 2024:05:31 14:30:00.");
+                        var date = ExifDate(value) ?? throw new ConversionException($"\"{value}\" isn't a date Spinform understands. Write it like 2024:05:31 14:30:00.");
                         exif.SetValue(ExifTag.DateTimeOriginal, date);
                         exif.SetValue(ExifTag.DateTimeDigitized, date);
                     }
@@ -234,7 +234,7 @@ public static class MetadataTool
     static async Task<List<MetadataField>> ReadMedia(string path, CancellationToken token)
     {
         var banner = await MediaInfo.Banner(path, token);
-        if (banner.Length == 0) throw new ConversionException("Reading video and audio details needs ffmpeg, which comes with Transmute.");
+        if (banner.Length == 0) throw new ConversionException("Reading video and audio details needs ffmpeg, which comes with Spinform.");
         var fields = new List<MetadataField>();
         var input = Regex.Match(banner, @"Input #0, ([^\n]+?), from");
         const string media = "Media";

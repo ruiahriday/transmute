@@ -14,14 +14,14 @@ static class Feedback
     public static string Version =>
         Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "?";
 
-    /// Transmute's version, Windows version, processor and helpers, one per line.
+    /// Spinform's version, Windows version, processor and helpers, one per line.
     public static string Details
     {
         get
         {
             var office = string.Join(", ", new[] { OfficeApps.App.Word, OfficeApps.App.Excel, OfficeApps.App.PowerPoint }.Where(OfficeApps.Has));
             return $"""
-                Transmute {Version} for Windows
+                Spinform {Version} for Windows
                 {WindowsName()} (build {Environment.OSVersion.Version.Build})
                 {RuntimeInformation.ProcessArchitecture} app on {RuntimeInformation.OSArchitecture} PC, {Processor()}
                 ffmpeg {(Tools.Ffmpeg is null ? "missing" : "found")}

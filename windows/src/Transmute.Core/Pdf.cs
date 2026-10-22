@@ -159,7 +159,7 @@ public static class PdfTools
             if (OutputPaths.FileSize(output) >= original)
             {
                 File.Copy(input, output, true);
-                return new JobResult([output], "This PDF is already as small as Transmute can make it (it has no large pictures).");
+                return new JobResult([output], "This PDF is already as small as Spinform can make it (it has no large pictures).");
             }
             return MediaConverter.SizeResult(input, output, goal ?? OutputPaths.FileSize(output));
         }
@@ -197,7 +197,7 @@ public static class PdfTools
             }
             catch
             {
-                // Leave pictures Transmute can't decode as they are.
+                // Leave pictures Spinform can't decode as they are.
             }
         }
     }
@@ -358,8 +358,8 @@ public static class Fonts
     static readonly object Gate = new();
     static bool installed;
 
-    public const string Sans = "Transmute Sans";
-    public const string Mono = "Transmute Mono";
+    public const string Sans = "Spinform Sans";
+    public const string Mono = "Spinform Mono";
 
     /// A regular sans-serif font file for drawing text on pictures, or null to let ImageMagick choose.
     public static string? SansFile()

@@ -283,7 +283,7 @@ public static class ImageConverter
     static bool IsWritable(OutputFormat f) => f is OutputFormat.Jpeg or OutputFormat.Png or OutputFormat.Webp or OutputFormat.Heic
         or OutputFormat.Avif or OutputFormat.Tiff or OutputFormat.Bmp or OutputFormat.Gif or OutputFormat.Ico;
 
-    /// Half or quarter size, in the same format when Transmute can write it.
+    /// Half or quarter size, in the same format when Spinform can write it.
     public static async Task<string> Resize(string input, double scale, ConversionOptions options, CancellationToken token)
     {
         var ext = Path.GetExtension(input).TrimStart('.').ToLowerInvariant();

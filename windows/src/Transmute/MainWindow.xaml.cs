@@ -88,6 +88,8 @@ public partial class MainWindow : Window
         Theme.Wave(core, ScaleTransform.ScaleYProperty, 0.97, 1.05, 1.8);
         Theme.Wave((RotateTransform)CoreGlyph.RenderTransform, RotateTransform.AngleProperty, -14, 14, 2.4);
         Theme.Loop(DashedBorder, Shape.StrokeDashOffsetProperty, 0, -18, 1.6);
+        // The Spinform mark spins into place once when the window opens.
+        Theme.To((RotateTransform)HeaderMark.RenderTransform, RotateTransform.AngleProperty, 0, 1.4, Theme.Spring, from: -240);
         MoveSegmentHighlight(false);
     }
 
@@ -157,8 +159,8 @@ public partial class MainWindow : Window
     {
         var key = Prefs.ConvertKey;
         WheelTip.Text = Prefs.WheelEnabled && key != WheelKey.Off
-            ? $"Tip: hold {key.Label()} while dragging files anywhere to convert them on the spot. You can also right-click files in File Explorer and choose Send to › Transmute."
-            : "Tip: right-click files in File Explorer and choose Send to › Transmute.";
+            ? $"Tip: hold {key.Label()} while dragging files anywhere to convert them on the spot. You can also right-click files in File Explorer and choose Send to › Spinform."
+            : "Tip: right-click files in File Explorer and choose Send to › Spinform.";
     }
 
     void RefreshButtons()
@@ -243,13 +245,13 @@ public partial class MainWindow : Window
 
     void OnAddFiles(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Multiselect = true, Title = "Add files to Transmute" };
+        var dialog = new OpenFileDialog { Multiselect = true, Title = "Add files to Spinform" };
         if (dialog.ShowDialog(this) == true) Queue.Add(dialog.FileNames);
     }
 
     void OnAddFolder(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Multiselect = true, Title = "Add folders to Transmute" };
+        var dialog = new OpenFolderDialog { Multiselect = true, Title = "Add folders to Spinform" };
         if (dialog.ShowDialog(this) == true) Queue.Add(dialog.FolderNames);
     }
 

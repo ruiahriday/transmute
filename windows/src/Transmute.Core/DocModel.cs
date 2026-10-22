@@ -6,7 +6,7 @@ public sealed record Run(string Text, bool Bold = false, bool Italic = false, bo
     public Run With(string text) => this with { Text = text };
 }
 
-/// A document's content as Transmute understands it: headings, paragraphs, lists, tables and
+/// A document's content as Spinform understands it: headings, paragraphs, lists, tables and
 /// pictures. Every document reader produces this and every writer consumes it.
 public abstract record Block
 {

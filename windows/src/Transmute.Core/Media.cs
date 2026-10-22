@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Transmute;
 
-/// Video and audio, through the ffmpeg that ships with Transmute.
+/// Video and audio, through the ffmpeg that ships with Spinform.
 public static class MediaConverter
 {
     public static async Task<string> Convert(string input, OutputFormat format, ConversionOptions options,

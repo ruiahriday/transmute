@@ -6,15 +6,17 @@ namespace Transmute.App;
 
 public enum WheelKey { Shift, Ctrl, Alt, Off }
 
-/// Preferences, kept in %APPDATA%\Transmute\settings.json.
+/// Preferences, kept in %APPDATA%\Spinform\settings.json (copied from %APPDATA%\Transmute, the app's
+/// old name, the first time Spinform starts).
 public sealed class Settings
 {
     public static Settings Current { get; private set; } = new();
 
     public static string Folder =>
         Environment.GetEnvironmentVariable("TRANSMUTE_SETTINGS_DIR") is { Length: > 0 } dir ? dir
-        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Transmute");
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Spinform");
     static string FilePath => Path.Combine(Folder, "settings.json");
+    static string OldFilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Transmute", "settings.json");
 
     public bool SaveInFolder { get; set; }
     public string OutputFolder { get; set; } = "";
@@ -37,6 +39,17 @@ public sealed class Settings
 
     public static void Load()
     {
+        try
+        {
+            // Spinform used to be called Transmute: bring testers' settings and wheel layouts along.
+            // A copy, so the old folder stays as it was.
+            if (!File.Exists(FilePath) && Environment.GetEnvironmentVariable("TRANSMUTE_SETTINGS_DIR") is null or "" && File.Exists(OldFilePath))
+            {
+                Directory.CreateDirectory(Folder);
+                File.Copy(OldFilePath, FilePath);
+            }
+        }
+        catch { }
         try
         {
             if (File.Exists(FilePath))
@@ -81,22 +94,35 @@ public sealed class Settings
         OutputFolder = SaveInFolder && Directory.Exists(OutputFolder) ? OutputFolder : null,
     };
 
-    // Open at sign-in: a value under the current user's Run key.
+    // Open at sign-in: a value under the current user's Run key. Before the rename it was called "Transmute".
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    const string RunValue = "Spinform", OldRunValue = "Transmute";
 
     public static bool OpenAtLogin
     {
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey);
-            return key?.GetValue("Transmute") is string;
+            return key?.GetValue(RunValue) is string || key?.GetValue(OldRunValue) is string;
         }
         set
         {
             using var key = Registry.CurrentUser.CreateSubKey(RunKey);
-            if (value) key.SetValue("Transmute", $"\"{Environment.ProcessPath}\" --background");
-            else key.DeleteValue("Transmute", false);
+            key.DeleteValue(OldRunValue, false);
+            if (value) key.SetValue(RunValue, $"\"{Environment.ProcessPath}\" --background");
+            else key.DeleteValue(RunValue, false);
         }
+    }
+
+    /// Points a sign-in entry left by Transmute at this copy of Spinform.
+    public static void MoveOldLoginItem()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
+            if (key?.GetValue(OldRunValue) is string) OpenAtLogin = true;
+        }
+        catch { }
     }
 }
 

@@ -7,7 +7,7 @@ namespace Transmute.App;
 
 /// Run by the build server: opens every window with sample files, saves a picture of each, runs
 /// a conversion through the real queue and checks how File Explorer drags look to the wheel.
-/// Transmute --smoke-test <fixtures folder> <output folder>
+/// Spinform --smoke-test <fixtures folder> <output folder>
 static class SmokeTest
 {
     public static bool Active { get; private set; }
@@ -36,7 +36,7 @@ static class SmokeTest
         log = new StreamWriter(Path.Combine(output, "smoke-test.log"));
         // Keep test settings away from the real ones.
         Environment.SetEnvironmentVariable("TRANSMUTE_SETTINGS_DIR", Path.Combine(output, "settings"));
-        Log($"Transmute {Feedback.Version} smoke test on {RuntimeInformation.OSDescription} ({RuntimeInformation.ProcessArchitecture})");
+        Log($"Spinform {Feedback.Version} smoke test on {RuntimeInformation.OSDescription} ({RuntimeInformation.ProcessArchitecture})");
         Log($"ffmpeg: {Tools.Ffmpeg ?? "missing"}");
         var work = Path.Combine(output, "files");
         Directory.CreateDirectory(work);

@@ -140,7 +140,7 @@ sealed class WheelEditorWindow : Window
         var resetAll = new Button { Content = "Reset all wheels", Margin = new Thickness(8, 0, 0, 0) };
         resetAll.Click += (_, _) =>
         {
-            if (MessageBox.Show(this, "Put every wheel back the way Transmute came?", "Transmute", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+            if (MessageBox.Show(this, "Put every wheel back the way Spinform came?", "Spinform", MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
             Prefs.WheelLayouts.Clear();
             Prefs.Save();
             Load();

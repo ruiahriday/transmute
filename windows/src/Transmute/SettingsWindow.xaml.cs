@@ -40,13 +40,13 @@ public partial class SettingsWindow : Window
         VersionLabel.Text = $"Version {Feedback.Version}";
         FfmpegLabel.Text = Tools.Ffmpeg is { } path
             ? $"✓ Found at {path}"
-            : "⚠ Not found. It comes with Transmute, so reinstalling should bring it back. Video, audio and some image formats need it.";
+            : "⚠ Not found. It comes with Spinform, so reinstalling should bring it back. Video, audio and some image formats need it.";
         var office = new[] { OfficeApps.App.Word, OfficeApps.App.Excel, OfficeApps.App.PowerPoint }.Where(OfficeApps.Has).Select(a => a.ToString()).ToList();
         OfficeStatus.Text = (office.Count, OfficeApps.LibreOffice) switch
         {
             ( > 0, _) => $"Found {string.Join(", ", office)}: Word, Excel and PowerPoint files convert exactly as Office shows them.",
             (_, not null) => "Found LibreOffice: Office files convert exactly as LibreOffice shows them.",
-            _ => "Neither is installed, so Transmute uses its own converters. They keep text, headings, lists, tables and pictures, but not every bit of layout.",
+            _ => "Neither is installed, so Spinform uses its own converters. They keep text, headings, lists, tables and pictures, but not every bit of layout.",
         };
         RefreshFolder();
         RefreshKeyNote();
@@ -77,7 +77,7 @@ public partial class SettingsWindow : Window
 
     void OnChooseFolder(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = "Save Transmute results in" };
+        var dialog = new OpenFolderDialog { Title = "Save Spinform results in" };
         if (dialog.ShowDialog(this) == true) Prefs.OutputFolder = dialog.FolderName;
         if (Prefs.OutputFolder.Length == 0) { Prefs.SaveInFolder = false; BesideOriginal.IsChecked = true; }
         Prefs.Save();

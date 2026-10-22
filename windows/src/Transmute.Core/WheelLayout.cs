@@ -22,7 +22,7 @@ public static class WheelLayout
     public static OutputFormat? Format(string id) =>
         id.StartsWith("convert:") && Enum.TryParse<OutputFormat>(id["convert:".Length..], true, out var format) ? format : null;
 
-    /// The layout Transmute ships with, the same as before wheels could be customized.
+    /// The layout Spinform ships with, the same as before wheels could be customized.
     public static List<string> Default(WheelKind wheel, FileKind kind) => wheel switch
     {
         WheelKind.Convert => kind.ConvertTargets().Take(10).Select(ConvertId).ToList(),

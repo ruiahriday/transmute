@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace Transmute;
 
 /// Uses Microsoft Office (Word, Excel, PowerPoint) or the free LibreOffice, when installed, for
-/// exact conversions of Office files. Transmute's own converters are the fallback.
+/// exact conversions of Office files. Spinform's own converters are the fallback.
 public static class OfficeApps
 {
     public enum App { Word, Excel, PowerPoint }
@@ -108,7 +108,7 @@ public static class OfficeApps
     }
 
     /// Turns an old .doc/.ppt/.xls (or any Office file) into its modern equivalent in a temp folder,
-    /// so Transmute's own readers can take it from there.
+    /// so Spinform's own readers can take it from there.
     public static async Task<string?> Modernize(string input, CancellationToken token)
     {
         var app = AppFor(input);

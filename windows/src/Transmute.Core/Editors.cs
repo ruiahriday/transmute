@@ -86,7 +86,7 @@ public sealed record ImageEdit
     public double Exposure { get; init; }
     public IReadOnlyList<Redaction> Redactions { get; init; } = [];
     public IReadOnlyList<Annotation> Annotations { get; init; } = [];
-    /// null keeps the input format when Transmute can write it, otherwise PNG.
+    /// null keeps the input format when Spinform can write it, otherwise PNG.
     public OutputFormat? OutputFormat { get; init; }
 
     public int Turns => ((QuarterTurns % 4) + 4) % 4;

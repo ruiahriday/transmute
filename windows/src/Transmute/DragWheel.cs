@@ -225,7 +225,7 @@ static class WheelItems
         else if (item.Action is { } action) Perform(action, paths);
         else if (item.Edit && paths.FirstOrDefault(p => Editors.CanEdit(Kinds.Of(p))) is { } path)
         {
-            // Straight into the editor, without opening Transmute and adding the file first.
+            // Straight into the editor, without opening Spinform and adding the file first.
             var job = queue.Add([path]).FirstOrDefault();
             if (job is not null) Editors.Open(job, null);
         }
@@ -270,7 +270,7 @@ static class WheelItems
                     }
                     catch (Exception e)
                     {
-                        MessageBox.Show($"Couldn't move {Path.GetFileName(path)}: {e.Message}", "Transmute", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show($"Couldn't move {Path.GetFileName(path)}: {e.Message}", "Spinform", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }
                 if (moved.Count > 0) Native.RevealInExplorer(moved);
@@ -386,10 +386,10 @@ sealed class WheelWindow : Window
             Width = ringSize,
             Height = ringSize,
             // Nearly clear but not fully: fully transparent pixels don't receive the drag.
-            Fill = new RadialGradientBrush(Color.FromArgb(0xF0, 0xEE, 0xF8, 0xF6), Color.FromArgb(0xE8, 0xF4, 0xF6, 0xFA)),
+            Fill = new RadialGradientBrush(Color.FromArgb(0xF0, 0xF5, 0xF3, 0xFF), Color.FromArgb(0xE8, 0xFA, 0xF5, 0xFF)),
             Stroke = Theme.Brand,
             StrokeThickness = 2,
-            Effect = new DropShadowEffect { BlurRadius = 26, ShadowDepth = 0, Opacity = 0.45, Color = Theme.Blue },
+            Effect = new DropShadowEffect { BlurRadius = 26, ShadowDepth = 0, Opacity = 0.45, Color = Theme.Violet },
             RenderTransformOrigin = new Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(0.7, 0.7),
             Opacity = 0,

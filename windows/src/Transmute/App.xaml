@@ -3,27 +3,35 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
-        <!-- Brand: teal to blue, the same as the app icon. -->
-        <Color x:Key="TealColor">#43C6AC</Color>
-        <Color x:Key="BlueColor">#2A5FD8</Color>
+        <!-- Brand: indigo to violet to pink, the same as the Spinform icon (Theme.cs has the same colours). -->
+        <Color x:Key="IndigoColor">#4338CA</Color>
+        <Color x:Key="VioletColor">#8B5CF6</Color>
+        <Color x:Key="PinkColor">#EC4899</Color>
         <LinearGradientBrush x:Key="Brand" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#43C6AC" Offset="0" />
-            <GradientStop Color="#2A5FD8" Offset="1" />
+            <GradientStop Color="#4338CA" Offset="0" />
+            <GradientStop Color="#8B5CF6" Offset="0.55" />
+            <GradientStop Color="#EC4899" Offset="1" />
         </LinearGradientBrush>
         <LinearGradientBrush x:Key="BrandHover" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#52D4BA" Offset="0" />
-            <GradientStop Color="#3A6FE6" Offset="1" />
+            <GradientStop Color="#5249DB" Offset="0" />
+            <GradientStop Color="#9A70F8" Offset="0.55" />
+            <GradientStop Color="#F472B6" Offset="1" />
         </LinearGradientBrush>
-        <SolidColorBrush x:Key="Accent" Color="#2A5FD8" />
-        <SolidColorBrush x:Key="AccentHover" Color="#3A6FE6" />
-        <SolidColorBrush x:Key="AccentPressed" Color="#1F4FC0" />
-        <SolidColorBrush x:Key="Surface" Color="#F2F6F8" />
+        <!-- The core of the icon: coral to rose. -->
+        <RadialGradientBrush x:Key="CoreGlow" GradientOrigin="0.35,0.3" Center="0.35,0.3" RadiusX="0.8" RadiusY="0.8">
+            <GradientStop Color="#FDBA74" Offset="0" />
+            <GradientStop Color="#F43F5E" Offset="1" />
+        </RadialGradientBrush>
+        <SolidColorBrush x:Key="Accent" Color="#4338CA" />
+        <SolidColorBrush x:Key="AccentHover" Color="#5249DB" />
+        <SolidColorBrush x:Key="AccentPressed" Color="#3730A3" />
+        <SolidColorBrush x:Key="Surface" Color="#F6F4FC" />
         <SolidColorBrush x:Key="Card" Color="#FFFFFF" />
         <SolidColorBrush x:Key="Glass" Color="#C8FFFFFF" />
         <SolidColorBrush x:Key="GlassEdge" Color="#E6FFFFFF" />
-        <SolidColorBrush x:Key="Line" Color="#DCE4E9" />
-        <SolidColorBrush x:Key="Ink" Color="#0F1E2E" />
-        <SolidColorBrush x:Key="Secondary" Color="#5A6B7A" />
+        <SolidColorBrush x:Key="Line" Color="#E4DFF2" />
+        <SolidColorBrush x:Key="Ink" Color="#1E1B3A" />
+        <SolidColorBrush x:Key="Secondary" Color="#5F5A78" />
         <SolidColorBrush x:Key="Danger" Color="#C42B1C" />
         <SolidColorBrush x:Key="Success" Color="#11806D" />
         <SolidColorBrush x:Key="Warning" Color="#9D5D00" />
@@ -57,7 +65,7 @@
             <Setter Property="CornerRadius" Value="18" />
             <Setter Property="Effect">
                 <Setter.Value>
-                    <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.10" Color="#0F1E2E" />
+                    <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.10" Color="#1E1B3A" />
                 </Setter.Value>
             </Setter>
         </Style>
@@ -67,7 +75,7 @@
             <Setter Property="Padding" Value="14,6" />
             <Setter Property="MinHeight" Value="30" />
             <Setter Property="Background" Value="#B3FFFFFF" />
-            <Setter Property="BorderBrush" Value="#1A0F1E2E" />
+            <Setter Property="BorderBrush" Value="#1A1E1B3A" />
             <Setter Property="Foreground" Value="{StaticResource Ink}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -83,7 +91,7 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Box" Property="Background" Value="#FFFFFFFF" />
-                                <Setter TargetName="Box" Property="BorderBrush" Value="#552A5FD8" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#558B5CF6" />
                                 <Trigger.EnterActions>
                                     <BeginStoryboard>
                                         <Storyboard>
@@ -102,7 +110,7 @@
                                 </Trigger.ExitActions>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Box" Property="Background" Value="#E6EEF2" />
+                                <Setter TargetName="Box" Property="Background" Value="#EEEAFA" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45" />
@@ -131,7 +139,7 @@
                                 <ScaleTransform x:Name="Scale" />
                             </Border.RenderTransform>
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="16" ShadowDepth="3" Direction="270" Opacity="0.45" Color="#2A5FD8" />
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="3" Direction="270" Opacity="0.45" Color="#8B5CF6" />
                             </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                         </Border>
@@ -218,7 +226,7 @@
         <Style TargetType="ProgressBar">
             <Setter Property="Height" Value="6" />
             <Setter Property="Foreground" Value="{StaticResource Brand}" />
-            <Setter Property="Background" Value="#140F1E2E" />
+            <Setter Property="Background" Value="#141E1B3A" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Template">
                 <Setter.Value>

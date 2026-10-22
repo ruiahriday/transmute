@@ -35,7 +35,7 @@ public static class Sheets
             "xls" => ReadXls(path),
             "ods" => ReadOds(path),
             "numbers" => throw new ConversionException("Numbers files can only be opened with Apple's Numbers app. Export it as Excel from Numbers first."),
-            _ => throw new ConversionException($"Transmute can't read {ext.ToUpperInvariant()} spreadsheets."),
+            _ => throw new ConversionException($"Spinform can't read {ext.ToUpperInvariant()} spreadsheets."),
         };
         // Every row as wide as the widest, so CSV columns line up.
         var width = table.Columns;
