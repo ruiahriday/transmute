@@ -88,28 +88,26 @@ struct CaptureHomeView: View {
                 ForEach([CaptureAction.recordArea, .recordWindow, .recordScreen]) { action in
                     CaptureTile(action: action, recording: true)
                 }
-                VStack(alignment: .leading, spacing: 7) {
-                    HStack(spacing: 14) {
-                        Toggle("Microphone", isOn: $mic).toggleStyle(CrispCheckboxStyle())
-                        Toggle("Mac sound", isOn: $systemAudio).toggleStyle(CrispCheckboxStyle())
-                        Toggle("Camera", isOn: $camera).toggleStyle(CrispCheckboxStyle())
-                    }
-                    HStack(spacing: 14) {
-                        Toggle("Show clicks", isOn: $clicks).toggleStyle(CrispCheckboxStyle())
-                        Toggle("Show keys", isOn: $keys).toggleStyle(CrispCheckboxStyle())
-                            .help("Shows the keys you press; needs Accessibility permission")
-                        Toggle("Studio", isOn: $studio).toggleStyle(CrispCheckboxStyle())
-                            .help("Smooth pointer and automatic zooms, finished in Studio")
-                    }
-                    Picker("Save as", selection: $recordFormat) {
-                        Text("MP4 video").tag("mp4")
-                        Text("GIF").tag("gif")
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 200)
+            }
+            HStack(spacing: 14) {
+                Toggle("Microphone", isOn: $mic).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                Toggle("Mac sound", isOn: $systemAudio).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                Toggle("Camera", isOn: $camera).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                Spacer(minLength: 8)
+                Picker("Save as", selection: $recordFormat) {
+                    Text("MP4 video").tag("mp4")
+                    Text("GIF").tag("gif")
                 }
-                .padding(.leading, 6)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .pickerStyle(.segmented)
+                .frame(width: 220)
+            }
+            HStack(spacing: 14) {
+                Toggle("Show clicks", isOn: $clicks).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                Toggle("Show keys", isOn: $keys).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                    .help("Shows the keys you press; needs Accessibility permission")
+                Toggle("Studio mode", isOn: $studio).toggleStyle(CrispCheckboxStyle()).fixedSize()
+                    .help("Smooth pointer and automatic zooms, finished in Studio")
+                Spacer(minLength: 0)
             }
         }
         .crispCard()

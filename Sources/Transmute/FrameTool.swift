@@ -724,6 +724,8 @@ struct FrameToolView: View {
             try? ImageEditEngine.loadPreview(url, maxPixel: 1200)
         }.value
         preview = loaded?.image
+        // The look may have been set before the picture finished loading.
+        await refresh()
     }
 
     private func refresh() async {

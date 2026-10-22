@@ -126,12 +126,12 @@ struct CaptureChooserView: View {
             HStack(spacing: 8) {
                 Button {
                     if let size = typedSize { choose(.exactSize(size)) }
-                } label: { Label("Capture This Size", systemImage: "rectangle.dashed") }
+                } label: { Label("Capture This Size", systemImage: "rectangle.dashed").lineLimit(1).fixedSize() }
                     .buttonStyle(ChipButtonStyle())
                     .disabled(typedSize == nil)
                 Button {
                     if let size = typedSize { choose(.lockedAspect(size.width / size.height)) }
-                } label: { Label("Drag at This Shape", systemImage: "aspectratio") }
+                } label: { Label("Drag at This Shape", systemImage: "aspectratio").lineLimit(1).fixedSize() }
                     .buttonStyle(ChipButtonStyle())
                     .disabled(typedSize == nil)
                 Spacer()

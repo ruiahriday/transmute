@@ -524,13 +524,12 @@ extension Snapshots {
         if FileManager.default.fileExists(atPath: clip.path) {
             var track = CursorTrack(areaWidth: 640, areaHeight: 360)
             for i in 0...600 { track.samples.append(.init(t: Double(i) / 60, x: 0.3 + Double(i) / 1500, y: 0.35 + Double(i) / 3000)) }
-            track.clicks = [.init(t: 1.0, x: 0.36, y: 0.38), .init(t: 4.0, x: 0.6, y: 0.5)]
+            track.clicks = [.init(t: 0.6, x: 0.36, y: 0.38)]
             var settings = StudioSettings()
             settings.background = .gradient(0x4338CA, 0xEC4899)
-            settings.zooms = [ZoomSegment(start: 6, end: 7.5, scale: 1.8, centre: NormPoint(x: 0.5, y: 0.5), manual: true)]
             StudioEngine.preparePointer()
             await shoot("studio-\(suffix)", output, size: CGSize(width: 1100, height: 720), wait: 4) {
-                StudioView(url: clip, settings: settings, track: track, time: 1.6)
+                StudioView(url: clip, settings: settings, track: track, time: 1.2)
             }
         } else {
             print("FAIL  studio picture: no clip.mp4 fixture")

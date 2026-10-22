@@ -476,7 +476,7 @@ final class ScreenRecorder: NSObject, ObservableObject {
     // MARK: Controls
 
     private func showControls(near rect: CGRect, on screen: NSScreen) {
-        let size = CGSize(width: 248, height: 50)
+        let size = CGSize(width: 300, height: 50)
         let visible = screen.visibleFrame
         var origin = CGPoint(x: rect.midX - size.width / 2, y: rect.minY - size.height - 10)
         if origin.y < visible.minY + 6 { origin.y = rect.maxY + 10 }
@@ -600,7 +600,7 @@ struct RecordingControlsBar: View {
     var onCancel: () -> Void = {}
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Circle()
                 .fill(phase == .recording ? Color.red : Theme.textTertiary)
                 .frame(width: 10, height: 10)
@@ -625,7 +625,7 @@ struct RecordingControlsBar: View {
             .buttonStyle(ChipButtonStyle())
             .help("Stop and discard")
             Button(action: onStop) {
-                Label("Stop", systemImage: "stop.fill")
+                Label("Stop", systemImage: "stop.fill").lineLimit(1).fixedSize()
             }
             .buttonStyle(GlowButtonStyle())
             .help("Stop and save")

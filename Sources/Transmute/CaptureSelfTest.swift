@@ -613,7 +613,7 @@ extension Snapshots {
             HistoryView(history: history)
         }
 
-        await shoot("recording-controls-\(suffix)", output, size: CGSize(width: 260, height: 56), wait: 1, clear: true) {
+        await shoot("recording-controls-\(suffix)", output, size: CGSize(width: 300, height: 50), wait: 1, clear: true) {
             RecordingControlsBar(phase: .recording, elapsed: 42, micOn: true, audioOn: true).tint(Theme.accent)
         }
 
