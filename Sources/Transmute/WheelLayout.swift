@@ -21,7 +21,7 @@ enum WheelLayout {
         id.hasPrefix("convert:") ? OutputFormat(rawValue: String(id.dropFirst("convert:".count))) : nil
     }
 
-    /// The layout Transmute ships with, the same as before wheels could be customized.
+    /// The layout Spinform ships with, the same as before wheels could be customized.
     static func defaultLayout(_ wheel: WheelKind, _ kind: FileKind) -> [String] {
         switch wheel {
         case .convert: kind.convertTargets.prefix(10).map(convertID)

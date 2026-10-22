@@ -23,7 +23,7 @@ struct TransmuteApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        Window("Transmute", id: "main") {
+        Window("Spinform", id: "main") {
             ContentView().environmentObject(JobQueue.shared)
         }
         .defaultSize(width: 700, height: 560)
@@ -34,8 +34,11 @@ struct TransmuteApp: App {
             }
         }
 
-        MenuBarExtra("Transmute", systemImage: "arrow.triangle.2.circlepath.circle") {
+        MenuBarExtra {
             MenuContent()
+        } label: {
+            Image(nsImage: MarkGeometry.templateImage())
+                .accessibilityLabel("Spinform")
         }
     }
 }
@@ -73,7 +76,7 @@ struct MenuContent: View {
     @AppStorage(WheelKind.actions.prefKey) private var actionsKey = WheelKind.actions.defaultKey.rawValue
 
     var body: some View {
-        Button("Open Transmute") {
+        Button("Open Spinform") {
             openWindow(id: "main")
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -87,7 +90,7 @@ struct MenuContent: View {
             }
         }
         Divider()
-        Button("Quit Transmute") { NSApp.terminate(nil) }
+        Button("Quit Spinform") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
     }
 
@@ -157,10 +160,16 @@ struct HUDView: View {
         let allDone = finished == jobs.count
 
         HStack(spacing: 12) {
-            Image(systemName: !allDone ? "arrow.triangle.2.circlepath"
-                  : failed.isEmpty ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                .font(.title2)
-                .foregroundStyle(!allDone ? Color.accentColor : failed.isEmpty ? Color.green : Color.orange)
+            Group {
+                if !allDone {
+                    SpinningMark(secondsPerTurn: 3).frame(width: 28, height: 28)
+                } else {
+                    Image(systemName: failed.isEmpty ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundStyle(failed.isEmpty ? Theme.success : Color.orange)
+                }
+            }
+            .frame(width: 28)
             VStack(alignment: .leading, spacing: 6) {
                 Text(title(jobs: jobs, allDone: allDone, failed: failed.count))
                     .font(.headline)
@@ -177,6 +186,7 @@ struct HUDView: View {
         .padding(14)
         .frame(width: 320, height: 84, alignment: .leading)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .tint(Theme.accent)
     }
 
     private func title(jobs: [Job], allDone: Bool, failed: Int) -> String {
@@ -256,7 +266,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Section("General") {
-                    Toggle("Show Transmute in the Dock", isOn: Binding(
+                    Toggle("Show Spinform in the Dock", isOn: Binding(
                         get: { showInDock },
                         set: { show in
                             showInDock = show
@@ -283,7 +293,7 @@ struct SettingsView: View {
                         Button("Send Feedback…") { Feedback.openForm() }
                         Button("Copy Mac Details") { Feedback.copyDetails() }
                     }
-                    Text("Send Feedback opens a short form on GitHub (it needs a free GitHub account). Or copy your Mac's details and paste them into a message to whoever sent you Transmute.")
+                    Text("Send Feedback opens a short form on GitHub (it needs a free GitHub account). Or copy your Mac's details and paste them into a message to whoever sent you Spinform.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -306,7 +316,8 @@ struct SettingsView: View {
             .padding()
         }
         .frame(width: 480, height: 600)
-        .sheet(isPresented: $showWheelEditor) { WheelEditorView() }
+        .tint(Theme.accent)
+        .sheet(isPresented: $showWheelEditor) { WheelEditorView().tint(Theme.accent) }
     }
 
     private func chooseFolder() {

@@ -361,7 +361,7 @@ struct MediaStreams: Equatable {
     static func explain(error: Error, input: URL) -> String {
         let text = error.localizedDescription
         if text.contains("Decoder") && text.contains("not found") || text.contains("no decoder") {
-            return "\(input.lastPathComponent) uses a codec Transmute can't read yet. (\(text))"
+            return "\(input.lastPathComponent) uses a codec Spinform can't read yet. (\(text))"
         }
         return text
     }

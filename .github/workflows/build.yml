@@ -1,4 +1,4 @@
-name: Build Transmute
+name: Build Spinform
 
 on:
   push:
@@ -53,14 +53,14 @@ jobs:
       - name: Check the bundle
         run: |
           set -euo pipefail
-          lipo -info build/Transmute.app/Contents/MacOS/Transmute
-          plutil -lint build/Transmute.app/Contents/Info.plist
-          codesign --verify --deep --strict --verbose=2 build/Transmute.app
+          lipo -info build/Spinform.app/Contents/MacOS/Spinform
+          plutil -lint build/Spinform.app/Contents/Info.plist
+          codesign --verify --deep --strict --verbose=2 build/Spinform.app
 
       - name: Launch test (app must stay running)
         id: launch
         run: |
-          ./build/Transmute.app/Contents/MacOS/Transmute > logs/launch.log 2>&1 &
+          ./build/Spinform.app/Contents/MacOS/Spinform > logs/launch.log 2>&1 &
           PID=$!
           sleep 10
           if kill -0 "$PID" 2>/dev/null; then
@@ -76,19 +76,19 @@ jobs:
         id: selftest
         run: |
           bash scripts/make-fixtures.sh "$RUNNER_TEMP/fixtures" "$FFMPEG_BIN" 2>&1 | tee logs/fixtures.log
-          ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest.log
+          ./build/Spinform.app/Contents/MacOS/Spinform --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest.log
 
       - name: Conversion self-test (no ffmpeg, Apple-only fallbacks; informational)
         id: selftest_noff
         continue-on-error: true
         run: |
-          TRANSMUTE_NO_FFMPEG=1 ./build/Transmute.app/Contents/MacOS/Transmute --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest-noffmpeg.log
+          TRANSMUTE_NO_FFMPEG=1 ./build/Spinform.app/Contents/MacOS/Spinform --selftest "$RUNNER_TEMP/fixtures" 2>&1 | tee logs/selftest-noffmpeg.log
 
       - name: Window pictures (for checking the look)
         id: snapshots
         continue-on-error: true
         run: |
-          ./build/Transmute.app/Contents/MacOS/Transmute --snapshots "$RUNNER_TEMP/fixtures" "$RUNNER_TEMP/snapshots" 2>&1 | tee logs/snapshots.log &
+          ./build/Spinform.app/Contents/MacOS/Spinform --snapshots "$RUNNER_TEMP/fixtures" "$RUNNER_TEMP/snapshots" 2>&1 | tee logs/snapshots.log &
           PID=$!
           for i in $(seq 1 120); do kill -0 $PID 2>/dev/null || break; sleep 1; done
           kill $PID 2>/dev/null || true
@@ -122,19 +122,19 @@ jobs:
       - name: Package zip and disk image
         run: |
           set -euo pipefail
-          ditto -c -k --sequesterRsrc --keepParent build/Transmute.app build/Transmute.zip
+          ditto -c -k --sequesterRsrc --keepParent build/Spinform.app build/Spinform.zip
           mkdir -p build/dmg
-          cp -R build/Transmute.app build/dmg/
+          cp -R build/Spinform.app build/dmg/
           ln -s /Applications build/dmg/Applications
-          hdiutil create -volname Transmute -srcfolder build/dmg -ov -format UDZO build/Transmute.dmg
+          hdiutil create -volname Spinform -srcfolder build/dmg -ov -format UDZO build/Spinform.dmg
           ls -la build
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Transmute
+          name: Spinform
           path: |
-            build/Transmute.dmg
-            build/Transmute.zip
+            build/Spinform.dmg
+            build/Spinform.zip
 
       - name: Publish download (release "latest")
         if: github.ref == 'refs/heads/main'
@@ -143,13 +143,15 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag || true
           cat > notes.md <<'NOTES'
-          **Install:** open `Transmute.dmg` and drag Transmute into Applications.
+          **Spinform** (formerly Transmute) converts, compresses and edits images, video, audio, PDFs, documents and more. Drop files in the window, or hold a key while dragging to spin up the drag wheel.
 
-          **First launch:** macOS blocks apps that aren't signed with a paid Apple developer certificate. Open Transmute once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. You only do this once.
+          **Install:** open `Spinform.dmg` and drag Spinform into Applications. If you had Transmute installed, delete it; Spinform keeps your settings.
+
+          **First launch:** macOS blocks apps that aren't signed with a paid Apple developer certificate. Open Spinform once, then go to **System Settings → Privacy & Security** and click **Open Anyway**. You only do this once.
 
           Works on Apple Silicon and Intel Macs with macOS 13 or newer. ffmpeg is included.
 
-          **This is a beta.** To report a problem or an idea, open the Transmute menu bar icon and choose **Send Feedback…**, or use https://github.com/${{ github.repository }}/issues/new?template=beta-feedback.yml
+          **This is a beta.** To report a problem or an idea, open the Spinform menu bar icon and choose **Send Feedback…**, or use https://github.com/${{ github.repository }}/issues/new?template=beta-feedback.yml
           NOTES
-          gh release create latest build/Transmute.dmg build/Transmute.zip \
-            --target "$GITHUB_SHA" --title "Transmute 1.0 beta (build ${{ github.run_number }})" --notes-file notes.md --latest
+          gh release create latest build/Spinform.dmg build/Spinform.zip \
+            --target "$GITHUB_SHA" --title "Spinform 1.0 beta (build ${{ github.run_number }})" --notes-file notes.md --latest

@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Transmute</string>
+    <string>Spinform</string>
     <key>CFBundleDisplayName</key>
-    <string>Transmute</string>
+    <string>Spinform</string>
     <key>CFBundleIdentifier</key>
     <string>local.personal.transmute</string>
     <key>CFBundleExecutable</key>
-    <string>Transmute</string>
+    <string>Spinform</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -21,7 +21,7 @@
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSAppleEventsUsageDescription</key>
-    <string>Transmute asks Pages, Keynote or Numbers to export documents when you convert iWork, Word, PowerPoint or Excel files.</string>
+    <string>Spinform asks Pages, Keynote or Numbers to export documents when you convert iWork, Word, PowerPoint or Excel files.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

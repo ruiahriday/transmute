@@ -71,20 +71,20 @@ struct ContentView: View {
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(item: $editing) { request in EditorHost(request: request, close: { editing = nil }) }
         .frame(minWidth: 640, minHeight: 520)
+        .tint(Theme.accent)
     }
 
     // MARK: Header
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
+            SpinformMark()
                 .frame(width: 38, height: 38)
-                .shadow(color: Theme.blue.opacity(0.35), radius: 8, y: 3)
+                .shadow(color: Theme.violet.opacity(0.30), radius: 6, y: 2)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Transmute")
+                Text("Spinform")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundStyle(Theme.brand)
+                    .foregroundStyle(Theme.brandText)
                 Text("Drop. Pick a format. Done.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -104,7 +104,7 @@ struct ContentView: View {
                 ProgressView().controlSize(.small)
             } else {
                 Image(systemName: done == total ? "checkmark.seal.fill" : "square.stack.3d.up.fill")
-                    .foregroundStyle(done == total ? Theme.teal : Theme.blue)
+                    .foregroundStyle(done == total ? Theme.success : Theme.accent)
             }
             Text(done > 0 ? "\(done) of \(total) done" : "\(total) file\(total == 1 ? "" : "s")")
                 .font(.system(size: 12, weight: .semibold))
@@ -151,7 +151,7 @@ struct ContentView: View {
             if dropTargeted {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .strokeBorder(Theme.brand, lineWidth: 3)
-                    .background(Theme.blue.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(Theme.violet.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .transition(.opacity)
             }
         }
@@ -331,6 +331,10 @@ struct EditorHost: View {
     let close: () -> Void
 
     var body: some View {
+        editor.tint(Theme.accent)
+    }
+
+    @ViewBuilder private var editor: some View {
         let id = request.jobID
         switch request.mode {
         case .image:
@@ -414,7 +418,7 @@ struct JobRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if case .done(let result) = job.state, let message = result.message {
-                    Text(message).font(.caption).foregroundStyle(Theme.teal).textSelection(.enabled).lineLimit(3)
+                    Text(message).font(.caption).foregroundStyle(Theme.success).textSelection(.enabled).lineLimit(3)
                 }
                 if case .failed(let message) = job.state {
                     Text(message).font(.caption).foregroundStyle(.red).textSelection(.enabled).lineLimit(3)

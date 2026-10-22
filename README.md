@@ -1,7 +1,7 @@
-# Transmute
+# Spinform
 
-A personal file converter for your Mac. It lives in the menu bar, converts in batches,
-and everything runs on your Mac: no files are uploaded anywhere.
+A personal file converter for your Mac, formerly called Transmute. It lives in the menu
+bar, converts in batches, and everything runs on your Mac: no files are uploaded anywhere.
 
 It's an original app written from scratch, using Tangerine's public App Store listing and
 website only to decide which features to build. It contains no code, icons or branding
@@ -10,10 +10,11 @@ from Tangerine.
 ## Install the ready-made app
 
 Each push to `main` makes GitHub's Mac build server compile the app, bundle ffmpeg, run a
-self-test of every conversion, and publish `Transmute.dmg` under **Releases → latest**.
+self-test of every conversion, and publish `Spinform.dmg` under **Releases → latest**.
 
-1. Download `Transmute.dmg` from the repository's latest release and open it.
-2. Drag **Transmute** into **Applications**.
+1. Download `Spinform.dmg` from the repository's latest release and open it.
+2. Drag **Spinform** into **Applications**. (If you had Transmute installed, delete it:
+   Spinform replaces it and keeps your settings.)
 3. Open it. macOS will refuse the first time, because the app isn't signed with a paid
    Apple developer certificate. Go to **System Settings → Privacy & Security**, scroll down,
    and click **Open Anyway**. You only do this once.
@@ -23,12 +24,12 @@ installing.
 
 ## Beta testers
 
-1. Download https://github.com/ruiahriday/transmute/releases/download/latest/Transmute.dmg
-2. Open it and drag Transmute into Applications.
-3. Open Transmute. macOS will block it the first time, because it isn't signed with a paid
+1. Download https://github.com/ruiahriday/transmute/releases/download/latest/Spinform.dmg
+2. Open it and drag Spinform into Applications.
+3. Open Spinform. macOS will block it the first time, because it isn't signed with a paid
    Apple developer certificate yet: go to **System Settings → Privacy & Security**, scroll
    down and click **Open Anyway**.
-4. To send feedback, click the Transmute icon in the menu bar and choose **Send Feedback…**
+4. To send feedback, click the Spinform icon in the menu bar and choose **Send Feedback…**
    (a short form on GitHub, needs a free account). Or use **Settings → Beta → Copy Mac
    Details** and paste them into a message with what you found.
 
@@ -39,21 +40,21 @@ Needs a Mac with macOS 13 or newer (Apple Silicon or Intel). It doesn't run on W
 1. Install Apple's developer tools (skip this if you have Xcode): `xcode-select --install`
 2. Optional: `brew install ffmpeg` for MP3, MKV, WebM, AVI, WMV, OGG, Opus, GIF-from-video
    and WebP. The ready-made app has ffmpeg built in.
-3. From this folder, run `./build-app.sh --install`. This builds `Transmute.app`, copies it
+3. From this folder, run `./build-app.sh --install`. This builds `Spinform.app`, copies it
    to `/Applications` and opens it.
 
 To work on it in Xcode, open `Package.swift` with Xcode and press Run.
 
 ## Self-test
 
-`Transmute.app/Contents/MacOS/Transmute --selftest <folder>` runs every conversion on the
+`Spinform.app/Contents/MacOS/Spinform --selftest <folder>` runs every conversion on the
 files in a folder and prints PASS or FAIL for each one. `scripts/make-fixtures.sh <folder>
 <ffmpeg>` creates one sample file of each kind. The build server runs both on every build.
 
 ## Using it
 
-- **Main window:** opens when you start Transmute, or click its Dock icon or the menu bar
-  icon (two circling arrows) and choose *Open Transmute*. Drop in files or whole folders, pick an output format for each kind of file, and click
+- **Main window:** opens when you start Spinform, or click its Dock icon or the menu bar
+  icon (three swooshes around a dot) and choose *Open Spinform*. Drop in files or whole folders, pick an output format for each kind of file, and click
   **Convert**. The **Compress** tab shrinks files by a percentage or to a target size. The
   **Tools** tab merges PDFs, turns images into a PDF, splits PDFs into pages, joins videos,
   zips everything, removes metadata, reads QR codes and puts files on the floating shelf.
@@ -117,7 +118,7 @@ Your original files are never changed. Results get a new name, such as `photo.jp
 - PDF compression recompresses embedded images. Text-only PDFs barely shrink, and target sizes
   are best effort for PDFs.
 - Pages, Keynote and Numbers files, and converting to them, need Apple's free Pages,
-  Keynote or Numbers app from the App Store. The first time, macOS asks whether Transmute
+  Keynote or Numbers app from the App Store. The first time, macOS asks whether Spinform
   may control that app; click OK. Without Keynote, PowerPoint files can still be turned
   into a picture of the first slide.
 - XLSX reading takes the first sheet's values. Formulas show their last saved results,
@@ -126,9 +127,13 @@ Your original files are never changed. Results get a new name, such as `photo.jp
 
 ## Code map
 
+The Swift package, target and source folder keep the app's old name, Transmute, and so does
+the bundle identifier (`local.personal.transmute`), so existing settings carry over.
+
 ```
 Sources/Transmute/
   App.swift             App entry point, menu bar item, progress card, settings
+  Theme.swift           Brand colours, the Spinform mark, glass cards, buttons, drop zone
   ContentView.swift     Main window: drop zone, file list, Convert / Compress / Tools
   DragWheel.swift       The drag wheel shown while dragging files with a key held
   WheelLayout.swift     What each wheel shows and where; WheelEditor.swift edits it

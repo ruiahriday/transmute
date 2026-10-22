@@ -69,7 +69,7 @@ struct WheelEditorView: View {
         .frame(width: 760, height: 580)
         .onChange(of: wheel) { _ in load() }
         .onChange(of: kind) { _ in load() }
-        .confirmationDialog("Put every wheel back the way Transmute came?", isPresented: $confirmResetAll) {
+        .confirmationDialog("Put every wheel back the way Spinform came?", isPresented: $confirmResetAll) {
             Button("Reset All Wheels", role: .destructive) {
                 WheelLayout.saved = [:]
                 load()
@@ -198,7 +198,7 @@ struct WheelEditorView: View {
         .frame(width: size, height: size)
         .background(Circle().fill(item == nil ? Color.clear : Color(nsColor: .windowBackgroundColor)))
         .overlay(
-            Circle().strokeBorder(isSelected ? Color.accentColor : Color.primary.opacity(item == nil ? 0.35 : 0.15),
+            Circle().strokeBorder(isSelected ? Theme.accent : Color.primary.opacity(item == nil ? 0.35 : 0.15),
                                   style: StrokeStyle(lineWidth: isSelected ? 2.5 : 1, dash: item == nil ? [4, 3] : []))
         )
         .shadow(radius: item == nil ? 0 : 1.5)

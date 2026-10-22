@@ -870,7 +870,7 @@ struct ImageEditorView: View {
                          at: p, anchor: .topLeading)
             var marker = Path()
             marker.addEllipse(in: CGRect(x: p.x - 3, y: p.y - 3, width: 6, height: 6))
-            context.fill(marker, with: .color(.accentColor))
+            context.fill(marker, with: .color(Theme.accent))
         }
     }
 
@@ -1200,7 +1200,7 @@ struct ImageEditorView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
-                    .tint(aspect == preset ? Color.accentColor : nil)
+                    .tint(aspect == preset ? Theme.accent : nil)
                 }
             }
             Button("Reset Crop") { edit.crop = nil }
@@ -1245,7 +1245,7 @@ struct ImageEditorView: View {
                             .fill(swatch.swiftUI)
                             .frame(width: 22, height: 22)
                             .overlay {
-                                Circle().strokeBorder(swatch == color ? Color.accentColor : Color.secondary.opacity(0.5),
+                                Circle().strokeBorder(swatch == color ? Theme.accent : Color.secondary.opacity(0.5),
                                                       lineWidth: swatch == color ? 3 : 1)
                             }
                     }

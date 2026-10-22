@@ -253,7 +253,7 @@ struct ShelfView: View {
         }
         .overlay {
             if dropTargeted {
-                RoundedRectangle(cornerRadius: 8).stroke(Color.accentColor, lineWidth: 3).padding(3)
+                RoundedRectangle(cornerRadius: 8).stroke(Theme.accent, lineWidth: 3).padding(3)
             }
         }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in

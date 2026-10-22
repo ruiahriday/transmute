@@ -1,5 +1,6 @@
 #!/bin/bash
-# Builds Transmute.app into ./build.
+# Builds Spinform.app into ./build. (The Swift target is still called Transmute, the
+# app's old name; the binary is renamed Spinform inside the bundle.)
 #   ./build-app.sh             build for this Mac
 #   ./build-app.sh --install   also copy it to /Applications and open it
 # Environment:
@@ -18,10 +19,10 @@ echo "==> Compiling (release)…"
 swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"}
 BIN_DIR="$(swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} --show-bin-path)"
 
-APP="build/Transmute.app"
+APP="build/Spinform.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN_DIR/Transmute" "$APP/Contents/MacOS/Transmute"
+cp "$BIN_DIR/Transmute" "$APP/Contents/MacOS/Spinform"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 # CI passes its run number so each download has its own build number (shown in Settings
 # and in feedback).
@@ -53,10 +54,11 @@ codesign --force --sign - "$APP"
 echo "==> Built $APP"
 
 if [[ "${1:-}" == "--install" ]]; then
-  rm -rf /Applications/Transmute.app
+  # Replaces a copy installed under the app's old name too (same bundle identifier).
+  rm -rf /Applications/Transmute.app /Applications/Spinform.app
   cp -R "$APP" /Applications/
-  echo "==> Installed to /Applications/Transmute.app"
-  open /Applications/Transmute.app
+  echo "==> Installed to /Applications/Spinform.app"
+  open /Applications/Spinform.app
 else
   echo "Run it with:  open $APP"
 fi

@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Saves pictures of Transmute's windows, for the build server and the website:
-///   Transmute.app/Contents/MacOS/Transmute --snapshots <fixtures folder> <output folder>
+/// Saves pictures of Spinform's windows, for the build server and the website:
+///   Spinform.app/Contents/MacOS/Spinform --snapshots <fixtures folder> <output folder>
 @MainActor
 enum Snapshots {
     static func start(fixtures: URL, output: URL) -> Never {
@@ -44,6 +44,10 @@ enum Snapshots {
                 ContentView().environmentObject(queue)
             }
 
+            await shoot("settings-\(suffix)", output, size: CGSize(width: 480, height: 628)) {
+                SettingsView()
+            }
+
             await shoot("drag-wheel-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), clear: true) {
                 WheelView(kind: .tools, items: DragWheelController.items(for: .tools, urls: [fixtures.appendingPathComponent("photo.jpg")])) { _ in }
             }
@@ -72,7 +76,7 @@ enum Snapshots {
                               styleMask: clear ? [.borderless] : [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                               backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
-        window.title = "Transmute"
+        window.title = "Spinform"
         if clear {
             window.isOpaque = false
             window.backgroundColor = .clear

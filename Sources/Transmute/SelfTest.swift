@@ -4,7 +4,7 @@ import ImageIO
 import PDFKit
 
 /// Headless check that runs every conversion on a folder of sample files:
-///   Transmute.app/Contents/MacOS/Transmute --selftest <folder>
+///   Spinform.app/Contents/MacOS/Spinform --selftest <folder>
 /// Prints PASS/FAIL per conversion and exits non-zero if anything failed.
 /// The build server runs this; it's also handy after changing a converter.
 @MainActor
@@ -51,6 +51,7 @@ enum SelfTest {
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
 
         wheelLayoutChecks()
+        brandChecks()
 
         // Pass 1: every input through every operation it supports.
         for input in inputs {
@@ -824,6 +825,21 @@ enum SelfTest {
         print("\n\(passed) passed, \(failed.count) failed, \(skipped) skipped")
         for name in failed { print("  FAILED: \(name)") }
         return failed.count
+    }
+
+    /// The app is called Spinform but keeps its old bundle identifier, so testers keep their settings.
+    private static func brandChecks() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let display = info["CFBundleDisplayName"] as? String ?? ""
+        let name = info["CFBundleName"] as? String ?? ""
+        record("Bundle: display name is Spinform", [], display == "Spinform" && name == "Spinform"
+               ? nil : "CFBundleDisplayName \(display), CFBundleName \(name)")
+        let identifier = Bundle.main.bundleIdentifier ?? ""
+        record("Bundle: identifier unchanged", [], identifier == "local.personal.transmute" ? nil : "got \(identifier)")
+        let blade = MarkGeometry.blade(0, side: 100).boundingRect
+        record("Brand mark: swoosh fits its box", [],
+               blade.width > 10 && blade.minX >= 0 && blade.maxX <= 100 && blade.minY >= 0 && blade.maxY <= 100
+               ? nil : "swoosh bounds \(blade)")
     }
 
     private static func wheelLayoutChecks() {

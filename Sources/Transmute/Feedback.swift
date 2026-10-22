@@ -12,12 +12,12 @@ enum Feedback {
         return "\(short) (build \(build))"
     }
 
-    /// Transmute's version, macOS version, Mac model and chip, one per line.
+    /// Spinform's version, macOS version, Mac model and chip, one per line.
     static var details: String {
         let os = ProcessInfo.processInfo.operatingSystemVersion
         let chip = sysctlString("machdep.cpu.brand_string") ?? (isAppleSilicon ? "Apple Silicon" : "Intel")
         return """
-        Transmute \(version)
+        Spinform \(version)
         macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)
         Mac \(sysctlString("hw.model") ?? "unknown"), \(chip)
         ffmpeg \(Tools.ffmpeg == nil ? "missing" : "found")

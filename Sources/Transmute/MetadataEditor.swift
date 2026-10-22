@@ -64,7 +64,7 @@ enum MetadataTool {
             guard !changes.isEmpty else { throw ConversionError("PDFs have no location to remove.") }
             return try writePDF(changes, to: input, options: options)
         default:
-            throw ConversionError("Transmute can't edit the metadata of \(kind.title.lowercased()).")
+            throw ConversionError("Spinform can't edit the metadata of \(kind.title.lowercased()).")
         }
     }
 
@@ -329,7 +329,7 @@ enum MetadataTool {
                                    options: ConversionOptions) throws -> URL {
         var changes = requested
         for key in changes.keys.sorted() where !imageKeys.contains(key) {
-            throw ConversionError("“\(key)” isn't something Transmute can edit in images.")
+            throw ConversionError("“\(key)” isn't something Spinform can edit in images.")
         }
         if let typed = changes["dateTaken"], !typed.isEmpty {
             guard let normalised = exifDate(from: typed) else {
@@ -758,7 +758,7 @@ enum MetadataTool {
         for key in changes.keys.sorted() where !allowed.contains(key) {
             throw ConversionError(mediaKeys.contains(key)
                 ? "\(ext.uppercased()) files can't store \(label(forKey: key).lowercased()) tags."
-                : "“\(key)” isn't something Transmute can edit in \(ext.uppercased()) files.")
+                : "“\(key)” isn't something Spinform can edit in \(ext.uppercased()) files.")
         }
         let source = try await probe(input, ffmpeg: ffmpeg)
         let sourceTags = source.allTags
@@ -1010,7 +1010,7 @@ enum MetadataTool {
 
     private static func writePDF(_ changes: [String: String], to input: URL, options: ConversionOptions) throws -> URL {
         for key in changes.keys.sorted() where pdfAttribute(forKey: key) == nil {
-            throw ConversionError("“\(key)” isn't something Transmute can edit in PDFs.")
+            throw ConversionError("“\(key)” isn't something Spinform can edit in PDFs.")
         }
         let document = try PDFTools.open(input)
         if document.isEncrypted {

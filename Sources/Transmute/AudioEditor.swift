@@ -476,7 +476,7 @@ struct AudioEditorView: View {
                 let w = size.width, h = size.height
                 guard w > 0, h > 0 else { return }
                 let keptRect = CGRect(x: keptFrom * w, y: 0, width: max(1, (keptTo - keptFrom) * w), height: h)
-                context.fill(Path(keptRect), with: .color(Color.accentColor.opacity(0.14)))
+                context.fill(Path(keptRect), with: .color(Theme.accent.opacity(0.14)))
                 if !levels.isEmpty {
                     let step = w * barsSpan / CGFloat(levels.count)
                     let barWidth = max(1, step * 0.7)
@@ -494,7 +494,7 @@ struct AudioEditorView: View {
                         }
                     }
                     context.fill(outside, with: .color(Color.secondary.opacity(0.45)))
-                    context.fill(inside, with: .color(Color.accentColor))
+                    context.fill(inside, with: .color(Theme.accent))
                 }
                 for mark in marks {
                     let rect = CGRect(x: mark.lowerBound * w, y: 0,
@@ -502,7 +502,7 @@ struct AudioEditorView: View {
                     context.fill(Path(rect), with: .color(Color.red.opacity(0.35)))
                 }
                 for edge in [keptFrom, keptTo] {
-                    context.fill(Path(CGRect(x: edge * w - 1, y: 0, width: 2, height: h)), with: .color(Color.accentColor))
+                    context.fill(Path(CGRect(x: edge * w - 1, y: 0, width: 2, height: h)), with: .color(Theme.accent))
                 }
                 context.fill(Path(CGRect(x: head * w - 1, y: 0, width: 2, height: h)), with: .color(Color.primary))
             }

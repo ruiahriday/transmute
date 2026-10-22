@@ -588,7 +588,7 @@ struct VideoEditorView: View {
                 Capsule()
                     .fill(Color.secondary.opacity(0.2))
                 Capsule()
-                    .fill(Color.accentColor.opacity(0.7))
+                    .fill(Theme.accent.opacity(0.7))
                     .frame(width: max(2, endX - startX))
                     .offset(x: startX)
                 if splitEnabled {

@@ -144,7 +144,7 @@ final class DragWheelController {
 }
 
 /// An editor in a window of its own, for the drag wheel's Edit bubble: no need to open
-/// Transmute and add the file first. The result is saved as a copy, as from the main window.
+/// Spinform and add the file first. The result is saved as a copy, as from the main window.
 @MainActor
 enum EditorWindow {
     private static var windows: [NSWindow] = []
@@ -430,10 +430,10 @@ struct WheelView: View {
         let diameter: CGFloat = (radius + 33 + 10) * 2
         return Circle()
             .fill(.ultraThinMaterial)
-            .overlay(Circle().fill(RadialGradient(colors: [Theme.teal.opacity(0.18), Theme.blue.opacity(0.05), .clear],
+            .overlay(Circle().fill(RadialGradient(colors: [Theme.violet.opacity(0.18), Theme.pink.opacity(0.05), .clear],
                                                   center: .center, startRadius: 10, endRadius: diameter / 2)))
             .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 2).opacity(0.7))
-            .shadow(color: Theme.blue.opacity(0.35), radius: 24)
+            .shadow(color: Theme.violet.opacity(0.35), radius: 24)
             .frame(width: diameter, height: diameter)
             .scaleEffect(appeared ? 1 : 0.6)
             .opacity(appeared ? 1 : 0)
@@ -459,7 +459,7 @@ struct WheelView: View {
             Circle().fill(isTargeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Color(nsColor: .windowBackgroundColor)))
         )
         .overlay(Circle().strokeBorder(Color.primary.opacity(isTargeted ? 0 : 0.08)))
-        .shadow(color: isTargeted ? Theme.blue.opacity(0.6) : .black.opacity(0.2), radius: isTargeted ? 12 : 3)
+        .shadow(color: isTargeted ? Theme.violet.opacity(0.6) : .black.opacity(0.2), radius: isTargeted ? 12 : 3)
         .scaleEffect(isTargeted ? 1.18 : 1)
         .animation(.spring(response: 0.25), value: isTargeted)
         .onDrop(of: [.fileURL], isTargeted: Binding(

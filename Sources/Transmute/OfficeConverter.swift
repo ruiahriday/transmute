@@ -7,7 +7,7 @@ import UniformTypeIdentifiers
 /// E-books, iWork and Office files. EPUB, XLSX, ODS, CSV and TSV are read and written
 /// natively; Pages, Keynote and Numbers do the rest through AppleScript when installed.
 enum OfficeConverter {
-    /// Spreadsheet formats Transmute reads without Numbers.
+    /// Spreadsheet formats Spinform reads without Numbers.
     private static let nativeSpreadsheets: Set<String> = ["xlsx", "csv", "tsv", "ods"]
 
     static func convert(_ input: URL, kind: FileKind, to format: OutputFormat, options: ConversionOptions) async throws -> [URL] {
@@ -123,7 +123,7 @@ enum OfficeConverter {
         } catch {
             let text = error.localizedDescription
             if text.contains("-1743") || text.localizedCaseInsensitiveContains("not authori") {
-                throw ConversionError("Transmute isn't allowed to control \(app.rawValue). Allow it in System Settings → Privacy & Security → Automation, then try again.")
+                throw ConversionError("Spinform isn't allowed to control \(app.rawValue). Allow it in System Settings → Privacy & Security → Automation, then try again.")
             }
             if text.contains("-1712") { throw ConversionError("\(app.rawValue) took too long to respond.") }
             var detail = text
@@ -1577,7 +1577,7 @@ enum OfficeConverter {
         let titleHeight = ceil(CTFontGetAscent(titleFont) + CTFontGetDescent(titleFont)) + 10
 
         var mediaBox = CGRect(origin: .zero, size: page)
-        let info = [kCGPDFContextTitle as String: title, kCGPDFContextCreator as String: "Transmute"] as CFDictionary
+        let info = [kCGPDFContextTitle as String: title, kCGPDFContextCreator as String: "Spinform"] as CFDictionary
         guard let ctx = CGContext(out as CFURL, mediaBox: &mediaBox, info) else {
             throw ConversionError("Couldn't create the PDF.")
         }

@@ -141,7 +141,7 @@ enum PDFTools {
 
         guard let best else {
             try FileManager.default.copyItem(at: input, to: out)
-            return JobResult(outputs: [out], message: "This PDF is already as small as Transmute can make it (it's mostly text and drawings, not pictures).")
+            return JobResult(outputs: [out], message: "This PDF is already as small as Spinform can make it (it's mostly text and drawings, not pictures).")
         }
         try FileManager.default.moveItem(at: best.url, to: out)
         var message = "\(original.formattedSize) → \(best.size.formattedSize)"
@@ -167,7 +167,7 @@ enum PDFTools {
         let plist: [String: Any] = [
             "Domains": ["Applications": true, "Printing": true],
             "FilterType": 1,
-            "Name": "Transmute compression",
+            "Name": "Spinform compression",
             "FilterData": [
                 "ColorSettings": [
                     "ImageSettings": [
