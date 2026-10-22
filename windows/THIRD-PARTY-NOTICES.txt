@@ -38,6 +38,8 @@ Video and audio
 FFmpeg (ffmpeg\ffmpeg.exe), a build from https://github.com/BtbN/FFmpeg-Builds
   Licensed under the GNU General Public License version 3; see ffmpeg\LICENSE.txt. Source code:
   https://ffmpeg.org and https://github.com/BtbN/FFmpeg-Builds. Spinform runs it as a separate program.
+NAudio.Wasapi 2.2.1, copyright Mark Heath and contributors, https://github.com/naudio/NAudio
+  Licensed under the MIT License. Used to record the microphone and the PC's own sound.
 
 -------------------------------------------------------------------------------
 

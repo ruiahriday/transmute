@@ -326,7 +326,7 @@ jobs:
           cat > notes.md <<'EOF'
           **Spinform for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs. Spinform is the new name for Transmute.
 
-          New: **remove or change the background of any picture** (JPEG, PNG, WebP, HEIC, TIFF, GIF, BMP, SVG), offline on your PC: one click in Tools, the No BG bubble on the drag wheel, or the Background panel in the photo editor (colour, gradient, blur or your own picture). And a sharper, cleaner look throughout.
+          New: **screenshots and screen recordings**, all on your PC. Capture an area, a window, the full screen or a whole scrolling page; mark it up (arrows, text, steps, highlighter, blur, crop); frame it on a background; pin it on top; copy the text in it; and find it again in History. Record the screen as MP4 or GIF with your microphone, the PC's sound, clicks, keystrokes and camera, then polish it in Video Studio with zooms on clicks, a smoother pointer and landscape, square or vertical shapes. Open the Capture tab, or press Ctrl+Shift+4 (all shortcuts are in Settings). Also: remove or change the background of any picture, offline.
 
           **Download [Spinform-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Spinform-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
 

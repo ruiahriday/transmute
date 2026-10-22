@@ -35,6 +35,25 @@ right-click entries, and brings your settings and wheel layouts along.
 - **Floating files:** shake files while dragging them, or drag them to the middle of the top edge
   of the screen, to park them on a small shelf that stays on top.
 - Spinform waits in the notification area by the clock. Right-click its icon for the menu.
+- **Capture** takes screenshots and recordings, all on your PC (nothing is uploaded):
+  - Area (**Ctrl+Shift+4**), window (**Ctrl+Shift+6**), full screen (**Ctrl+Shift+3**), the
+    previous area (**Ctrl+Shift+7**), everything in one place (**Ctrl+Shift+2**) and a scrolling
+    capture of a long page (**Ctrl+Shift+8**). Shortcuts can be changed in **Settings › Capture**,
+    and Print Screen can be used too. Self-timer, freeze the screen, magnifier and crosshair.
+  - A thumbnail appears after each capture: copy, save, mark up, frame, pin, copy text, or drag it
+    straight into another app.
+  - **Mark up**: arrows, lines, boxes, ovals, highlighter, text styles, numbered steps,
+    spotlight, pencil, pixelate or blur, crop, rotate and an eyedropper. Save as a picture or as a
+    `.spinform` project to keep editing later.
+  - **Frame** puts a picture on a colour, gradient, wallpaper or picture background with padding,
+    rounded corners and a shadow. **Pin** keeps a picture floating on top of every window.
+  - **Copy Text** (**Ctrl+Shift+9**) reads the words in an area, picture or video frame.
+  - **Record** an area (**Ctrl+Shift+5**), window or screen as MP4 or GIF, with the microphone, the
+    PC's sound, clicks, keystrokes and the camera. **Video Studio** adds zooms on clicks, a
+    smoother pointer, a background and landscape, square or vertical shapes.
+  - **History** (**Ctrl+Shift+0**) keeps recent captures for as long as you choose.
+  - Automation: `Spinform.exe --capture-area`, `--record`, `--ocr`, `--history` and more, or links
+    such as `spinform://capture/area`.
 
 Word, Excel and PowerPoint files convert exactly as Office shows them when Microsoft Office or
 LibreOffice is installed; otherwise Spinform's own converters keep the text, headings, lists,
