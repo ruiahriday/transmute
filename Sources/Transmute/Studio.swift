@@ -249,20 +249,27 @@ enum StudioEngine {
         return ctx.makeImage().map { CIImage(cgImage: $0) }
     }
 
-    /// The system arrow pointer as a picture, for drawing the smoothed pointer.
-    static let pointerImage: CGImage? = {
-        let image = NSCursor.arrow.image
-        var rect = CGRect(origin: .zero, size: image.size)
-        return image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
-    }()
-    static let pointerHotSpot: CGPoint = NSCursor.arrow.hotSpot
-    static let pointerPointSize: CGSize = NSCursor.arrow.image.size
+    /// The system arrow pointer as a picture, for drawing the smoothed pointer. AppKit hands it
+    /// over on the main thread (`preparePointer`); renders read the copy.
+    private static let pointerLock = NSLock()
+    private static var pointerStore: (image: CGImage, hotSpot: CGPoint, size: CGSize)?
+
+    static var pointer: (image: CGImage, hotSpot: CGPoint, size: CGSize)? {
+        pointerLock.lock()
+        defer { pointerLock.unlock() }
+        return pointerStore
+    }
 
     /// Loads the pointer picture on the main thread before a render needs it.
     @MainActor static func preparePointer() {
-        _ = pointerImage
-        _ = pointerHotSpot
-        _ = pointerPointSize
+        guard pointer == nil else { return }
+        let cursor = NSCursor.arrow
+        let image = cursor.image
+        var rect = CGRect(origin: .zero, size: image.size)
+        guard let cg = image.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return }
+        pointerLock.lock()
+        pointerStore = (cg, cursor.hotSpot, image.size)
+        pointerLock.unlock()
     }
 
     /// Everything needed to draw frames of one export.
@@ -304,17 +311,17 @@ enum StudioEngine {
                 .transformed(by: CGAffineTransform(translationX: target.minX, y: target.minY))
                 .cropped(to: target)
             // The smoothed pointer, scaled with the zoom.
-            if settings.cursorSize > 0.01, let track, let pointer = StudioEngine.pointerImage,
+            if settings.cursorSize > 0.01, let track, let arrow = StudioEngine.pointer,
                let at = StudioEngine.cursor(at: t, track: track, smooth: settings.smoothCursor) {
                 let px = (CGFloat(at.x) * extent.width + extent.minX - viewX) * sx + target.minX
                 let py = ((1 - CGFloat(at.y)) * extent.height + extent.minY - viewY) * sy + target.minY
                 // The pointer's size in output pixels: its point size on the recorded area, scaled like the picture.
                 let pointsToPixels = content.width / CGFloat(max(track.areaWidth, 1)) * CGFloat(state.scale)
-                let size = CGSize(width: StudioEngine.pointerPointSize.width * pointsToPixels * CGFloat(settings.cursorSize),
-                                  height: StudioEngine.pointerPointSize.height * pointsToPixels * CGFloat(settings.cursorSize))
-                let hot = CGPoint(x: StudioEngine.pointerHotSpot.x / max(StudioEngine.pointerPointSize.width, 1) * size.width,
-                                  y: StudioEngine.pointerHotSpot.y / max(StudioEngine.pointerPointSize.height, 1) * size.height)
-                let pointerImage = CIImage(cgImage: pointer)
+                let grow = pointsToPixels * CGFloat(settings.cursorSize)
+                let size = CGSize(width: arrow.size.width * grow, height: arrow.size.height * grow)
+                let hot = CGPoint(x: arrow.hotSpot.x / max(arrow.size.width, 1) * size.width,
+                                  y: arrow.hotSpot.y / max(arrow.size.height, 1) * size.height)
+                let pointerImage = CIImage(cgImage: arrow.image)
                 let scaleX = size.width / max(pointerImage.extent.width, 1)
                 let scaleY = size.height / max(pointerImage.extent.height, 1)
                 let placed = pointerImage
@@ -355,7 +362,7 @@ enum StudioEngine {
     /// One finished frame at `seconds`, for the preview.
     static func previewFrame(url: URL, seconds: Double, settings: StudioSettings, track: CursorTrack?,
                              base: Int = 540) async throws -> CGImage {
-        let info = try await info(of: url)
+        let info = try await StudioEngine.info(of: url)
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url))
         generator.appliesPreferredTrackTransform = true
         generator.requestedTimeToleranceBefore = CMTime(value: 1, timescale: 30)
@@ -378,7 +385,7 @@ enum StudioEngine {
     /// hardware where the Mac has an encoder (VideoToolbox), with the sound carried over untouched.
     static func export(url: URL, settings: StudioSettings, track: CursorTrack?, to out: URL, base: Int = 1080,
                        progress: @escaping @Sendable (Double) -> Void = { _ in }) async throws -> URL {
-        let info = try await info(of: url)
+        let info = try await StudioEngine.info(of: url)
         let asset = AVURLAsset(url: url)
         guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else {
             throw ConversionError("That file has no video.")

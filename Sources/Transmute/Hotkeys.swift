@@ -175,8 +175,8 @@ struct Hotkey: Equatable, Hashable {
         }
     }
 
-    var eventModifiers: EventModifiers {
-        var result: EventModifiers = []
+    var eventModifiers: SwiftUI.EventModifiers {
+        var result: SwiftUI.EventModifiers = []
         if modifiers.contains(.command) { result.insert(.command) }
         if modifiers.contains(.option) { result.insert(.option) }
         if modifiers.contains(.control) { result.insert(.control) }
