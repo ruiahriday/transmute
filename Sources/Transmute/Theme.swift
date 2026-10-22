@@ -261,13 +261,13 @@ struct DropHero: View {
     ]
 
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 12) {
             ZStack {
                 orbit
                 rings
                 core
             }
-            .frame(width: 250, height: 250)
+            .frame(width: 210, height: 190)
             VStack(spacing: 6) {
                 Text(targeted ? "Let go to add" : "Drop anything here")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
@@ -291,7 +291,7 @@ struct DropHero: View {
                     .background(Capsule().fill(Color.primary.opacity(0.05)))
             }
         }
-        .padding(28)
+        .padding(20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -311,10 +311,10 @@ struct DropHero: View {
     private var core: some View {
         Circle()
             .fill(Theme.brand)
-            .frame(width: 96, height: 96)
+            .frame(width: 80, height: 80)
             .overlay(
                 Image(systemName: targeted ? "arrow.down.circle.fill" : "arrow.triangle.2.circlepath")
-                    .font(.system(size: 40, weight: .semibold))
+                    .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(.white)
                     .rotationEffect(.degrees(targeted ? 0 : (pulse ? 12 : -12)))
             )
@@ -327,7 +327,7 @@ struct DropHero: View {
             ForEach(0..<2) { i in
                 Circle()
                     .stroke(Theme.teal.opacity(pulse ? 0 : 0.35), lineWidth: 2)
-                    .frame(width: 96, height: 96)
+                    .frame(width: 80, height: 80)
                     .scaleEffect(pulse ? 1.9 + CGFloat(i) * 0.3 : 1)
             }
         }
@@ -347,8 +347,8 @@ struct DropHero: View {
 
     private func orbitOffset(index: Int, time: Double) -> CGSize {
         let angle = Double(index) / Double(chips.count) * 2 * .pi + time / 9
-        let radius = targeted ? 128.0 : 112.0
-        return CGSize(width: cos(angle) * radius, height: sin(angle) * radius * 0.92)
+        let radius = targeted ? 104.0 : 94.0
+        return CGSize(width: cos(angle) * radius, height: sin(angle) * radius * 0.8)
     }
 
     private func chipView(_ label: String, _ kind: FileKind) -> some View {
