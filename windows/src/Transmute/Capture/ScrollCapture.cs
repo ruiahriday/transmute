@@ -28,6 +28,9 @@ sealed class ScrollCapture
     bool grabbing;
     int still;
     int lost;
+    int stuck;
+    BgraImage? previous;
+    bool savedMiss;
 
     /// For the self-test and smoke test: scroll without moving the pointer.
     public Action? Scroller { get; set; }
@@ -35,7 +38,7 @@ sealed class ScrollCapture
     public static string? DebugFolder { get; set; }
     readonly Dictionary<StitchStep, int> steps = [];
     string? lastError;
-    public string Diagnostics => $"{stitcher.Frames} frames joined, {stitcher.Length} px long; " + string.Join(", ", steps.Select(kv => $"{kv.Key} {kv.Value}")) + (lastError is null ? "" : $"; last error: {lastError}");
+    public string Diagnostics => $"{stitcher.Frames} frames joined, {stitcher.Length} px long, last fit {stitcher.LastScore:0.00}; " + string.Join(", ", steps.Select(kv => $"{kv.Key} {kv.Value}")) + (lastError is null ? "" : $"; last error: {lastError}");
 
     ScrollCapture(PixelRect area)
     {
@@ -149,7 +152,8 @@ sealed class ScrollCapture
         if (next == direction) return;
         direction = next;
         stitcher = new ScrollStitcher(direction);
-        still = 0;
+        still = stuck = 0;
+        previous = null;
         Update();
     }
 
@@ -165,7 +169,26 @@ sealed class ScrollCapture
             {
                 var frame = ScreenGrab.Area(area);
                 if (DebugFolder is { } debug && index < 8) frame.Save(Path.Combine(debug, $"scroll-frame-{index:00}.png"));
-                return s.Add(frame);
+                var before = s.Last;
+                var result = s.Add(frame);
+                if (result == StitchStep.Lost)
+                {
+                    if (DebugFolder is { } folder && !savedMiss && before is not null)
+                    {
+                        savedMiss = true;
+                        before.Save(Path.Combine(folder, "scroll-miss-before.png"));
+                        frame.Save(Path.Combine(folder, "scroll-miss-after.png"));
+                    }
+                    // The page has stopped moving but the last part won't fit strictly (it often
+                    // moved only a little at the very end): accept a looser fit, then stop.
+                    var frozen = previous is not null && ScrollStitcher.FindOffset(previous, frame, out _, out _) == 0;
+                    stuck = frozen ? stuck + 1 : 0;
+                    if (stuck == 3) result = s.Add(frame, relaxed: true);
+                    if (result == StitchStep.Lost && stuck >= 3) result = StitchStep.Unchanged;
+                }
+                else stuck = 0;
+                previous = frame;
+                return result;
             });
             steps[step] = steps.GetValueOrDefault(step) + 1;
             if (s != stitcher) return;

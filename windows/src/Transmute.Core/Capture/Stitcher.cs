@@ -109,7 +109,14 @@ public sealed class ScrollStitcher
     /// How long the result is so far, in pixels (height, or width when sideways).
     public int Length => rows.Count + Math.Max(0, footer);
 
-    public StitchStep Add(BgraImage frame)
+    /// The frame the next one is matched against (the last one joined on).
+    public BgraImage? Last => last;
+    /// How well the best offset fitted on the last Add, from 0 to 1 (for diagnostics).
+    public double LastScore { get; private set; }
+
+    /// Joins a frame on. Relaxed accepts a weaker fit; use it only when the page has stopped
+    /// moving and a strict match keeps failing.
+    public StitchStep Add(BgraImage frame, bool relaxed = false)
     {
         if (direction == ScrollDirection.Horizontal) frame = frame.Transposed();
         if (last is null)
@@ -122,7 +129,8 @@ public sealed class ScrollStitcher
         }
         if (frame.Width != width || frame.Height != last.Height) throw new ArgumentException("Every frame must be the same size.");
         if (rows.Count >= maxLength) return StitchStep.Full;
-        var offset = FindOffset(last, frame, out _, out var bottom);
+        var offset = FindOffset(last, frame, out _, out var bottom, out var score, relaxed ? 0.6 : 0.8);
+        LastScore = score;
         if (offset is null) return StitchStep.Lost;
         if (offset == 0) return StitchStep.Unchanged;
         if (footer < 0)
@@ -194,16 +202,20 @@ public sealed class ScrollStitcher
     /// How many pixels the content moved up between two frames: 0 when it didn't move, null when
     /// no offset fits (scrolled too far between frames, or the content changed). Also the number
     /// of rows at the top and bottom that didn't move at all.
-    public static int? FindOffset(BgraImage previous, BgraImage next, out int staticTop, out int staticBottom)
+    public static int? FindOffset(BgraImage previous, BgraImage next, out int staticTop, out int staticBottom) =>
+        FindOffset(previous, next, out staticTop, out staticBottom, out _);
+
+    public static int? FindOffset(BgraImage previous, BgraImage next, out int staticTop, out int staticBottom, out double bestScore, double threshold = 0.8)
     {
         var h = previous.Height;
         var (hp, fp) = Hashes(previous);
         var (hn, fn) = Hashes(next);
         staticTop = staticBottom = 0;
+        bestScore = 0;
         var equal = 0;
         for (var y = 0; y < h; y++) if (hp[y] == hn[y]) equal++;
         // All (or all but a few flickering) rows in place: nothing scrolled.
-        if (equal >= h - Math.Max(1, h / 30)) return 0;
+        if (equal >= h - Math.Max(1, h / 30)) { bestScore = 1; return 0; }
         while (staticTop < h && hp[staticTop] == hn[staticTop]) staticTop++;
         while (staticBottom < h - staticTop && hp[h - 1 - staticBottom] == hn[h - 1 - staticBottom]) staticBottom++;
         // Never let "still" edges take more than 40% each: in a long blank stretch everything matches.
@@ -212,7 +224,6 @@ public sealed class ScrollStitcher
         var moving = h - staticTop - staticBottom;
         var minOverlap = Math.Max(6, moving / 12);
         int? best = null;
-        var bestScore = 0.0;
         for (var d = 1; d <= moving - minOverlap; d++)
         {
             int matched = 0, considered = 0;
@@ -230,6 +241,6 @@ public sealed class ScrollStitcher
         }
         // Apps re-draw a few rows differently as they scroll (text at the edge, a blinking caret),
         // so a strong majority is enough; a wrong offset matches almost nothing.
-        return bestScore >= 0.8 ? best : null;
+        return bestScore >= threshold ? best : null;
     }
 }
