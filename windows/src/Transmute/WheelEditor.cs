@@ -60,10 +60,10 @@ sealed class WheelEditorWindow : Window
 
         // Wheel tabs and the kind of file.
         var tabs = new StackPanel { Orientation = Orientation.Horizontal };
-        var tabBack = new Border { Background = new SolidColorBrush(Color.FromRgb(0xE8, 0xE8, 0xE8)), CornerRadius = new CornerRadius(7), Child = tabs, HorizontalAlignment = HorizontalAlignment.Left };
+        var tabBack = new Border { Background = new SolidColorBrush(Color.FromArgb(0x12, 0x1E, 0x1B, 0x3A)), CornerRadius = new CornerRadius(17), Padding = new Thickness(2), Child = tabs, HorizontalAlignment = HorizontalAlignment.Left };
         foreach (var w in Enum.GetValues<WheelKind>())
         {
-            var tab = new RadioButton { Style = (Style)Application.Current.FindResource("Segment"), GroupName = "wheel", IsChecked = w == wheel };
+            var tab = new RadioButton { Style = (Style)Application.Current.FindResource("SegmentPill"), GroupName = "wheel", IsChecked = w == wheel };
             tab.Checked += (_, _) => { wheel = w; Load(); };
             wheelTabs[w] = tab;
             tabs.Children.Add(tab);
@@ -295,7 +295,7 @@ sealed class WheelEditorWindow : Window
         {
             Width = ringSize,
             Height = ringSize,
-            Fill = new SolidColorBrush(Color.FromRgb(0xF4, 0xF4, 0xF4)),
+            Fill = new SolidColorBrush(Color.FromRgb(0xF5, 0xF3, 0xFF)),
             Stroke = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
         };
         Canvas.SetLeft(ring, (PreviewSize - ringSize) / 2);

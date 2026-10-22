@@ -207,6 +207,28 @@
             </Setter>
         </Style>
 
+        <!-- The same tabs with their own highlight, for windows without the sliding one (Customize Wheels). -->
+        <Style TargetType="RadioButton" x:Key="SegmentPill" BasedOn="{StaticResource Segment}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Box" Background="Transparent" CornerRadius="14" Padding="18,6" Margin="2">
+                            <ContentPresenter HorizontalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Box" Property="Background" Value="{StaticResource Brand}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Opacity" Value="0.85" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ComboBox">
             <Setter Property="MinHeight" Value="28" />
             <Setter Property="VerticalContentAlignment" Value="Center" />

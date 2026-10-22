@@ -37,7 +37,7 @@ public partial class SettingsWindow : Window
             foreach (var option in Enum.GetValues<WheelKey>()) box.Items.Add(new ComboBoxItem { Content = option.Label(), Tag = option });
             box.SelectedIndex = (int)key;
         }
-        VersionLabel.Text = $"Version {Feedback.Version}";
+        VersionLabel.Text = $"Spinform {Feedback.Version} (formerly Transmute)";
         FfmpegLabel.Text = Tools.Ffmpeg is { } path
             ? $"✓ Found at {path}"
             : "⚠ Not found. It comes with Spinform, so reinstalling should bring it back. Video, audio and some image formats need it.";
