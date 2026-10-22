@@ -19,9 +19,11 @@ enum MediaConverter {
                         try await runFFmpeg(ffmpeg, input: input, args: streams.maps(for: args) + args + meta,
                                             output: out, progress: progress)
                     } catch where !(error is CancellationError) && !args.contains("-an") {
-                        // A second go with plain stereo sound, which most failures on odd camera files come down to.
+                        // A second go without a track ffmpeg named as unreadable, and with plain stereo
+                        // sound, which most failures on odd camera files come down to.
                         try? FileManager.default.removeItem(at: out)
-                        try await runFFmpeg(ffmpeg, input: input, args: streams.maps(for: args) + args + meta + ["-ac", "2"],
+                        let retry = streams.excluding(errorText: error.localizedDescription) ?? streams
+                        try await runFFmpeg(ffmpeg, input: input, args: retry.maps(for: args) + args + meta + ["-ac", "2"],
                                             output: out, progress: progress)
                     }
                 } catch let ffmpegError where !(ffmpegError is CancellationError) {
@@ -244,8 +246,8 @@ struct MediaStreams: Equatable {
 
     var tracks: [Track] = []
 
-    /// Codecs ffmpeg lists but can't decode.
-    static let undecodable: Set<String> = ["none", "apac"]
+    /// Codecs ffmpeg lists but can't decode. ffmpeg 7.1 and later call Apple's spatial audio "apple_apac".
+    static let undecodable: Set<String> = ["none", "apac", "apple_apac"]
 
     static func read(_ url: URL, ffmpeg: String) async -> MediaStreams {
         guard let output = try? await Shell.run(ffmpeg, ["-hide_banner", "-nostdin", "-i", url.path]) else { return MediaStreams() }
@@ -342,6 +344,17 @@ struct MediaStreams: Equatable {
             }
         }
         return maps
+    }
+
+    /// The same tracks with the codec ffmpeg named in "no decoder found for: x" treated as unreadable,
+    /// or nil when the error isn't about a missing decoder.
+    func excluding(errorText: String) -> MediaStreams? {
+        guard let range = errorText.range(of: "no decoder found for: ") else { return nil }
+        let codec = String(errorText[range.upperBound...].prefix { !$0.isWhitespace }).lowercased()
+        guard !codec.isEmpty, tracks.contains(where: { $0.codec == codec }) else { return nil }
+        var copy = self
+        for i in copy.tracks.indices where copy.tracks[i].codec == codec { copy.tracks[i].codec = "none" }
+        return copy
     }
 
     /// A plainer message for the errors ffmpeg gives on files it can't read.
