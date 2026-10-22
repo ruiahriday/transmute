@@ -386,11 +386,18 @@ sealed class WheelWindow : Window
             Width = ringSize,
             Height = ringSize,
             // Nearly clear but not fully: fully transparent pixels don't receive the drag.
-            Fill = new SolidColorBrush(Color.FromArgb(0xE6, 0xF7, 0xF7, 0xF7)),
-            Stroke = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
-            StrokeThickness = 1,
-            Effect = new DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Opacity = 0.25 },
+            Fill = new RadialGradientBrush(Color.FromArgb(0xF0, 0xEE, 0xF8, 0xF6), Color.FromArgb(0xE8, 0xF4, 0xF6, 0xFA)),
+            Stroke = Theme.Brand,
+            StrokeThickness = 2,
+            Effect = new DropShadowEffect { BlurRadius = 26, ShadowDepth = 0, Opacity = 0.45, Color = Theme.Blue },
+            RenderTransformOrigin = new Point(0.5, 0.5),
+            RenderTransform = new ScaleTransform(0.7, 0.7),
+            Opacity = 0,
         };
+        var ringScale = (ScaleTransform)ring.RenderTransform;
+        Theme.To(ringScale, ScaleTransform.ScaleXProperty, 1, 0.3, Theme.Spring);
+        Theme.To(ringScale, ScaleTransform.ScaleYProperty, 1, 0.3, Theme.Spring);
+        Theme.To(ring, OpacityProperty, 1, 0.2);
         Canvas.SetLeft(ring, (Size - ringSize) / 2);
         Canvas.SetTop(ring, (Size - ringSize) / 2);
         canvas.Children.Add(ring);
@@ -416,6 +423,13 @@ sealed class WheelWindow : Window
             Canvas.SetLeft(bubble, Size / 2 + x - size / 2);
             Canvas.SetTop(bubble, Size / 2 + y - size / 2);
             canvas.Children.Add(bubble);
+            // Bubbles spring out from the middle one after another.
+            var pop = (ScaleTransform)bubble.RenderTransform;
+            var delay = i * 0.025;
+            bubble.Opacity = 0;
+            Theme.To(bubble, OpacityProperty, 1, 0.2, delay: delay);
+            Theme.To(pop, ScaleTransform.ScaleXProperty, 1, 0.38, Theme.Spring, delay, from: 0.3);
+            Theme.To(pop, ScaleTransform.ScaleYProperty, 1, 0.38, Theme.Spring, delay, from: 0.3);
         }
     }
 
@@ -432,7 +446,6 @@ sealed class WheelWindow : Window
 
     Border MakeBubble(WheelItem item, double diameter)
     {
-        var accent = (SolidColorBrush)Application.Current.FindResource("Accent");
         var glyph = new TextBlock { Text = item.Glyph, FontSize = 17, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol, Segoe UI") };
         var label = new TextBlock { Text = item.Label, FontSize = 10.5, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = diameter - 6 };
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
@@ -454,9 +467,11 @@ sealed class WheelWindow : Window
         };
         void Highlight(bool on)
         {
-            bubble.Background = on ? accent : Brushes.White;
+            bubble.Background = on ? Theme.Brand : Brushes.White;
             glyph.Foreground = label.Foreground = on ? Brushes.White : Brushes.Black;
-            ((ScaleTransform)bubble.RenderTransform).ScaleX = ((ScaleTransform)bubble.RenderTransform).ScaleY = on ? 1.15 : 1;
+            var scale = (ScaleTransform)bubble.RenderTransform;
+            Theme.To(scale, ScaleTransform.ScaleXProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
+            Theme.To(scale, ScaleTransform.ScaleYProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
         }
         bubble.DragEnter += (_, e) => { Highlight(true); e.Effects = DragDropEffects.Copy; e.Handled = true; };
         bubble.DragOver += (_, e) => { e.Effects = DragDropEffects.Copy; e.Handled = true; };

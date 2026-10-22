@@ -19,6 +19,8 @@ public sealed class Job : INotifyPropertyChanged
     public string Name => System.IO.Path.GetFileName(Path);
     public string Details => $"{Kind.Title()} · {OutputPaths.FormatSize(Size)}";
     public ImageSource? Icon => FileIcons.For(Path);
+    public Brush KindBrush => Theme.TintBrush(Kind);
+    public string KindBadge => Theme.Badge(Kind);
 
     JobStatus status;
     double fraction;

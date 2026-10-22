@@ -54,6 +54,12 @@ static class SmokeTest
             var tone = Copy("tone.wav");
             var report = Copy("report.docx");
             var pdfSource = Directory.GetFiles(fixtures, "*.pdf").FirstOrDefault();
+            await Step("main window empty", async () =>
+            {
+                App.Current.ShowMain();
+                await Wait(2);
+                return Application.Current.Windows.OfType<MainWindow>().Single();
+            });
             var jobs = JobQueue.Shared.Add([photo, clip, tone, report]);
 
             await Step("main window", async () =>

@@ -4,6 +4,9 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
 using Microsoft.Win32;
 
 namespace Transmute.App;
@@ -28,10 +31,99 @@ public partial class MainWindow : Window
         };
         DragEnter += OnDragOver;
         DragOver += OnDragOver;
-        DragLeave += (_, _) => DropHighlight.Visibility = Visibility.Collapsed;
+        DragLeave += (_, _) => { DropHighlight.Visibility = Visibility.Collapsed; DropTitle.Text = "Drop anything here"; };
         Drop += OnDrop;
         Activated += (_, _) => RefreshTip();
+        Loaded += (_, _) => StartAnimations();
         Refresh();
+    }
+
+    // The look: drifting glows, the drop zone's orbit and pulse, the sliding tab highlight.
+
+    static readonly (string Label, FileKind Kind)[] OrbitChips =
+    [
+        ("JPG", FileKind.Image), ("MP4", FileKind.Video), ("PDF", FileKind.Pdf), ("MP3", FileKind.Audio),
+        ("DOCX", FileKind.Document), ("PNG", FileKind.Image), ("ZIP", FileKind.Archive), ("MOV", FileKind.Video),
+    ];
+    readonly List<FrameworkElement> chips = [];
+    double orbitAngle;
+
+    void StartAnimations()
+    {
+        void Drift(Ellipse glow, double dx, double dy, double seconds)
+        {
+            var t = (TranslateTransform)glow.RenderTransform;
+            Theme.Wave(t, TranslateTransform.XProperty, -dx, dx, seconds);
+            Theme.Wave(t, TranslateTransform.YProperty, -dy, dy, seconds * 1.3);
+        }
+        Drift(GlowA, 60, 40, 9);
+        Drift(GlowB, 50, 60, 11);
+        Drift(GlowC, 90, 30, 13);
+
+        foreach (var (label, kind) in OrbitChips)
+        {
+            var chip = new Border
+            {
+                Background = new SolidColorBrush(Theme.Tint(kind)),
+                CornerRadius = new CornerRadius(9),
+                Padding = new Thickness(8, 2, 8, 3),
+                Child = new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 10, FontWeight = FontWeights.Bold },
+                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 2, Direction = 270, Opacity = 0.3, Color = Theme.Tint(kind) },
+            };
+            Orbit.Children.Add(chip);
+            chips.Add(chip);
+        }
+        CompositionTarget.Rendering += OnFrame;
+        Closed += (_, _) => CompositionTarget.Rendering -= OnFrame;
+
+        foreach (var (ring, delay) in new[] { (RingA, 0.0), (RingB, 1.1) })
+        {
+            var scale = (ScaleTransform)ring.RenderTransform;
+            foreach (var axis in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+                scale.BeginAnimation(axis, new DoubleAnimation(1, 2.1, TimeSpan.FromSeconds(2.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+            ring.BeginAnimation(OpacityProperty, new DoubleAnimation(0.9, 0, TimeSpan.FromSeconds(2.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+        }
+        var core = (ScaleTransform)Core.RenderTransform;
+        Theme.Wave(core, ScaleTransform.ScaleXProperty, 0.97, 1.05, 1.8);
+        Theme.Wave(core, ScaleTransform.ScaleYProperty, 0.97, 1.05, 1.8);
+        Theme.Wave((RotateTransform)CoreGlyph.RenderTransform, RotateTransform.AngleProperty, -14, 14, 2.4);
+        Theme.Loop(DashedBorder, Shape.StrokeDashOffsetProperty, 0, -18, 1.6);
+        MoveSegmentHighlight(false);
+    }
+
+    /// Moves the format chips around the drop zone, a little each frame.
+    void OnFrame(object? sender, EventArgs e)
+    {
+        if (EmptyState.Visibility != Visibility.Visible || chips.Count == 0) return;
+        orbitAngle += 0.0035;
+        var wide = DropHighlight.Visibility == Visibility.Visible;
+        double cx = Orbit.Width / 2, cy = Orbit.Height / 2, r = wide ? 104 : 94;
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var a = orbitAngle + i * 2 * Math.PI / chips.Count;
+            var chip = chips[i];
+            if (chip.ActualWidth == 0) chip.UpdateLayout();
+            Canvas.SetLeft(chip, cx + Math.Cos(a) * r - chip.ActualWidth / 2);
+            Canvas.SetTop(chip, cy + Math.Sin(a) * r * 0.8 - chip.ActualHeight / 2);
+        }
+    }
+
+    /// Slides the gradient highlight under the chosen tab.
+    void MoveSegmentHighlight(bool animate)
+    {
+        var tab = ConvertTab.IsChecked == true ? ConvertTab : CompressTab.IsChecked == true ? CompressTab : ToolsTab;
+        if (tab.ActualWidth == 0) return;
+        var x = tab.TranslatePoint(new Point(0, 0), Segments).X;
+        var width = tab.ActualWidth - 4;
+        SegmentHighlight.Height = tab.ActualHeight - 4;
+        if (!animate)
+        {
+            SegmentHighlight.Width = width;
+            SegmentShift.X = x;
+            return;
+        }
+        Theme.To(SegmentShift, TranslateTransform.XProperty, x, 0.32, Theme.Spring);
+        Theme.To(SegmentHighlight, WidthProperty, width, 0.32, Theme.Spring);
     }
 
     void OnJobsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -52,6 +144,8 @@ public partial class MainWindow : Window
     void Refresh()
     {
         var any = Queue.Jobs.Count > 0;
+        if (IsLoaded && any != (FileList.Visibility == Visibility.Visible))
+            Theme.To(any ? FileList : EmptyState, OpacityProperty, 1, 0.3, from: 0);
         EmptyState.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
         FileList.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
         BuildFormatPickers();
@@ -70,6 +164,10 @@ public partial class MainWindow : Window
     void RefreshButtons()
     {
         var jobs = Queue.Jobs;
+        var done = jobs.Count(j => j.Status == JobStatus.Done);
+        Summary.Text = jobs.Count == 0 ? "Drop. Pick a format. Done."
+            : Queue.IsRunning ? $"Working… {done} of {jobs.Count} done"
+            : done > 0 ? $"{done} of {jobs.Count} done" : $"{jobs.Count} file{(jobs.Count == 1 ? "" : "s")} ready";
         var busy = Queue.IsRunning;
         var pdfs = jobs.Count(j => j.Kind == FileKind.Pdf);
         var images = jobs.Count(j => j.Kind == FileKind.Image);
@@ -132,12 +230,14 @@ public partial class MainWindow : Window
         var files = e.Data.GetDataPresent(DataFormats.FileDrop);
         e.Effects = files ? DragDropEffects.Copy : DragDropEffects.None;
         DropHighlight.Visibility = files ? Visibility.Visible : Visibility.Collapsed;
+        DropTitle.Text = files ? "Let go to add" : "Drop anything here";
         e.Handled = true;
     }
 
     void OnDrop(object sender, DragEventArgs e)
     {
         DropHighlight.Visibility = Visibility.Collapsed;
+        DropTitle.Text = "Drop anything here";
         if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) Queue.Add(paths);
     }
 
@@ -196,6 +296,12 @@ public partial class MainWindow : Window
         ConvertPanel.Visibility = ConvertTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         CompressPanel.Visibility = CompressTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         ToolsPanel.Visibility = ToolsTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        MoveSegmentHighlight(IsLoaded);
+        if (IsLoaded)
+        {
+            Theme.To(Panels, OpacityProperty, 1, 0.25, from: 0);
+            Theme.To((TranslateTransform)Panels.RenderTransform, TranslateTransform.YProperty, 0, 0.3, Theme.Spring, from: 10);
+        }
     }
 
     void OnQuality(object sender, RoutedPropertyChangedEventArgs<double> e)
