@@ -144,7 +144,7 @@ public static class PdfTools
         try
         {
             var original = OutputPaths.FileSize(input);
-            var settings = new (double Quality, int MaxPixel)[] { (0.6, 2000), (0.45, 1400), (0.35, 1000), (0.25, 700) };
+            var settings = new (double Quality, int MaxPixel)[] { (0.7, 2400), (0.55, 1800), (0.45, 1400), (0.35, 1000), (0.25, 800) };
             foreach (var (quality, max) in settings)
             {
                 using var document = Open(input, PdfDocumentOpenMode.Modify);
@@ -176,7 +176,9 @@ public static class PdfTools
         {
             if (item is not PdfDictionary dict || dict.Stream is null) continue;
             if (dict.Elements.GetName("/Subtype") != "/Image") continue;
-            if (dict.Elements.ContainsKey("/SMask") || dict.Elements.ContainsKey("/Mask") || dict.Elements.GetBoolean("/ImageMask")) continue;
+            // Stencil masks and colour-key masks need exact pixels. A soft mask (/SMask) is a separate
+            // picture that may have its own size, so the colour part can still be recompressed.
+            if (dict.Elements.GetBoolean("/ImageMask") || Resolve(dict.Elements["/Mask"]) is PdfArray) continue;
             try
             {
                 var replacement = Recompressed(dict, quality, maxPixel);
@@ -202,38 +204,39 @@ public static class PdfTools
 
     static (byte[] Jpeg, int Width, int Height, bool Gray)? Recompressed(PdfDictionary dict, double quality, int maxPixel)
     {
-        var filter = dict.Elements["/Filter"];
+        var filter = Resolve(dict.Elements["/Filter"]);
         var filterName = filter switch
         {
             PdfName n => n.Value,
-            PdfArray { Elements.Count: 1 } a => (a.Elements[0] as PdfName)?.Value,
+            PdfArray { Elements.Count: 1 } a => (Resolve(a.Elements[0]) as PdfName)?.Value,
+            null => "",
             _ => null,
         };
+        int w = dict.Elements.GetInteger("/Width"), h = dict.Elements.GetInteger("/Height");
+        // Small pictures (logos, icons) stay as they are.
+        if (w * h < 200 * 200) return null;
+        var channels = ColorChannels(dict.Elements["/ColorSpace"]);
         MagickImage image;
         if (filterName == "/DCTDecode")
         {
             image = new MagickImage(dict.Stream.Value);
             if (image.ColorSpace == ColorSpace.CMYK) image.Negate(); // PDF CMYK JPEGs are usually stored inverted (Adobe)
         }
-        else if (filterName == "/FlateDecode")
+        else if (filterName == "/JPXDecode")
         {
-            if (dict.Elements.GetInteger("/BitsPerComponent") != 8) return null;
-            var colorSpace = dict.Elements["/ColorSpace"] is PdfName cs ? cs.Value : null;
-            var mapping = colorSpace switch { "/DeviceRGB" => PixelMapping.RGB, "/DeviceGray" => (PixelMapping?)null, _ => (PixelMapping?)PixelMapping.RGB };
-            if (colorSpace is not ("/DeviceRGB" or "/DeviceGray")) return null;
-            int w = dict.Elements.GetInteger("/Width"), h = dict.Elements.GetInteger("/Height");
-            if (dict.Elements["/DecodeParms"] is not null)
-            {
-                // Predictor-encoded pixels; PDFsharp's decoder undoes the predictor for us.
-            }
-            var raw = dict.Stream.UnfilteredValue;
-            var channels = colorSpace == "/DeviceGray" ? 1 : 3;
-            if (raw.Length < w * h * channels) return null;
-            var settings = new PixelReadSettings((uint)w, (uint)h, StorageType.Char, channels == 1 ? "R" : "RGB");
+            // JPEG 2000, common in scanned PDFs.
+            image = new MagickImage(dict.Stream.Value, MagickFormat.Jp2);
+        }
+        else if (filterName is "/FlateDecode" or "/LZWDecode" or "")
+        {
+            if (dict.Elements.GetInteger("/BitsPerComponent") != 8 || channels is null) return null;
+            // PDFsharp's decoder undoes the filter and any PNG predictor.
+            var raw = filterName == "" ? dict.Stream.Value : dict.Stream.UnfilteredValue;
+            if (raw.Length < w * h * channels.Value) return null;
+            var map = channels switch { 1 => "R", 4 => "CMYK", _ => "RGB" };
+            var settings = new PixelReadSettings((uint)w, (uint)h, StorageType.Char, map);
             image = new MagickImage(raw, settings);
             if (channels == 1) image.ColorSpace = ColorSpace.Gray;
-            // Small or flat pictures (logos, line art) stay lossless.
-            if (w * h < 200 * 200) { image.Dispose(); return null; }
         }
         else return null;
 
@@ -246,6 +249,29 @@ public static class PdfTools
             image.Quality = (uint)(quality * 100);
             var jpeg = image.ToByteArray(MagickFormat.Jpeg);
             return (jpeg, (int)image.Width, (int)image.Height, gray);
+        }
+    }
+
+    static PdfItem? Resolve(PdfItem? item) => item is PdfReference r ? r.Value : item;
+
+    /// Colour channels of an image's colour space: 1, 3 or 4, or null for palettes and others.
+    static int? ColorChannels(PdfItem? item)
+    {
+        switch (Resolve(item))
+        {
+            case PdfName { Value: "/DeviceGray" or "/CalGray" }: return 1;
+            case PdfName { Value: "/DeviceRGB" or "/CalRGB" }: return 3;
+            case PdfName { Value: "/DeviceCMYK" }: return 4;
+            case PdfArray a when a.Elements.Count >= 2 && Resolve(a.Elements[0]) is PdfName name:
+                if (name.Value == "/ICCBased" && Resolve(a.Elements[1]) is PdfDictionary icc)
+                {
+                    var n = icc.Elements.GetInteger("/N");
+                    return n is 1 or 3 or 4 ? n : null;
+                }
+                if (name.Value is "/CalRGB") return 3;
+                if (name.Value is "/CalGray") return 1;
+                return null;
+            default: return null;
         }
     }
 

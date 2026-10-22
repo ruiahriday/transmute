@@ -266,6 +266,22 @@ static class Tests
             Expect(OutputPaths.FileSize(result.Outputs[0]) <= OutputPaths.FileSize(Fixture("photo.jpg")) * 0.55, result.Message ?? "");
             return result.Outputs;
         });
+        // Beta testers got "already as small as it can be" on 30 MB PDFs of photos.
+        foreach (var (label, alpha, icc) in new[] { ("plain RGB", false, false), ("with transparency", true, false), ("ICC colour", false, true) })
+        {
+            await Check($"Photo PDF ({label}) compress 50% is at most 60% of the original", async () =>
+            {
+                var pdf = Path.Combine(Sub("pdf-compress"), $"photos {label}.pdf");
+                MakePhotoPdf(pdf, 3, 2400, 3200, alpha, icc);
+                var before = OutputPaths.FileSize(pdf);
+                var result = await Engine.Perform(new JobOperation.Compress(new CompressionTarget.Percent(0.5)), pdf,
+                    options with { OutputFolder = Sub("pdf-compress") }, _ => { }, default);
+                var after = OutputPaths.FileSize(result.Outputs[0]);
+                Expect(after <= before * 0.6, $"{before:N0} → {after:N0} bytes: {result.Message}");
+                Console.WriteLine($"      {result.Message}");
+                return result.Outputs;
+            });
+        }
         await Check("Removing metadata takes out the location", async () =>
         {
             var clean = await Engine.Perform(new JobOperation.StripMetadata(), Fixture("photo.jpg"), options with { OutputFolder = Sub("strip") }, _ => { }, default);
@@ -277,6 +293,50 @@ static class Tests
         Console.WriteLine($"\n{passed} passed, {skipped} skipped, {Failed.Count} failed in {clock.Elapsed.TotalSeconds:0} s");
         foreach (var f in Failed) Console.WriteLine($"  FAILED: {f}");
         return Failed.Count == 0 ? 0 : 1;
+    }
+
+    /// A PDF with one big photo-like picture per page, stored losslessly (Flate) so it is large.
+    static void MakePhotoPdf(string path, int pages, int width, int height, bool alpha, bool icc)
+    {
+        var random = new Random(7);
+        using var document = new PdfSharp.Pdf.PdfDocument();
+        for (var p = 0; p < pages; p++)
+        {
+            var channels = alpha ? 4 : 3;
+            var pixels = new byte[width * height * channels];
+            for (var y = 0; y < height; y++)
+                for (var x = 0; x < width; x++)
+                {
+                    var i = (y * width + x) * channels;
+                    var grain = random.Next(0, 40);
+                    pixels[i] = (byte)((x * 200 / width + p * 20) % 216 + grain);
+                    pixels[i + 1] = (byte)(y * 200 / height + grain);
+                    pixels[i + 2] = (byte)((x + y) * 100 / (width + height) + 60 + grain);
+                    if (alpha) pixels[i + 3] = (byte)(x < width / 10 ? 128 : 255);
+                }
+            var png = Path.ChangeExtension(path, $"{p}.png");
+            using (var image = new MagickImage(pixels, new PixelReadSettings((uint)width, (uint)height, StorageType.Char, alpha ? "RGBA" : "RGB")))
+                image.Write(png, MagickFormat.Png);
+            var page = document.AddPage();
+            page.Width = PdfSharp.Drawing.XUnit.FromPoint(595);
+            page.Height = PdfSharp.Drawing.XUnit.FromPoint(842);
+            using (var gfx = PdfSharp.Drawing.XGraphics.FromPdfPage(page))
+            using (var picture = PdfSharp.Drawing.XImage.FromFile(png))
+                gfx.DrawImage(picture, 0, 0, 595, 842);
+            File.Delete(png);
+        }
+        if (icc)
+        {
+            // Point every picture at an ICC-based RGB colour space, as PDFs from design apps do.
+            var profile = new PdfSharp.Pdf.PdfDictionary(document);
+            profile.Elements.SetInteger("/N", 3);
+            profile.CreateStream(new byte[] { 0 });
+            document.Internals.AddObject(profile);
+            foreach (var item in document.Internals.GetAllObjects())
+                if (item is PdfSharp.Pdf.PdfDictionary d && d.Elements.GetName("/Subtype") == "/Image" && d.Elements.GetName("/ColorSpace") == "/DeviceRGB")
+                    d.Elements["/ColorSpace"] = new PdfSharp.Pdf.PdfArray(document, new PdfSharp.Pdf.PdfName("/ICCBased"), profile.Reference!);
+        }
+        document.Save(path);
     }
 
     static string Sub(string name)

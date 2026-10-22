@@ -20,7 +20,7 @@ public static class Engine
                 {
                     FileKind.Image => await ImageConverter.Compress(input, goal, options, token),
                     FileKind.Video or FileKind.Audio => await MediaConverter.Compress(input, kind, goal, options, progress, token),
-                    FileKind.Pdf => await Task.Run(() => PdfTools.Compress(input, options, c.Target is CompressionTarget.Bytes ? goal : null), token),
+                    FileKind.Pdf => await Task.Run(() => PdfTools.Compress(input, options, goal), token),
                     _ => throw new ConversionException($"{kind.Title()} can't be compressed."),
                 };
             }
