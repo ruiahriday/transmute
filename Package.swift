@@ -8,7 +8,7 @@ let package = Package(
         .executableTarget(
             name: "Transmute", path: "Sources/Transmute",
             // Linked explicitly: the video editor's player view failed to load without it.
-            linkerSettings: [.linkedFramework("AVKit"), .linkedFramework("Quartz")]
+            linkerSettings: [.linkedFramework("AVKit"), .linkedFramework("Quartz"), .linkedFramework("Vision")]
         )
     ]
 )

@@ -28,8 +28,8 @@ struct WheelEditorView: View {
                 }
                 .fixedSize()
                 Text("Drag a bubble onto another spot to swap them. Positions go clockwise from the top. Any format, tool or action can go on any wheel, and changes save right away.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding([.horizontal, .top], 20)
@@ -37,7 +37,7 @@ struct WheelEditorView: View {
             HStack(alignment: .top, spacing: 16) {
                 preview
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("On the wheel (clockwise from the top)").font(.headline)
+                    SectionLabel("On the wheel, clockwise from the top")
                     List(selection: $selected) {
                         ForEach(Array(slots.enumerated()), id: \.offset) { index, id in
                             row(index, id).tag(index)
@@ -48,7 +48,7 @@ struct WheelEditorView: View {
                     }
                     .listStyle(.bordered(alternatesRowBackgrounds: true))
                     addMenu
-                    Text(status).font(.caption).foregroundStyle(.secondary)
+                    Text(status).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
                 }
             }
             .padding(20)
@@ -62,9 +62,11 @@ struct WheelEditorView: View {
                 .disabled(!isCustom)
                 Button("Reset All Wheels…") { confirmResetAll = true }
                 Spacer()
-                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction)
+                Button("Done") { dismiss() }.keyboardShortcut(.defaultAction).buttonStyle(GlowButtonStyle())
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Theme.surface)
         }
         .frame(width: 760, height: 580)
         .onChange(of: wheel) { _ in load() }
@@ -150,8 +152,10 @@ struct WheelEditorView: View {
 
     private func row(_ index: Int, _ id: String) -> some View {
         HStack {
-            Text("\(index + 1).").monospacedDigit().foregroundStyle(.secondary).frame(width: 24, alignment: .trailing)
-            Text(WheelItem.describe(id)).foregroundStyle(id == WheelLayout.gap ? .secondary : .primary)
+            Text("\(index + 1).").font(Theme.Fonts.body).monospacedDigit().foregroundStyle(Theme.textTertiary)
+                .frame(width: 24, alignment: .trailing)
+            Text(WheelItem.describe(id)).font(Theme.Fonts.body)
+                .foregroundStyle(id == WheelLayout.gap ? Theme.textTertiary : Theme.textPrimary)
             Spacer()
             Button { change(select: index - 1) { slots.swapAt(index, index - 1) } } label: { Image(systemName: "chevron.up") }
                 .help("Move up (anticlockwise)")
@@ -170,18 +174,18 @@ struct WheelEditorView: View {
         let ring: CGFloat = (Self.radius + 30 + 10) * 2
         return ZStack {
             Circle()
-                .fill(Color.primary.opacity(0.04))
-                .overlay(Circle().strokeBorder(Color.primary.opacity(0.12)))
+                .fill(Theme.canvas)
+                .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 1.5))
                 .frame(width: ring, height: ring)
-            Text(wheel.title).font(.headline)
+            Text(wheel.title).font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
             ForEach(Array(slots.enumerated()), id: \.offset) { index, id in
                 bubble(index, id, size: size)
                     .offset(WheelGeometry.position(of: index, count: slots.count, radius: Self.radius))
             }
         }
         .frame(width: Self.previewSize, height: Self.previewSize)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color(nsColor: .controlBackgroundColor)))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.1)))
+        .background(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).fill(Theme.surface))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.hairline))
     }
 
     private func bubble(_ index: Int, _ id: String, size: CGFloat) -> some View {
@@ -189,19 +193,20 @@ struct WheelEditorView: View {
         let isSelected = selected == index
         return VStack(spacing: 2) {
             if let item {
-                Image(systemName: item.symbol).font(.system(size: 14, weight: .semibold))
-                Text(item.label).font(.system(size: 9, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+                Image(systemName: item.symbol).font(.system(size: 14, weight: .medium))
+                Text(item.label).font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
             } else {
-                Text("empty").font(.system(size: 9)).foregroundStyle(.secondary)
+                Text("empty").font(.system(size: 9, weight: .medium)).foregroundStyle(Theme.textTertiary)
             }
         }
+        .foregroundStyle(Theme.textPrimary)
         .frame(width: size, height: size)
-        .background(Circle().fill(item == nil ? Color.clear : Color(nsColor: .windowBackgroundColor)))
+        .background(Circle().fill(item == nil ? Color.clear : Theme.surface))
         .overlay(
-            Circle().strokeBorder(isSelected ? Theme.accent : Color.primary.opacity(item == nil ? 0.35 : 0.15),
-                                  style: StrokeStyle(lineWidth: isSelected ? 2.5 : 1, dash: item == nil ? [4, 3] : []))
+            Circle().strokeBorder(isSelected ? Theme.accent : (item == nil ? Theme.controlBorder.opacity(0.6) : Theme.hairline),
+                                  style: StrokeStyle(lineWidth: isSelected ? 2 : 1, dash: item == nil ? [4, 3] : []))
         )
-        .shadow(radius: item == nil ? 0 : 1.5)
+        .shadow(color: .black.opacity(item == nil ? 0 : 0.08), radius: 1.5, y: 1)
         .contentShape(Circle())
         .help(WheelItem.describe(id))
         .onTapGesture { selected = index }

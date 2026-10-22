@@ -1174,12 +1174,13 @@ struct MetadataEditorView: View {
                 .frame(width: 32, height: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(url.lastPathComponent)
-                    .font(.headline)
+                    .font(Theme.Fonts.title)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text("Changes are saved to a copy; the original isn't touched.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
             Spacer(minLength: 0)
         }

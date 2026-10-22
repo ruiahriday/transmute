@@ -434,10 +434,7 @@ struct AudioEditorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(url.lastPathComponent)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            EditorTitle(url: url)
             waveform
                 .frame(maxWidth: .infinity, minHeight: 110, idealHeight: 140, maxHeight: 180)
             transport

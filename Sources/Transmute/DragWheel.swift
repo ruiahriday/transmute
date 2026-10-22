@@ -289,6 +289,7 @@ struct WheelItem: Identifiable {
         case "tool:qr": self.init(label: "QR", symbol: "qrcode.viewfinder", action: .job(.readQR))
         case "tool:zip": self.init(label: "Zip", symbol: "archivebox", action: .batch(.archive(.zip)))
         case "tool:edit": self.init(label: "Edit", symbol: "wand.and.stars", action: .edit)
+        case "tool:nobg": self.init(label: "Remove BG", symbol: "scissors", action: .job(.editImage(.removingBackground)))
         default:
             guard id.hasPrefix("action:"),
                   let action = FileAction.allCases.first(where: { "action:" + $0.id == id }) else { return nil }
@@ -310,6 +311,7 @@ struct WheelItem: Identifiable {
         case "tool:qr": return "Read QR code"
         case "tool:zip": return "Zip"
         case "tool:edit": return "Edit (opens the photo, video or audio editor)"
+        case "tool:nobg": return "Remove background (transparent PNG)"
         case "action:airdrop": return "AirDrop"
         case "action:float": return "Float (floating files)"
         case "action:copy": return "Copy"
@@ -429,11 +431,10 @@ struct WheelView: View {
     private var ring: some View {
         let diameter: CGFloat = (radius + 33 + 10) * 2
         return Circle()
-            .fill(.ultraThinMaterial)
-            .overlay(Circle().fill(RadialGradient(colors: [Theme.violet.opacity(0.18), Theme.pink.opacity(0.05), .clear],
-                                                  center: .center, startRadius: 10, endRadius: diameter / 2)))
-            .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 2).opacity(0.7))
-            .shadow(color: Theme.violet.opacity(0.35), radius: 24)
+            .fill(Theme.canvas.opacity(0.97))
+            .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 1).padding(radius * 0.62))
+            .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 1.5))
+            .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
             .frame(width: diameter, height: diameter)
             .scaleEffect(appeared ? 1 : 0.6)
             .opacity(appeared ? 1 : 0)
@@ -442,25 +443,25 @@ struct WheelView: View {
 
     private var caption: some View {
         VStack(spacing: 2) {
-            Text(kind.title).font(.headline)
-            Text("Drop on a bubble").font(.caption).foregroundStyle(.secondary)
+            Text(kind.title).font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
+            Text("Drop on a bubble").font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
         }
     }
 
     private func bubbleView(_ item: WheelItem) -> some View {
         let isTargeted = targeted == item.id
         return VStack(spacing: 3) {
-            Image(systemName: item.symbol).font(.system(size: 16, weight: .semibold))
-            Text(item.label).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+            Image(systemName: item.symbol).font(.system(size: 16, weight: .medium))
+            Text(item.label).font(.system(size: 10, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
         }
-        .foregroundStyle(isTargeted ? Color.white : Color.primary)
+        .foregroundStyle(isTargeted ? Color.white : Theme.textPrimary)
         .frame(width: bubble, height: bubble)
         .background(
-            Circle().fill(isTargeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Color(nsColor: .windowBackgroundColor)))
+            Circle().fill(isTargeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.surface))
         )
-        .overlay(Circle().strokeBorder(Color.primary.opacity(isTargeted ? 0 : 0.08)))
-        .shadow(color: isTargeted ? Theme.violet.opacity(0.6) : .black.opacity(0.2), radius: isTargeted ? 12 : 3)
-        .scaleEffect(isTargeted ? 1.18 : 1)
+        .overlay(Circle().strokeBorder(isTargeted ? Color.black.opacity(0.1) : Theme.hairline, lineWidth: 1))
+        .shadow(color: .black.opacity(isTargeted ? 0.22 : 0.08), radius: isTargeted ? 4 : 1.5, y: 1)
+        .scaleEffect(isTargeted ? 1.12 : 1)
         .animation(.spring(response: 0.25), value: isTargeted)
         .onDrop(of: [.fileURL], isTargeted: Binding(
             get: { targeted == item.id },

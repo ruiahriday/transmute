@@ -124,7 +124,7 @@ final class HUDController {
         self.panel = panel
         panel.contentView = NSHostingView(rootView: HUDView(ids: ids).environmentObject(JobQueue.shared))
         if let frame = NSScreen.main?.visibleFrame {
-            panel.setFrame(NSRect(x: frame.maxX - 330, y: frame.maxY - 96, width: 320, height: 84), display: true)
+            panel.setFrame(NSRect(x: frame.maxX - 334, y: frame.maxY - 92, width: 324, height: 84), display: true)
         }
         panel.orderFrontRegardless()
     }
@@ -165,27 +165,31 @@ struct HUDView: View {
                     SpinningMark(secondsPerTurn: 3).frame(width: 28, height: 28)
                 } else {
                     Image(systemName: failed.isEmpty ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                        .font(.title2)
-                        .foregroundStyle(failed.isEmpty ? Theme.success : Color.orange)
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(failed.isEmpty ? Theme.success : Theme.warning)
                 }
             }
             .frame(width: 28)
             VStack(alignment: .leading, spacing: 6) {
                 Text(title(jobs: jobs, allDone: allDone, failed: failed.count))
-                    .font(.headline)
+                    .font(Theme.Fonts.bodyStrong)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                 if allDone, let first = failed.first, case .failed(let message) = first.state {
-                    Text(message).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    Text(message).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary).lineLimit(2)
                 } else if allDone, let message = qrMessage(jobs) {
-                    Text(message).font(.caption).textSelection(.enabled).lineLimit(2)
+                    Text(message).font(Theme.Fonts.caption).foregroundStyle(Theme.textPrimary).textSelection(.enabled).lineLimit(2)
                 } else {
-                    ProgressView(value: progress)
+                    GlowProgressBar(value: progress, tint: Theme.violet)
                 }
             }
         }
-        .padding(14)
-        .frame(width: 320, height: 84, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .padding(.horizontal, 14)
+        .frame(width: 312, height: 72, alignment: .leading)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.hairline))
+        .padding(6)
+        .shadow(color: .black.opacity(0.14), radius: 4, y: 2)
         .tint(Theme.accent)
     }
 
@@ -232,7 +236,7 @@ struct SettingsView: View {
                             Text(outputFolderPath.isEmpty ? "No folder chosen" : outputFolderPath)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.textSecondary)
                             Spacer()
                             Button("Choose…", action: chooseFolder)
                         }
@@ -250,20 +254,20 @@ struct SettingsView: View {
                     if hasKeyClash {
                         Label("Two wheels use the same key. The actions wheel wins, then tools.",
                               systemImage: "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
+                            .font(Theme.Fonts.caption)
+                            .foregroundStyle(Theme.warning)
                     } else {
                         Text("Some apps use ⌘ or ⌥ while dragging to copy or make an alias. If that gets in the way, pick another key.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(Theme.Fonts.caption)
+                            .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Section("Floating files") {
                     Toggle("Open when I shake files while dragging them", isOn: $shakeToShelf)
                     Toggle("Open when I drag files up to the notch", isOn: $notchToShelf)
                     Text("On a screen without a notch, drag to the middle of the top edge instead.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Section("General") {
                     Toggle("Show Spinform in the Dock", isOn: Binding(
@@ -294,14 +298,14 @@ struct SettingsView: View {
                         Button("Copy Mac Details") { Feedback.copyDetails() }
                     }
                     Text("Send Feedback opens a short form on GitHub (it needs a free GitHub account). Or copy your Mac's details and paste them into a message to whoever sent you Spinform.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(Theme.Fonts.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
                 Section("ffmpeg") {
                     if let path = Tools.ffmpeg {
-                        Label("Installed at \(path)", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                        Label("Installed at \(path)", systemImage: "checkmark.circle.fill").foregroundStyle(Theme.success)
                     } else {
-                        Label("Not installed", systemImage: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+                        Label("Not installed", systemImage: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
                         Text("Needed for MP3, MKV, WebM, AVI, WMV, OGG, Opus, GIF from video and WebP. Install it with Homebrew: brew install ffmpeg")
                             .font(.caption)
                             .textSelection(.enabled)
@@ -309,17 +313,23 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
+            Divider()
             HStack(spacing: 8) {
                 SpinformMark().frame(width: 20, height: 20)
-                Text("Spinform \(Feedback.version)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("Spinform")
+                    .font(Theme.Fonts.bodyStrong)
+                    .foregroundStyle(Theme.textPrimary)
+                Text(Feedback.version)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
                 Spacer()
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(GlowButtonStyle())
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Theme.surface)
         }
         .frame(width: 480, height: 600)
         .tint(Theme.accent)

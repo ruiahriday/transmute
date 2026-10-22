@@ -1,8 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// Spinform's look: the indigo-violet-pink brand gradient from the icon, slowly drifting colour
-/// glows behind glass cards, and small springy animations for things that change.
+/// Spinform's look: the indigo-violet-pink brand gradient from the icon on crisp, solid
+/// surfaces with hairline borders, a clear type scale, and small springy animations.
 enum Theme {
     // Brand palette (the icon's colours).
     static let indigo = Color(hex: 0x4338CA)
@@ -23,25 +23,63 @@ enum Theme {
                  .adaptive(light: 0xDB2777, dark: 0xF472B6)],
         startPoint: .leading, endPoint: .trailing)
     /// The app's accent for controls (toggles, sliders, selection rings).
-    static let accent = Color.adaptive(light: 0x7C3AED, dark: 0x8B5CF6)
+    static let accent = Color.adaptive(light: 0x6D28D9, dark: 0x8B5CF6)
+    /// Accent-coloured text and symbols, readable on the surfaces below.
+    static let accentText = Color.adaptive(light: 0x5B21B6, dark: 0xC4B5FD)
     /// Finished, saved, done.
-    static let success = Color.adaptive(light: 0x059669, dark: 0x34D399)
+    static let success = Color.adaptive(light: 0x047857, dark: 0x34D399)
+    static let warning = Color.adaptive(light: 0xB45309, dark: 0xFBBF24)
+    static let danger = Color.adaptive(light: 0xB91C1C, dark: 0xF87171)
     /// The core dot's warm gradient.
     static let core = [coral, rose]
     static let spring = Animation.spring(response: 0.42, dampingFraction: 0.78)
 
+    // Surfaces, lines and text: solid and crisp, with enough contrast in light mode.
+    /// The window behind everything.
+    static let canvas = Color.adaptive(light: 0xF3F3F6, dark: 0x0F0F12)
+    /// Cards and rows.
+    static let surface = Color.adaptive(light: 0xFFFFFF, dark: 0x1B1B20)
+    /// Chips, tiles and wells inside a card.
+    static let surfaceRaised = Color.adaptive(light: 0xF5F5F8, dark: 0x26262C)
+    static let surfaceHover = Color.adaptive(light: 0xEDEDF2, dark: 0x303037)
+    /// One-pixel borders on cards and controls.
+    static let hairline = Color.adaptive(light: 0xDCDCE3, dark: 0x34343C)
+    /// Borders of things you click: checkboxes, swatches.
+    static let controlBorder = Color.adaptive(light: 0x7C7C8A, dark: 0x8A8A96)
+    static let textPrimary = Color.adaptive(light: 0x111118, dark: 0xF4F4F6)
+    static let textSecondary = Color.adaptive(light: 0x4B4B57, dark: 0xB0B0BB)
+    static let textTertiary = Color.adaptive(light: 0x6B6B78, dark: 0x8C8C98)
+
+    /// Corner radii, so cards, controls and chips agree.
+    enum Radius {
+        static let card: CGFloat = 12
+        static let row: CGFloat = 10
+        static let control: CGFloat = 8
+        static let chip: CGFloat = 7
+    }
+
+    /// The type scale.
+    enum Fonts {
+        static let wordmark = Font.system(size: 20, weight: .bold, design: .rounded)
+        static let title = Font.system(size: 15, weight: .semibold)
+        static let bodyStrong = Font.system(size: 13, weight: .semibold)
+        static let body = Font.system(size: 13)
+        static let caption = Font.system(size: 11.5)
+        static let section = Font.system(size: 10.5, weight: .semibold)
+    }
+
     /// A colour per kind of file, for badges and progress bars.
     static func tint(_ kind: FileKind) -> Color {
         switch kind {
-        case .image: Color(red: 0.95, green: 0.45, blue: 0.55)
-        case .video: Color(red: 0.55, green: 0.42, blue: 0.97)
-        case .audio: Color(red: 0.98, green: 0.62, blue: 0.25)
-        case .pdf: Color(red: 0.93, green: 0.32, blue: 0.30)
-        case .document, .ebook: Color(red: 0.25, green: 0.55, blue: 0.95)
-        case .presentation: Color(red: 0.96, green: 0.50, blue: 0.20)
-        case .spreadsheet: Color(red: 0.20, green: 0.70, blue: 0.45)
-        case .subtitle: Color(red: 0.45, green: 0.60, blue: 0.70)
-        case .archive: Color(red: 0.62, green: 0.50, blue: 0.38)
+        case .image: Color(red: 0.91, green: 0.36, blue: 0.48)
+        case .video: Color(red: 0.49, green: 0.36, blue: 0.93)
+        case .audio: Color(red: 0.95, green: 0.55, blue: 0.16)
+        case .pdf: Color(red: 0.88, green: 0.26, blue: 0.25)
+        case .document, .ebook: Color(red: 0.20, green: 0.49, blue: 0.91)
+        case .presentation: Color(red: 0.93, green: 0.45, blue: 0.15)
+        case .spreadsheet: Color(red: 0.13, green: 0.62, blue: 0.40)
+        case .subtitle: Color(red: 0.36, green: 0.52, blue: 0.63)
+        case .archive: Color(red: 0.55, green: 0.44, blue: 0.33)
         case .other: Color.gray
         }
     }
@@ -68,91 +106,113 @@ extension Color {
 
 // MARK: Background
 
-/// Soft brand-colour glows (indigo, violet, pink and a little of the core's coral) that drift
-/// behind the window's content.
-struct AuroraBackground: View {
+/// The window's backdrop: a flat, solid canvas with a faint brand tint along the top edge.
+/// No blurred glows, so everything on it stays sharp.
+struct AppBackground: View {
     @Environment(\.colorScheme) private var scheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: reduceMotion)) { timeline in
-            let t = timeline.date.timeIntervalSinceReferenceDate
-            GeometryReader { geo in
-                ZStack {
-                    glow(Theme.violet, size: geo.size, x: 0.18 + 0.10 * sin(t / 7), y: 0.20 + 0.08 * cos(t / 9),
-                         light: 0.20, dark: 0.30)
-                    glow(Theme.pink, size: geo.size, x: 0.84 + 0.08 * cos(t / 8), y: 0.28 + 0.10 * sin(t / 6),
-                         light: 0.14, dark: 0.20)
-                    glow(Theme.indigo, size: geo.size, x: 0.50 + 0.15 * sin(t / 11), y: 0.88 + 0.06 * cos(t / 7),
-                         light: 0.16, dark: 0.34)
-                    glow(Theme.coral, size: geo.size, x: 0.86 + 0.05 * sin(t / 10), y: 0.84 + 0.05 * cos(t / 12),
-                         light: 0.10, dark: 0.08, scale: 0.4)
-                }
-            }
+        ZStack(alignment: .top) {
+            Theme.canvas
+            LinearGradient(colors: [Theme.violet.opacity(scheme == .dark ? 0.10 : 0.07), Theme.canvas.opacity(0)],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 160)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
         .ignoresSafeArea()
-    }
-
-    private func glow(_ color: Color, size: CGSize, x: Double, y: Double,
-                      light: Double, dark: Double, scale: CGFloat = 0.62) -> some View {
-        let diameter = max(size.width, size.height) * scale
-        let opacity = scheme == .dark ? dark : light
-        return Circle()
-            .fill(color.opacity(opacity))
-            .frame(width: diameter, height: diameter)
-            .blur(radius: diameter * 0.28)
-            .position(x: size.width * x, y: size.height * y)
     }
 }
 
-// MARK: Glass
+// MARK: Cards
 
-struct GlassCard: ViewModifier {
-    var radius: CGFloat = 18
-    var padding: CGFloat = 16
+/// A solid card with a one-pixel border and a tight shadow.
+struct CrispCard: ViewModifier {
+    var radius: CGFloat = Theme.Radius.card
+    var padding: CGFloat = 14
 
     func body(content: Content) -> some View {
         content
             .padding(padding)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(LinearGradient(colors: [.white.opacity(0.35), Theme.violet.opacity(0.10)],
-                                                 startPoint: .top, endPoint: .bottom), lineWidth: 1)
-            )
-            .shadow(color: Theme.indigo.opacity(0.12), radius: 18, y: 8)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
+            .shadow(color: .black.opacity(0.05), radius: 1.5, y: 1)
     }
 }
 
 extension View {
-    func glassCard(radius: CGFloat = 18, padding: CGFloat = 16) -> some View {
-        modifier(GlassCard(radius: radius, padding: padding))
+    func crispCard(radius: CGFloat = Theme.Radius.card, padding: CGFloat = 14) -> some View {
+        modifier(CrispCard(radius: radius, padding: padding))
+    }
+}
+
+/// A small upper-case heading for a group of controls.
+struct SectionLabel: View {
+    let title: String
+    init(_ title: String) { self.title = title }
+
+    var body: some View {
+        Text(title.uppercased())
+            .font(Theme.Fonts.section)
+            .tracking(0.6)
+            .foregroundStyle(Theme.textSecondary)
+    }
+}
+
+/// The filename heading at the top of the video, audio and info editors.
+struct EditorTitle: View {
+    let url: URL
+
+    var body: some View {
+        HStack(spacing: 10) {
+            KindBadge(kind: FileKind.of(url), size: 26)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(url.lastPathComponent)
+                    .font(Theme.Fonts.title)
+                    .foregroundStyle(Theme.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text("Edits are saved as a copy; the original stays as it is.")
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+        }
     }
 }
 
 // MARK: Buttons
 
-/// The big gradient button (Convert, Compress).
+/// The main action button (Convert, Compress): the brand gradient, crisp edges, no glow.
 struct GlowButtonStyle: ButtonStyle {
-    @Environment(\.isEnabled) private var isEnabled
-
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 8)
-            .background(Theme.brand, in: Capsule())
-            .overlay(Capsule().strokeBorder(.white.opacity(0.25)))
-            .shadow(color: Theme.violet.opacity(isEnabled ? 0.45 : 0), radius: configuration.isPressed ? 4 : 10, y: 4)
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .opacity(isEnabled ? 1 : 0.45)
-            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+        PrimaryBody(configuration: configuration)
+    }
+
+    private struct PrimaryBody: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 7)
+                .background(Theme.brand, in: RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                    .fill(Color.black.opacity(configuration.isPressed ? 0.16 : 0)))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                    .fill(Color.white.opacity(hovering && !configuration.isPressed ? 0.10 : 0)))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                    .strokeBorder(Color.black.opacity(0.12), lineWidth: 1))
+                .shadow(color: Theme.indigo.opacity(isEnabled ? 0.22 : 0), radius: 2, y: 1)
+                .opacity(isEnabled ? 1 : 0.45)
+                .onHover { hovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+        }
     }
 }
 
-/// Small rounded buttons for the Tools tab.
+/// Small buttons for the Tools tab and rows: solid, with a border that firms up on hover.
 struct ChipButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         ChipBody(configuration: configuration)
@@ -166,16 +226,60 @@ struct ChipButtonStyle: ButtonStyle {
         var body: some View {
             configuration.label
                 .font(.system(size: 12, weight: .medium))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
                 .background(
-                    Capsule().fill(Color.primary.opacity(configuration.isPressed ? 0.16 : hovering ? 0.11 : 0.07))
+                    RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous)
+                        .fill(configuration.isPressed ? Theme.hairline : hovering ? Theme.surfaceHover : Theme.surfaceRaised)
                 )
-                .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08)))
-                .scaleEffect(configuration.isPressed ? 0.96 : 1)
-                .opacity(isEnabled ? 1 : 0.4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous)
+                        .strokeBorder(hovering && isEnabled ? Theme.controlBorder.opacity(0.7) : Theme.hairline, lineWidth: 1)
+                )
+                .opacity(isEnabled ? 1 : 0.45)
+                .contentShape(Rectangle())
                 .onHover { hovering = $0 }
-                .animation(.easeOut(duration: 0.15), value: hovering)
+                .animation(.easeOut(duration: 0.12), value: hovering)
+        }
+    }
+}
+
+/// A checkbox that stays easy to see on white: a firm border when off, the accent when on.
+struct CrispCheckboxStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        CheckboxBody(configuration: configuration)
+    }
+
+    private struct CheckboxBody: View {
+        let configuration: ToggleStyleConfiguration
+        @Environment(\.isEnabled) private var isEnabled
+        @State private var hovering = false
+
+        var body: some View {
+            let on = configuration.isOn
+            Button { configuration.isOn.toggle() } label: {
+                HStack(spacing: 7) {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(on ? Theme.accent : Theme.surface)
+                        .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous)
+                            .strokeBorder(on ? Theme.accent : (hovering ? Theme.textSecondary : Theme.controlBorder), lineWidth: 1.25))
+                        .overlay {
+                            if on {
+                                Image(systemName: "checkmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(.white)
+                            }
+                        }
+                        .frame(width: 15, height: 15)
+                    configuration.label
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .opacity(isEnabled ? 1 : 0.45)
+            .onHover { hovering = $0 }
+            .accessibilityValue(on ? "on" : "off")
         }
     }
 }
@@ -191,13 +295,14 @@ struct SlidingPicker<Value: Hashable & Identifiable>: View {
     @Namespace private var namespace
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(options) { option in
                 segment(option)
             }
         }
-        .padding(4)
-        .background(Capsule().fill(Color.primary.opacity(0.06)))
+        .padding(3)
+        .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.control + 1, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control + 1, style: .continuous).strokeBorder(Theme.hairline, lineWidth: 1))
     }
 
     private func segment(_ option: Value) -> some View {
@@ -207,17 +312,18 @@ struct SlidingPicker<Value: Hashable & Identifiable>: View {
         } label: {
             Label(title(option), systemImage: symbol(option))
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(selected ? Color.white : Color.primary.opacity(0.75))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 6)
+                .foregroundStyle(selected ? Color.white : Theme.textSecondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
                 .background {
                     if selected {
-                        Capsule().fill(Theme.brand)
+                        RoundedRectangle(cornerRadius: Theme.Radius.control - 2, style: .continuous)
+                            .fill(Theme.brand)
                             .matchedGeometryEffect(id: "highlight", in: namespace)
-                            .shadow(color: Theme.violet.opacity(0.35), radius: 6, y: 2)
+                            .shadow(color: .black.opacity(0.12), radius: 1, y: 1)
                     }
                 }
-                .contentShape(Capsule())
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -225,7 +331,7 @@ struct SlidingPicker<Value: Hashable & Identifiable>: View {
 
 // MARK: Progress
 
-/// A rounded bar with the brand gradient and a light sweep moving across it while it runs.
+/// A thin rounded bar in the file's colour, with a light sweep moving across it while it runs.
 struct GlowProgressBar: View {
     var value: Double
     var tint: Color = Theme.violet
@@ -233,22 +339,22 @@ struct GlowProgressBar: View {
 
     var body: some View {
         GeometryReader { geo in
-            let width = max(6, geo.size.width * min(1, max(0, value)))
+            let width = max(4, geo.size.width * min(1, max(0, value)))
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.primary.opacity(0.08))
+                Capsule().fill(Theme.hairline)
                 Capsule()
-                    .fill(LinearGradient(colors: [tint.opacity(0.85), Theme.pinkLight], startPoint: .leading, endPoint: .trailing))
+                    .fill(LinearGradient(colors: [tint, Theme.pink], startPoint: .leading, endPoint: .trailing))
                     .frame(width: width)
                     .overlay(alignment: .leading) {
-                        LinearGradient(colors: [.clear, .white.opacity(0.55), .clear], startPoint: .leading, endPoint: .trailing)
-                            .frame(width: 40)
-                            .offset(x: sweep ? width : -40)
+                        LinearGradient(colors: [.clear, .white.opacity(0.45), .clear], startPoint: .leading, endPoint: .trailing)
+                            .frame(width: 32)
+                            .offset(x: sweep ? width : -32)
                     }
                     .clipShape(Capsule())
                     .animation(.easeOut(duration: 0.25), value: value)
             }
         }
-        .frame(height: 6)
+        .frame(height: 5)
         .onAppear {
             withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) { sweep = true }
         }
@@ -260,19 +366,19 @@ struct GlowProgressBar: View {
 /// A rounded square with the kind's symbol, tinted by kind.
 struct KindBadge: View {
     let kind: FileKind
-    var size: CGFloat = 38
+    var size: CGFloat = 36
 
     var body: some View {
         let tint = Theme.tint(kind)
-        RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-            .fill(LinearGradient(colors: [tint, tint.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
+            .fill(LinearGradient(colors: [tint, tint.opacity(0.82)], startPoint: .top, endPoint: .bottom))
             .frame(width: size, height: size)
+            .overlay(RoundedRectangle(cornerRadius: size * 0.26, style: .continuous).strokeBorder(Color.black.opacity(0.08)))
             .overlay(
                 Image(systemName: kind.symbol)
                     .font(.system(size: size * 0.42, weight: .semibold))
                     .foregroundStyle(.white)
             )
-            .shadow(color: tint.opacity(0.4), radius: 6, y: 3)
     }
 }
 
@@ -282,7 +388,7 @@ struct PopCheck: View {
 
     var body: some View {
         Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 18))
+            .font(.system(size: 17, weight: .semibold))
             .foregroundStyle(.white, Theme.success)
             .scaleEffect(shown ? 1 : 0.2)
             .opacity(shown ? 1 : 0)
@@ -292,7 +398,7 @@ struct PopCheck: View {
 
 // MARK: Drop zone
 
-/// The empty window: a glowing drop target with format chips circling it.
+/// The empty window: a drop target with the spinning mark and format chips circling it.
 struct DropHero: View {
     let targeted: Bool
     let wheelHint: String?
@@ -315,13 +421,14 @@ struct DropHero: View {
                 core
             }
             .frame(width: 210, height: 160)
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
                 Text(targeted ? "Let go to add" : "Drop anything here")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(Theme.textPrimary)
                     .contentTransition(.opacity)
                 Text("Images, video, audio, PDFs, documents, e-books, spreadsheets, slides, subtitles and archives")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.body)
+                    .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 420)
             }
@@ -331,49 +438,53 @@ struct DropHero: View {
             .buttonStyle(GlowButtonStyle())
             if let wheelHint {
                 Label(wheelHint, systemImage: "circle.dashed")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color.primary.opacity(0.05)))
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous).strokeBorder(Theme.hairline))
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [10, 8], dashPhase: dash))
-                .foregroundStyle(targeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Color.secondary.opacity(0.35)))
-                .padding(14)
+            RoundedRectangle(cornerRadius: Theme.Radius.card - 2, style: .continuous)
+                .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [7, 6], dashPhase: dash))
+                .foregroundStyle(targeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.controlBorder.opacity(0.45)))
+                .padding(10)
         )
-        .scaleEffect(targeted ? 1.015 : 1)
+        .background(
+            RoundedRectangle(cornerRadius: Theme.Radius.card - 2, style: .continuous)
+                .fill(Theme.violet.opacity(targeted ? 0.06 : 0))
+                .padding(10)
+        )
         .animation(Theme.spring, value: targeted)
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) { pulse = true }
-            withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) { dash = -180 }
+            withAnimation(.linear(duration: 6).repeatForever(autoreverses: false)) { dash = -130 }
         }
     }
 
     private var core: some View {
         ZStack {
             Circle().fill(Theme.brand)
-            Circle().fill(RadialGradient(colors: [.white.opacity(0.30), .clear], center: UnitPoint(x: 0.28, y: 0.18),
-                                         startRadius: 0, endRadius: 60))
             SpinningMark(style: .onBrand, secondsPerTurn: targeted ? 3 : 14)
                 .padding(10)
         }
         .frame(width: 80, height: 80)
-        .shadow(color: Theme.violet.opacity(0.5), radius: targeted ? 30 : 18, y: 6)
-        .scaleEffect(targeted ? 1.12 : (pulse ? 1.04 : 0.98))
+        .overlay(Circle().strokeBorder(Color.black.opacity(0.08)))
+        .shadow(color: Theme.indigo.opacity(0.25), radius: 3, y: 2)
+        .scaleEffect(targeted ? 1.1 : (pulse ? 1.03 : 1))
     }
 
     private var rings: some View {
         ZStack {
             ForEach(0..<2) { i in
                 Circle()
-                    .stroke(Theme.pinkLight.opacity(pulse ? 0 : 0.40), lineWidth: 2)
+                    .stroke(Theme.violet.opacity(pulse ? 0 : 0.35), lineWidth: 1.5)
                     .frame(width: 80, height: 80)
                     .scaleEffect(pulse ? 1.9 + CGFloat(i) * 0.3 : 1)
             }
@@ -400,12 +511,11 @@ struct DropHero: View {
 
     private func chipView(_ label: String, _ kind: FileKind) -> some View {
         Text(label)
-            .font(.system(size: 10, weight: .heavy, design: .rounded))
+            .font(.system(size: 10, weight: .bold, design: .rounded))
             .foregroundStyle(.white)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Capsule().fill(Theme.tint(kind)))
-            .shadow(color: Theme.tint(kind).opacity(0.4), radius: 4, y: 2)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(Theme.tint(kind)))
     }
 }
 

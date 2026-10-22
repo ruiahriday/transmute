@@ -33,10 +33,15 @@ struct ContentView: View {
 
     enum CompressBy { case percent, size }
 
+    /// `initialMode` picks the tab shown first (the window pictures show the Tools tab too).
+    init(initialMode: Mode = .convert) {
+        _mode = State(initialValue: initialMode)
+    }
+
     var body: some View {
         ZStack {
-            AuroraBackground()
-            VStack(spacing: 14) {
+            AppBackground()
+            VStack(spacing: 12) {
                 header.layoutPriority(1)
                 Group {
                     if queue.jobs.isEmpty {
@@ -46,11 +51,11 @@ struct ContentView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                controls.glassCard(radius: 20, padding: 16).layoutPriority(1)
+                controls.crispCard(padding: 14).layoutPriority(1)
             }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 18)
-            .padding(.top, 6)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .padding(.top, 4)
             .animation(Theme.spring, value: queue.jobs.isEmpty)
         }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
@@ -77,17 +82,16 @@ struct ContentView: View {
     // MARK: Header
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             SpinformMark()
-                .frame(width: 38, height: 38)
-                .shadow(color: Theme.violet.opacity(0.30), radius: 6, y: 2)
-            VStack(alignment: .leading, spacing: 1) {
+                .frame(width: 32, height: 32)
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Spinform")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(Theme.Fonts.wordmark)
                     .foregroundStyle(Theme.brandText)
                 Text("Drop. Pick a format. Done.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
             if !queue.jobs.isEmpty {
@@ -104,16 +108,18 @@ struct ContentView: View {
                 ProgressView().controlSize(.small)
             } else {
                 Image(systemName: done == total ? "checkmark.seal.fill" : "square.stack.3d.up.fill")
-                    .foregroundStyle(done == total ? Theme.success : Theme.accent)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(done == total ? Theme.success : Theme.accentText)
             }
             Text(done > 0 ? "\(done) of \(total) done" : "\(total) file\(total == 1 ? "" : "s")")
                 .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
                 .monospacedDigit()
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(.regularMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08)))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous).strokeBorder(Theme.hairline))
         .animation(Theme.spring, value: done)
     }
 
@@ -126,12 +132,12 @@ struct ContentView: View {
                 : "Tip: hold \(WheelKind.convert.key.label) while dragging a file anywhere to convert it on the spot",
             onChoose: { showImporter = true }
         )
-        .glassCard(radius: 24, padding: 0)
+        .crispCard(padding: 0)
     }
 
     private var fileList: some View {
         ScrollView {
-            LazyVStack(spacing: 8) {
+            LazyVStack(spacing: 6) {
                 ForEach(queue.jobs) { job in
                     JobRow(
                         job: job,
@@ -149,9 +155,9 @@ struct ContentView: View {
         .scrollContentBackground(.hidden)
         .overlay {
             if dropTargeted {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Theme.brand, lineWidth: 3)
-                    .background(Theme.violet.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .strokeBorder(Theme.brand, lineWidth: 2)
+                    .background(Theme.violet.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                     .transition(.opacity)
             }
         }
@@ -202,23 +208,29 @@ struct ContentView: View {
     private var convertControls: some View {
         VStack(alignment: .leading, spacing: 8) {
             if queue.kindsPresent.isEmpty {
-                Text("Add some files to choose output formats.").foregroundStyle(.secondary)
+                Text("Add some files to choose output formats.").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
             }
             ForEach(queue.kindsPresent) { kind in
                 Picker(selection: format(for: kind)) {
                     ForEach(kind.convertTargets) { Text($0.label).tag($0) }
                 } label: {
-                    Label(kind.title, systemImage: kind.symbol).frame(width: 120, alignment: .leading)
+                    Label(kind.title, systemImage: kind.symbol)
+                        .font(Theme.Fonts.body)
+                        .foregroundStyle(Theme.textPrimary)
+                        .frame(width: 120, alignment: .leading)
                 }
                 .frame(maxWidth: 320)
             }
             HStack(spacing: 12) {
                 if queue.kindsPresent.contains(.image) || queue.kindsPresent.contains(.pdf) {
-                    Text("Quality")
+                    Text("Quality").font(Theme.Fonts.body).foregroundStyle(Theme.textPrimary)
                     Slider(value: $quality, in: 0.1...1).frame(width: 140)
-                    Text("\(Int(quality * 100))%").monospacedDigit().frame(width: 40, alignment: .leading)
+                    Text("\(Int(quality * 100))%").font(Theme.Fonts.body).monospacedDigit()
+                        .foregroundStyle(Theme.textSecondary).frame(width: 40, alignment: .leading)
                 }
                 Toggle("Remove metadata", isOn: $stripMetadata)
+                    .toggleStyle(CrispCheckboxStyle())
+                    .help("Leaves out location, camera and other details from the converted copies")
                 Spacer()
                 actionButtons(title: "Convert") {
                     let plan = queue.jobs.map { job in
@@ -246,10 +258,10 @@ struct ContentView: View {
                 .frame(width: 200)
                 if compressBy == .percent {
                     Slider(value: $percent, in: 10...90, step: 5).frame(width: 160)
-                    Text("to \(Int(percent))% of original").monospacedDigit()
+                    Text("to \(Int(percent))% of original").font(Theme.Fonts.body).monospacedDigit()
                 } else {
                     TextField("MB", text: $targetMB).frame(width: 60)
-                    Text("MB per file")
+                    Text("MB per file").font(Theme.Fonts.body)
                 }
                 Spacer()
                 actionButtons(title: "Compress") {
@@ -263,8 +275,8 @@ struct ContentView: View {
                 }
             }
             Text("Works on images, video, audio and PDFs; other files are skipped. Originals are never changed.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.Fonts.caption)
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
@@ -276,11 +288,42 @@ struct ContentView: View {
         let all = queue.jobs.map(\.id)
         let busy = queue.isRunning
         return VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button("Merge PDFs") { queue.runBatch(.mergePDFs, ids: pdfs, options: .fromDefaults(), reveal: revealWhenDone) }
-                    .disabled(pdfs.count < 2 || busy)
+            HStack(spacing: 6) {
+                Button { runBackground(.remove, on: images) } label: { Label("Remove Background", systemImage: "scissors") }
+                    .disabled(images.isEmpty || busy)
+                    .help("Cuts out the main subject of every image and saves transparent PNGs")
+                Menu {
+                    Button("White") { runBackground(BackgroundEdit(fill: .color(.white)), on: images) }
+                    Button("Light Grey") { runBackground(BackgroundEdit(fill: .color(RGBAColor(hex: 0xF1F1F4))), on: images) }
+                    Button("Black") { runBackground(BackgroundEdit(fill: .color(RGBAColor(hex: 0x18181B))), on: images) }
+                    Divider()
+                    ForEach(GradientPreset.all) { preset in
+                        Button("\(preset.name) Gradient") { runBackground(BackgroundEdit(fill: preset.fill), on: images) }
+                    }
+                    Divider()
+                    Button("Blur the Original") { runBackground(BackgroundEdit(fill: .blur(0.5)), on: images) }
+                    Button("A Picture…") { chooseBackgroundPicture(for: images) }
+                } label: {
+                    Label("New Background", systemImage: "photo.on.rectangle")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous).strokeBorder(Theme.hairline))
+                .disabled(images.isEmpty || busy)
+                .help("Keeps the subject and puts a colour, gradient, blur or picture behind it; for every image")
                 Button("Images → PDF") { queue.runBatch(.imagesToPDF, ids: images, options: .fromDefaults(), reveal: revealWhenDone) }
                     .disabled(images.isEmpty || busy)
+                Button("Read QR Codes") {
+                    queue.start(images.map { ($0, JobOperation.readQR) }, options: .fromDefaults(), reveal: false)
+                }
+                .disabled(images.isEmpty || busy)
+            }
+            HStack(spacing: 6) {
+                Button("Merge PDFs") { queue.runBatch(.mergePDFs, ids: pdfs, options: .fromDefaults(), reveal: revealWhenDone) }
+                    .disabled(pdfs.count < 2 || busy)
                 Button("Split PDF Pages") {
                     queue.start(pdfs.map { ($0, JobOperation.splitPDF) }, options: .fromDefaults(), reveal: revealWhenDone)
                 }
@@ -289,17 +332,13 @@ struct ContentView: View {
                     .disabled(videos.count < 2 || busy)
                     .help("Joins the videos in list order into one MP4")
             }
-            HStack {
+            HStack(spacing: 6) {
                 Button("Zip All") { queue.runBatch(.archive(.zip), ids: all, options: .fromDefaults(), reveal: revealWhenDone) }
                     .disabled(all.isEmpty || busy)
                 Button("Remove Metadata") {
                     queue.start(cleanable.map { ($0, JobOperation.stripMetadata) }, options: .fromDefaults(), reveal: revealWhenDone)
                 }
                 .disabled(cleanable.isEmpty || busy)
-                Button("Read QR Codes") {
-                    queue.start(images.map { ($0, JobOperation.readQR) }, options: .fromDefaults(), reveal: false)
-                }
-                .disabled(images.isEmpty || busy)
                 Button("Float Files") { FloatingShelf.shared.add(queue.jobs.map(\.url)) }
                     .disabled(all.isEmpty)
                     .help("Keeps the files on a small always-on-top shelf you can drag them out of")
@@ -307,6 +346,21 @@ struct ContentView: View {
                 if busy { Button("Cancel") { queue.cancelAll() } }
             }
         }
+    }
+
+    /// Remove or replace the background of every image in the list, two at a time.
+    private func runBackground(_ background: BackgroundEdit, on ids: [UUID]) {
+        var edit = ImageEdit()
+        edit.background = background
+        queue.start(ids.map { ($0, JobOperation.editImage(edit)) }, options: .fromDefaults(), reveal: revealWhenDone)
+    }
+
+    private func chooseBackgroundPicture(for ids: [UUID]) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.prompt = "Use as Background"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        runBackground(BackgroundEdit(fill: .image(url)), on: ids)
     }
 
     @ViewBuilder
@@ -408,20 +462,23 @@ struct JobRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            KindBadge(kind: job.kind)
-            VStack(alignment: .leading, spacing: 3) {
+            KindBadge(kind: job.kind, size: 34)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(job.url.lastPathComponent)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(Theme.Fonts.bodyStrong)
+                    .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text("\(job.kind.title) · \(job.size.formattedSize)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.caption)
+                    .foregroundStyle(Theme.textSecondary)
                 if case .done(let result) = job.state, let message = result.message {
-                    Text(message).font(.caption).foregroundStyle(Theme.success).textSelection(.enabled).lineLimit(3)
+                    Text(message).font(Theme.Fonts.caption.weight(.medium)).foregroundStyle(Theme.success)
+                        .textSelection(.enabled).lineLimit(3)
                 }
                 if case .failed(let message) = job.state {
-                    Text(message).font(.caption).foregroundStyle(.red).textSelection(.enabled).lineLimit(3)
+                    Text(message).font(Theme.Fonts.caption.weight(.medium)).foregroundStyle(Theme.danger)
+                        .textSelection(.enabled).lineLimit(3)
                 }
             }
             Spacer(minLength: 8)
@@ -433,26 +490,31 @@ struct JobRow: View {
                     .help("Open in the editor; the result is saved as a copy")
             }
             if let onInfo {
-                Button(action: onInfo) { Image(systemName: "info.circle") }
-                    .buttonStyle(.borderless)
-                    .disabled(isRunning)
-                    .help("View and edit metadata")
-            }
-            Button(action: onRemove) { Image(systemName: "xmark.circle.fill") }
+                Button(action: onInfo) {
+                    Image(systemName: "info.circle").font(.system(size: 14, weight: .medium))
+                }
                 .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
-                .opacity(hovering ? 1 : 0.5)
-                .help("Remove from list")
+                .foregroundStyle(Theme.accentText)
+                .disabled(isRunning)
+                .help("View and edit metadata")
+            }
+            Button(action: onRemove) {
+                Image(systemName: "xmark").font(.system(size: 10, weight: .bold))
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(hovering ? Theme.surfaceHover : Color.clear))
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(hovering ? Theme.textPrimary : Theme.textTertiary)
+            .help("Remove from list")
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.vertical, 9)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(hovering ? Theme.tint(job.kind).opacity(0.6) : Color.primary.opacity(0.07), lineWidth: 1)
+            RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
+                .strokeBorder(hovering ? Theme.tint(job.kind).opacity(0.7) : Theme.hairline, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(hovering ? 0.14 : 0.06), radius: hovering ? 12 : 6, y: hovering ? 6 : 3)
-        .scaleEffect(hovering ? 1.008 : 1)
+        .shadow(color: .black.opacity(0.04), radius: 1, y: 1)
         .modifier(Shake(amount: shake))
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.18), value: hovering)
@@ -471,17 +533,18 @@ struct JobRow: View {
         switch job.state {
         case .queued:
             Text("Ready")
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 2)
+                .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(Theme.hairline))
         case .running(let fraction):
             HStack(spacing: 8) {
                 GlowProgressBar(value: fraction, tint: Theme.tint(job.kind)).frame(width: 110)
                 Text("\(Int(fraction * 100))%")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .font(Theme.Fonts.caption.monospacedDigit().weight(.medium))
+                    .foregroundStyle(Theme.textSecondary)
                     .frame(width: 34, alignment: .trailing)
             }
         case .done(let result):
@@ -497,7 +560,7 @@ struct JobRow: View {
                 PopCheck()
             }
         case .failed:
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Theme.warning)
         }
     }
 }

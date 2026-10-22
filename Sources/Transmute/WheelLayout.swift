@@ -2,14 +2,14 @@ import Foundation
 
 /// Which bubbles each drag wheel shows, and where. A layout is a list of item ids going clockwise
 /// from the top; "gap" leaves a position empty so the others stay where the user put them.
-/// Ids: "convert:pdf", "tool:edit" (and half, quarter, clean, split, merge, topdf, qr, zip),
+/// Ids: "convert:pdf", "tool:edit" (and nobg, half, quarter, clean, split, merge, topdf, qr, zip),
 /// "action:airdrop" (and float, copy, copypath, terminal, move). Any item can go on any wheel.
 enum WheelLayout {
     static let gap = "gap"
     static let maxSlots = 12
     static let prefKey = "wheelLayouts"
 
-    static let tools = ["edit", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"]
+    static let tools = ["edit", "nobg", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"]
     static let actions = FileAction.allCases.map(\.id)
 
     /// Where a customized layout is kept in the saved dictionary: "convert.document", "tools.image"…
@@ -51,7 +51,7 @@ enum WheelLayout {
         case "clean": kinds.allSatisfy(\.canStripMetadata)
         case "split": kinds.allSatisfy { $0 == .pdf }
         case "merge": kinds.allSatisfy { $0 == .pdf } && count > 1
-        case "topdf", "qr": kinds.allSatisfy { $0 == .image }
+        case "topdf", "qr", "nobg": kinds.allSatisfy { $0 == .image }
         case "zip": true
         case "edit": kinds.allSatisfy { [.image, .video, .audio].contains($0) }
         default: false

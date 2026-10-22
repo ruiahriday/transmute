@@ -175,10 +175,19 @@ struct ImageEdit: Equatable, Sendable {
     var exposure = 0.0
     var redactions: [Redaction] = []
     var annotations: [Annotation] = []
+    /// Cut out the subject and make the rest transparent or something else (BackgroundTool.swift); nil leaves it.
+    var background: BackgroundEdit?
     /// nil keeps the input format when macOS can write it, otherwise PNG.
     var outputFormat: OutputFormat?
 
     static let identity = ImageEdit()
+
+    /// Just the background taken away: the drag wheel's and the Tools tab's one-click cut-out.
+    static var removingBackground: ImageEdit {
+        var edit = ImageEdit()
+        edit.background = .remove
+        return edit
+    }
 
     /// quarterTurns folded into 0…3.
     var turns: Int { ((quarterTurns % 4) + 4) % 4 }
@@ -189,7 +198,13 @@ struct ImageEdit: Equatable, Sendable {
 
     var changesPixels: Bool {
         crop.map { !$0.clamped.isFull } == true || turns != 0 || flipHorizontal || flipVertical
-            || hasColorAdjustments || !redactions.isEmpty || !annotations.isEmpty
+            || hasColorAdjustments || !redactions.isEmpty || !annotations.isEmpty || background != nil
+    }
+
+    /// Only the background changes, so the copy is named for that ("photo no-bg.png").
+    var onlyBackground: Bool {
+        background != nil && crop.map { !$0.clamped.isFull } != true && turns == 0 && !flipHorizontal && !flipVertical
+            && !hasColorAdjustments && redactions.isEmpty && annotations.isEmpty
     }
 
     /// Nothing to do: saving would only copy the image.
@@ -228,24 +243,31 @@ enum ImageEditEngine {
         let originalSize: CGSize
     }
 
-    static func apply(_ edit: ImageEdit, to input: URL, options: ConversionOptions) async throws -> JobResult {
+    /// `subjectMask` replaces Vision's subject detection (the self-test uses a known shape).
+    static func apply(_ edit: ImageEdit, to input: URL, options: ConversionOptions,
+                      subjectMask: ((CGImage) throws -> CIImage)? = nil) async throws -> JobResult {
         guard FileKind.of(input) == .image else {
             throw ConversionError("Only images can be edited in the photo editor.")
         }
         let original = try ImageConverter.loadCGImage(input)
         try Task.checkCancellation()
-        let image = try render(edit, on: original)
+        let image = try render(edit, on: original, subjectMask: subjectMask)
         try Task.checkCancellation()
 
         // Keep the input's format (and its extension spelling) unless another was chosen.
-        let kept = keptFormat(of: input)
+        var kept = keptFormat(of: input)
+        let transparent = edit.background?.isTransparent == true
+        // A cut-out needs transparency: PNG, unless the input is HEIC or TIFF, which keep it too.
+        if transparent, let format = kept, ![.png, .heic, .tiff].contains(format) { kept = nil }
         var format = kept ?? .png
         var ext = kept != nil ? input.pathExtension.lowercased() : OutputFormat.png.fileExtension
         if let chosen = edit.outputFormat, canWrite(chosen) {
             format = chosen
             ext = chosen.fileExtension
         }
+        let suffix = edit.onlyBackground ? (transparent ? "no-bg" : "new-bg") : "edited"
         var notes: [String] = []
+        if let background = edit.background { notes.append(background.summary) }
         let frames = CGImageSourceCreateWithURL(input as CFURL, nil).map { CGImageSourceGetCount($0) } ?? 1
         if frames > 1 && ["gif", "webp"].contains(input.pathExtension.lowercased()) {
             notes.append("first frame only")
@@ -256,7 +278,7 @@ enum ImageEditEngine {
             let png = OutputPaths.temporaryURL(ext: "png")
             defer { try? FileManager.default.removeItem(at: png) }
             try ImageConverter.data(from: image, type: .png, quality: 1).write(to: png)
-            let out = OutputPaths.destination(for: input, ext: "webp", suffix: "edited", folder: options.outputFolder)
+            let out = OutputPaths.destination(for: input, ext: "webp", suffix: suffix, folder: options.outputFolder)
             try await ImageConverter.encodeWebP(png, to: out, quality: options.quality)
             return JobResult(outputs: [out], message: message(for: image, notes: notes))
         }
@@ -275,11 +297,13 @@ enum ImageEditEngine {
             guard edit.outputFormat == nil else {
                 throw ConversionError("This Mac can't encode HEIC images. Choose JPEG or PNG instead.")
             }
-            data = try encode(image, type: .jpeg, quality: options.quality, metadataFrom: metadataSource)
-            ext = "jpg"
-            notes.append("saved as JPEG: this Mac can't encode HEIC")
+            // A cut-out falls back to PNG so it stays transparent.
+            let fallback: UTType = transparent ? .png : .jpeg
+            data = try encode(image, type: fallback, quality: options.quality, metadataFrom: metadataSource)
+            ext = transparent ? "png" : "jpg"
+            notes.append("saved as \(transparent ? "PNG" : "JPEG"): this Mac can't encode HEIC")
         }
-        let out = OutputPaths.destination(for: input, ext: ext, suffix: "edited", folder: options.outputFolder)
+        let out = OutputPaths.destination(for: input, ext: ext, suffix: suffix, folder: options.outputFolder)
         try data.write(to: out, options: .atomic)
         return JobResult(outputs: [out], message: message(for: image, notes: notes))
     }
@@ -307,13 +331,18 @@ enum ImageEditEngine {
         ImageConverter.utType(for: format) != nil || (format == .webp && Tools.ffmpeg != nil)
     }
 
-    /// The whole pipeline, in the order the editor's overlays assume: redactions → annotations →
-    /// colour → crop → rotate/flip. Everything before the crop uses the oriented original's coordinates.
-    static func render(_ edit: ImageEdit, on original: CGImage) throws -> CGImage {
+    /// The whole pipeline, in the order the editor's overlays assume: background → redactions →
+    /// annotations → colour → crop → rotate/flip. Everything before the crop uses the oriented original's coordinates.
+    static func render(_ edit: ImageEdit, on original: CGImage,
+                       subjectMask: ((CGImage) throws -> CIImage)? = nil) throws -> CGImage {
         let context = CIContext(options: [.cacheIntermediates: false])
         let width = original.width, height = original.height
         var image = original
 
+        if let background = edit.background {
+            let mask = try subjectMask?(original) ?? BackgroundEngine.subjectMask(for: original)
+            image = try BackgroundEngine.compose(original, mask: mask, fill: background.fill)
+        }
         if !edit.redactions.isEmpty {
             let redacted = redact(CIImage(cgImage: image), edit.redactions, width: width, height: height)
             image = try ciRender(redacted, width: width, height: height, like: original, context: context)
@@ -337,12 +366,20 @@ enum ImageEditEngine {
         return image
     }
 
-    /// The editor's live preview: redactions and colour only (SwiftUI draws the rest on top).
-    /// nil means "unchanged, show the plain preview".
-    static func previewRender(_ edit: ImageEdit, on image: CGImage) -> CGImage? {
-        guard !edit.redactions.isEmpty || edit.hasColorAdjustments else { return nil }
+    /// The editor's live preview: background, redactions and colour (SwiftUI draws the rest on top).
+    /// `mask` is the subject found on this preview. nil means "unchanged, show the plain preview".
+    static func previewRender(_ edit: ImageEdit, on image: CGImage, mask: CGImage? = nil) -> CGImage? {
+        var base = image
+        var changed = false
+        if let background = edit.background, let mask,
+           let composed = try? BackgroundEngine.compose(image, mask: BackgroundEngine.mask(from: mask),
+                                                        fill: background.fill, preview: true) {
+            base = composed
+            changed = true
+        }
+        guard !edit.redactions.isEmpty || edit.hasColorAdjustments else { return changed ? base : nil }
         let context = CIContext(options: [.cacheIntermediates: false])
-        var ci = CIImage(cgImage: image)
+        var ci = CIImage(cgImage: base)
         if !edit.redactions.isEmpty { ci = redact(ci, edit.redactions, width: image.width, height: image.height) }
         if edit.hasColorAdjustments { ci = adjustColors(ci, edit) }
         return try? ciRender(ci, width: image.width, height: image.height, like: image, context: context)
@@ -626,6 +663,10 @@ enum ImageEditEngine {
             props[kCGImagePropertyOrientation] = 1
             props[kCGImagePropertyPixelWidth] = nil
             props[kCGImagePropertyPixelHeight] = nil
+            // Describe the new pixels, not the old ones (a cut-out JPEG gains transparency).
+            for key in [kCGImagePropertyHasAlpha, kCGImagePropertyDepth, kCGImagePropertyIsIndexed, kCGImagePropertyIsFloat] {
+                props[key] = nil
+            }
             if var tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any] {
                 tiff[kCGImagePropertyTIFFOrientation] = 1
                 props[kCGImagePropertyTIFFDictionary] = tiff
@@ -655,15 +696,32 @@ struct ImageEditorView: View {
     let onSave: (ImageEdit) -> Void
     let onCancel: () -> Void
 
-    init(url: URL, onSave: @escaping (ImageEdit) -> Void, onCancel: @escaping () -> Void) {
+    /// `showcase` opens on the Background panel with that background chosen (for the window pictures).
+    init(url: URL, showcase: BackgroundEdit? = nil, onSave: @escaping (ImageEdit) -> Void, onCancel: @escaping () -> Void) {
         self.url = url
         self.onSave = onSave
         self.onCancel = onCancel
+        if let showcase {
+            var edit = ImageEdit()
+            edit.background = showcase
+            _edit = State(initialValue: edit)
+            _tool = State(initialValue: .background)
+        }
     }
 
     private enum Tool: String, CaseIterable, Identifiable {
-        case crop = "Crop", redact = "Redact", annotate = "Annotate", adjust = "Adjust"
+        case crop = "Crop", redact = "Redact", annotate = "Markup", adjust = "Adjust", background = "Background"
         var id: String { rawValue }
+
+        var symbol: String {
+            switch self {
+            case .crop: "crop"
+            case .redact: "eye.slash"
+            case .annotate: "pencil.tip.crop.circle"
+            case .adjust: "slider.horizontal.3"
+            case .background: "scissors"
+            }
+        }
     }
 
     private enum CropAspect: String, CaseIterable, Identifiable {
@@ -702,7 +760,9 @@ struct ImageEditorView: View {
         var contrast: Double
         var saturation: Double
         var exposure: Double
+        var background: BackgroundEdit?
         var loaded: Bool
+        var maskReady: Bool
     }
 
     /// Slider level (1…10) → fraction of the image height.
@@ -728,6 +788,9 @@ struct ImageEditorView: View {
     @State private var pendingText: NormPoint? = nil
     /// Ids of added redactions and annotations, oldest first, for Undo.
     @State private var addedOrder: [UUID] = []
+    /// The subject found on `preview`, for the Background panel; found the first time it's needed.
+    @State private var subjectMask: CGImage? = nil
+    @State private var subjectStatus: SubjectStatus = .idle
     @FocusState private var textFieldFocused: Bool
 
     var body: some View {
@@ -738,27 +801,33 @@ struct ImageEditorView: View {
                 transformBar
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
+                    .background(Theme.surface)
             }
             Divider()
             sidebar
-                .frame(width: 280)
+                .frame(width: 300)
+                .background(Theme.surface)
         }
-        .frame(minWidth: 760, idealWidth: 1000, minHeight: 560, idealHeight: 700)
+        .frame(minWidth: 780, idealWidth: 1000, minHeight: 560, idealHeight: 700)
         .task(id: url) { await loadPreview() }
         .task(id: previewKey) { await refreshRendered() }
+        .task(id: wantsSubject) { await findSubject() }
     }
 
     private var previewKey: PreviewKey {
         PreviewKey(redactions: edit.redactions, brightness: edit.brightness, contrast: edit.contrast,
-                   saturation: edit.saturation, exposure: edit.exposure, loaded: preview != nil)
+                   saturation: edit.saturation, exposure: edit.exposure, background: edit.background,
+                   loaded: preview != nil, maskReady: subjectMask != nil)
     }
+
+    private var wantsSubject: Bool { (tool == .background || edit.background != nil) && preview != nil }
 
     // MARK: Canvas
 
     private var canvasArea: some View {
         GeometryReader { proxy in
             ZStack {
-                Color(nsColor: .underPageBackgroundColor)
+                Color.adaptive(light: 0xE6E6EC, dark: 0x0B0B0E)
                 if let image = rendered ?? preview {
                     let size = canvasSize(imageWidth: image.width, imageHeight: image.height, in: proxy.size)
                     // Turns and flips are only shown here; drawing still happens in the
@@ -795,6 +864,9 @@ struct ImageEditorView: View {
 
     private func editorCanvas(image: CGImage, size: CGSize) -> some View {
         ZStack(alignment: .topLeading) {
+            // Shows through where the picture is transparent (a cut-out, or a PNG with no background).
+            Checkerboard()
+                .frame(width: size.width, height: size.height)
             Image(decorative: image, scale: 1)
                 .resizable()
                 .interpolation(.high)
@@ -948,7 +1020,7 @@ struct ImageEditorView: View {
             } else if !isClick, let kind = draftKind(for: state) {
                 add(ImageEdit.Annotation(kind: kind, color: color, size: annotationSize(for: kind)))
             }
-        case .adjust:
+        case .adjust, .background:
             break
         }
     }
@@ -1105,11 +1177,30 @@ struct ImageEditorView: View {
         try? await Task.sleep(nanoseconds: 120_000_000)
         guard !Task.isCancelled else { return }
         let box = ImageEditEngine.PreviewImage(image: base, originalSize: .zero)
+        let maskBox = subjectMask.map { ImageEditEngine.PreviewImage(image: $0, originalSize: .zero) }
         let result = await Task.detached(priority: .userInitiated) {
-            ImageEditEngine.previewRender(edit, on: box.image).map { ImageEditEngine.PreviewImage(image: $0, originalSize: .zero) }
+            ImageEditEngine.previewRender(edit, on: box.image, mask: maskBox?.image)
+                .map { ImageEditEngine.PreviewImage(image: $0, originalSize: .zero) }
         }.value
         guard !Task.isCancelled else { return }
         rendered = result?.image
+    }
+
+    /// Finds the subject on the preview once; the Background panel waits for it.
+    private func findSubject() async {
+        guard wantsSubject, subjectMask == nil, let base = preview else { return }
+        if case .failed = subjectStatus { return } // only again from Try Again
+        subjectStatus = .finding
+        let box = ImageEditEngine.PreviewImage(image: base, originalSize: .zero)
+        do {
+            let mask = try await Task.detached(priority: .userInitiated) {
+                ImageEditEngine.PreviewImage(image: try BackgroundEngine.maskImage(for: box.image), originalSize: .zero)
+            }.value
+            subjectMask = mask.image
+            subjectStatus = .ready
+        } catch {
+            subjectStatus = .failed(error.localizedDescription)
+        }
     }
 
     // MARK: Bottom bar
@@ -1135,9 +1226,9 @@ struct ImageEditorView: View {
                 .help("Remove the last box, arrow or text")
             Spacer()
             Text(outputSizeText)
-                .font(.callout)
+                .font(Theme.Fonts.body)
                 .monospacedDigit()
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
@@ -1158,12 +1249,8 @@ struct ImageEditorView: View {
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Picker("Tool", selection: $tool) {
-                ForEach(Tool.allCases) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .padding(12)
+            toolBar
+                .padding(10)
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
@@ -1172,6 +1259,11 @@ struct ImageEditorView: View {
                     case .redact: redactControls
                     case .annotate: annotateControls
                     case .adjust: adjustControls
+                    case .background:
+                        BackgroundPanel(background: $edit.background, status: subjectStatus) {
+                            subjectStatus = .idle
+                            Task { await findSubject() }
+                        }
                     }
                     if tool == .redact || tool == .annotate {
                         Divider()
@@ -1186,10 +1278,40 @@ struct ImageEditorView: View {
         }
     }
 
+    /// The editor's tools as a row of symbol tabs.
+    private var toolBar: some View {
+        HStack(spacing: 4) {
+            ForEach(Tool.allCases) { item in
+                let selected = tool == item
+                Button { tool = item } label: {
+                    VStack(spacing: 3) {
+                        Image(systemName: item.symbol)
+                            .font(.system(size: 14, weight: selected ? .semibold : .regular))
+                            .frame(height: 17)
+                        Text(item.rawValue)
+                            .font(.system(size: 10.5, weight: selected ? .semibold : .medium))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                    }
+                    .foregroundStyle(selected ? Theme.accentText : Theme.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                        .fill(selected ? Theme.accent.opacity(0.12) : Color.clear))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                        .strokeBorder(selected ? Theme.accent.opacity(0.55) : Color.clear, lineWidth: 1))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(item.rawValue)
+            }
+        }
+    }
+
     private var cropControls: some View {
         VStack(alignment: .leading, spacing: 10) {
             hint("Drag on the photo to choose what to keep. Drag inside the box to move it; click outside it to start over.")
-            Text("Aspect ratio").font(.headline)
+            SectionLabel("Aspect ratio")
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 6)], spacing: 6) {
                 ForEach(CropAspect.allCases) { preset in
                     Button { choose(preset) } label: {
@@ -1217,8 +1339,8 @@ struct ImageEditorView: View {
             .pickerStyle(.segmented)
             .labelsHidden()
             Text("Black boxes are the safest choice for text: blur and pixelation can sometimes be partly undone.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(Theme.Fonts.caption)
+                .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -1237,7 +1359,7 @@ struct ImageEditorView: View {
                     .focused($textFieldFocused)
                     .onSubmit { commitPendingText() }
             }
-            Text("Colour").font(.headline)
+            SectionLabel("Colour")
             HStack(spacing: 8) {
                 ForEach(RGBAColor.swatches, id: \.self) { swatch in
                     Button { color = swatch } label: {
@@ -1253,7 +1375,7 @@ struct ImageEditorView: View {
                 }
             }
             if markup != .highlight {
-                Text(markup == .text ? "Text size" : "Line width").font(.headline)
+                SectionLabel(markup == .text ? "Text size" : "Line width")
                 Slider(value: $sizeLevel, in: 1...10)
             }
         }
@@ -1302,11 +1424,12 @@ struct ImageEditorView: View {
                                   neutral: Double, format: @escaping (Double) -> String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(title).font(.headline)
+                Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Text(format(value.wrappedValue))
+                    .font(Theme.Fonts.body)
                     .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.textSecondary)
                 Button { value.wrappedValue = neutral } label: { Image(systemName: "arrow.uturn.backward.circle") }
                     .buttonStyle(.borderless)
                     .disabled(value.wrappedValue == neutral)
@@ -1318,9 +1441,9 @@ struct ImageEditorView: View {
 
     private var itemList: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Added").font(.headline)
+            SectionLabel("Added")
             if edit.redactions.isEmpty && edit.annotations.isEmpty {
-                Text("Nothing yet.").font(.callout).foregroundStyle(.secondary)
+                Text("Nothing yet.").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
             }
             ForEach(edit.redactions) { redaction in
                 itemRow(redaction.style.label, symbol: redaction.style.symbol, tint: .primary) { remove(redaction.id) }
@@ -1358,8 +1481,8 @@ struct ImageEditorView: View {
 
     private func hint(_ text: String) -> some View {
         Text(text)
-            .font(.callout)
-            .foregroundStyle(.secondary)
+            .font(Theme.Fonts.body)
+            .foregroundStyle(Theme.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
     }
 

@@ -20,6 +20,14 @@ enum Snapshots {
     private static func run(fixtures: URL, output: URL) async {
         try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
         let queue = JobQueue.shared
+        // A product-style photo for the Background panel: one clear subject on a studio backdrop.
+        let art = FileManager.default.temporaryDirectory.appendingPathComponent("spinform-snapshots-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: art, withIntermediateDirectories: true)
+        let subjectPhoto = art.appendingPathComponent("vase.png")
+        if let image = SampleArt.subjectPhoto(width: 960, height: 720),
+           let data = try? ImageConverter.data(from: image, type: .png) {
+            try? data.write(to: subjectPhoto)
+        }
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
             NSApp.appearance = NSAppearance(named: appearance)
             let suffix = appearance == .aqua ? "light" : "dark"
@@ -46,8 +54,30 @@ enum Snapshots {
                 ContentView().environmentObject(queue)
             }
 
+            await shoot("main-tools-\(suffix)", output, size: CGSize(width: 760, height: 600)) {
+                ContentView(initialMode: .tools).environmentObject(queue)
+            }
+
             await shoot("settings-\(suffix)", output, size: CGSize(width: 480, height: 628)) {
                 SettingsView()
+            }
+
+            await shoot("wheel-editor-\(suffix)", output, size: CGSize(width: 760, height: 608)) {
+                WheelEditorView().tint(Theme.accent)
+            }
+
+            await shoot("hud-\(suffix)", output, size: CGSize(width: 324, height: 84), clear: true) {
+                HUDView(ids: Array(ids.prefix(3))).environmentObject(queue)
+            }
+
+            if FileManager.default.fileExists(atPath: subjectPhoto.path) {
+                await shoot("photo-editor-background-\(suffix)", output, size: CGSize(width: 980, height: 680), wait: 6) {
+                    ImageEditorView(url: subjectPhoto, showcase: BackgroundEdit(fill: GradientPreset.all[2].fill),
+                                    onSave: { _ in }, onCancel: {}).tint(Theme.accent)
+                }
+                await shoot("photo-editor-cutout-\(suffix)", output, size: CGSize(width: 980, height: 680), wait: 6) {
+                    ImageEditorView(url: subjectPhoto, showcase: .remove, onSave: { _ in }, onCancel: {}).tint(Theme.accent)
+                }
             }
 
             await shoot("drag-wheel-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), clear: true) {

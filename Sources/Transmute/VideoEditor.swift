@@ -485,10 +485,7 @@ struct VideoEditorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(url.lastPathComponent)
-                .font(.headline)
-                .lineLimit(1)
-                .truncationMode(.middle)
+            EditorTitle(url: url)
             preview
                 .frame(maxWidth: .infinity, minHeight: 200, idealHeight: 300, maxHeight: .infinity)
             timeline
@@ -509,7 +506,8 @@ struct VideoEditorView: View {
     private var preview: some View {
         if let player {
             VideoPlayer(player: player)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous).strokeBorder(Theme.hairline))
         } else if loading {
             ProgressView("Loading…")
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

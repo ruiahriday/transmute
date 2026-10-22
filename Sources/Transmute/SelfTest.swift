@@ -335,6 +335,8 @@ enum SelfTest {
             return outputs
         }
 
+        await backgroundChecks(outDir: outDir, options: options, inputs: inputs)
+
         // Video editor, snapshots and joining (need ffmpeg and the clip.mp4 / movie.mkv fixtures).
         let editClip = inputs.first { $0.lastPathComponent == "clip.mp4" }
         let editMovie = inputs.first { $0.lastPathComponent == "movie.mkv" }
@@ -854,8 +856,12 @@ enum SelfTest {
         same("two PDFs get Merge", WheelLayout.resolve(.tools, [.pdf, .pdf], custom: nil),
              ["tool:half", "tool:quarter", "tool:clean", "tool:split", "tool:merge", "tool:zip"])
         same("mixed files share formats", WheelLayout.resolve(.convert, [.image, .video], custom: nil), ["convert:gif"])
-        same("images get Edit first on the tools wheel", Array(WheelLayout.resolve(.tools, [.image], custom: nil).prefix(2)),
-             ["tool:edit", "tool:half"])
+        same("images get Edit, then Remove background, on the tools wheel",
+             Array(WheelLayout.resolve(.tools, [.image], custom: nil).prefix(3)), ["tool:edit", "tool:nobg", "tool:half"])
+        same("Remove background has a bubble", [WheelItem(id: "tool:nobg")?.label ?? "-"], ["Remove BG"])
+        same("Remove background is offered for images only",
+             [WheelLayout.available(.image).contains("tool:nobg"), WheelLayout.available(.pdf).contains("tool:nobg"),
+              WheelLayout.fits("tool:nobg", [.image, .video])].map { $0 ? "yes" : "no" }, ["yes", "no", "no"])
         same("videos get Edit first on the actions wheel", Array(WheelLayout.resolve(.actions, [.video], custom: nil).prefix(1)),
              ["tool:edit"])
         same("a photo and a PDF have no Edit", WheelLayout.resolve(.tools, [.image, .pdf], custom: nil).filter { $0 == "tool:edit" }, [])
@@ -874,6 +880,189 @@ enum SelfTest {
         same("saved layouts are cleaned up", [String(cleaned.count), cleaned[0]], [String(WheelLayout.maxSlots), "convert:pdf"])
         same("unknown ids have no bubble", ["tool:zip", "action:airdrop", "convert:pdf", "gap", "nope"].map { WheelItem(id: $0) == nil ? "-" : "ok" },
              ["ok", "ok", "ok", "-", "-"])
+    }
+
+    // MARK: Background removal
+
+    /// Cut-outs and new backgrounds: the compositing and file formats with a known subject mask
+    /// (works anywhere), then Vision's own subject detection on this Mac.
+    private static func backgroundChecks(outDir: URL, options: ConversionOptions, inputs: [URL]) async {
+        let dir = outDir.appendingPathComponent("background")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        var opts = options
+        opts.outputFolder = dir
+        let version = ProcessInfo.processInfo.operatingSystemVersionString
+        print("Background removal: \(BackgroundEngine.findsAnySubject ? "any subject (Vision foreground instance mask)" : "people only (Vision person segmentation)") on macOS \(version)")
+
+        let circlePNG = dir.appendingPathComponent("circle.png")
+        let circleJPG = dir.appendingPathComponent("circle.jpg")
+        let photo = dir.appendingPathComponent("orange.png")
+        guard let circle = SampleArt.circleOnBlue(width: 400, height: 300),
+              let still = SampleArt.subjectPhoto(width: 640, height: 480),
+              (try? ImageConverter.data(from: circle, type: .png).write(to: circlePNG)) != nil,
+              (try? ImageConverter.data(from: circle, type: .jpeg, quality: 0.95).write(to: circleJPG)) != nil,
+              (try? ImageConverter.data(from: still, type: .png).write(to: photo)) != nil else {
+            record("Background: fixtures", nil, "couldn't draw the test pictures")
+            return
+        }
+        // The red circle's own shape, as Vision would ideally find it.
+        let knownMask: (CGImage) throws -> CIImage = { image in
+            BackgroundEngine.feathered(SampleArt.circleMask(width: image.width, height: image.height),
+                                       width: image.width, height: image.height)
+        }
+        func sample(_ url: URL, _ x: Double, _ y: Double) throws -> RGBAColor {
+            try ImageEditEngine.samplePixel(url, at: NormPoint(x: x, y: y))
+        }
+        func corners(_ url: URL) throws -> [RGBAColor] {
+            try [(0.02, 0.02), (0.98, 0.02), (0.02, 0.98), (0.98, 0.98)].map { try sample(url, $0.0, $0.1) }
+        }
+        func hasAlpha(_ url: URL) -> Bool {
+            guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let image = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return false }
+            switch image.alphaInfo {
+            case .none, .noneSkipFirst, .noneSkipLast: return false
+            default: return true
+            }
+        }
+        func describe(_ c: RGBAColor) -> String {
+            String(format: "r%.2f g%.2f b%.2f a%.2f", c.red, c.green, c.blue, c.alpha)
+        }
+        /// Transparent corners, an opaque red middle.
+        func expectCutOut(_ url: URL) throws {
+            guard hasAlpha(url) else { throw ConversionError("\(url.lastPathComponent) has no alpha channel") }
+            let found = try corners(url)
+            guard found.allSatisfy({ $0.alpha < 0.05 }) else {
+                throw ConversionError("corners aren't transparent: \(found.map(describe))")
+            }
+            let middle = try sample(url, 0.5, 0.5)
+            guard middle.alpha > 0.95 else { throw ConversionError("the middle isn't opaque: \(describe(middle))") }
+        }
+        func one(_ result: JobResult) throws -> URL {
+            guard let url = result.outputs.first else { throw ConversionError("no output") }
+            return url
+        }
+
+        await check("Background: cut-out of a JPEG is a transparent PNG") {
+            let result = try await ImageEditEngine.apply(.removingBackground, to: circleJPG, options: opts, subjectMask: knownMask)
+            let out = try one(result)
+            guard out.pathExtension == "png", out.lastPathComponent.contains("no-bg") else {
+                throw ConversionError("expected circle no-bg.png, got \(out.lastPathComponent)")
+            }
+            try expectCutOut(out)
+            let middle = try sample(out, 0.5, 0.5)
+            guard middle.red > 0.75, middle.blue < 0.3 else { throw ConversionError("the subject changed colour: \(describe(middle))") }
+            return result.outputs
+        }
+
+        await check("Background: solid colour keeps the JPEG and paints the corners") {
+            var edit = ImageEdit()
+            edit.background = BackgroundEdit(fill: .color(RGBAColor(hex: 0x22C55E)))
+            let result = try await ImageEditEngine.apply(edit, to: circleJPG, options: opts, subjectMask: knownMask)
+            let out = try one(result)
+            guard out.pathExtension == "jpg" else { throw ConversionError("expected a JPEG, got \(out.lastPathComponent)") }
+            for corner in try corners(out) {
+                guard abs(corner.red - 0.13) < 0.12, abs(corner.green - 0.77) < 0.12, abs(corner.blue - 0.37) < 0.12 else {
+                    throw ConversionError("corner should be green #22C55E: \(describe(corner))")
+                }
+            }
+            let middle = try sample(out, 0.5, 0.5)
+            guard middle.red > 0.75, middle.green < 0.3 else { throw ConversionError("the subject changed: \(describe(middle))") }
+            return result.outputs
+        }
+
+        await check("Background: gradient runs from the top colour to the bottom colour") {
+            var edit = ImageEdit()
+            edit.background = BackgroundEdit(fill: .gradient(top: RGBAColor(hex: 0xFDBA74), bottom: RGBAColor(hex: 0x1E3A8A)))
+            let result = try await ImageEditEngine.apply(edit, to: circlePNG, options: opts, subjectMask: knownMask)
+            let out = try one(result)
+            let top = try sample(out, 0.02, 0.01)
+            let bottom = try sample(out, 0.02, 0.99)
+            guard abs(top.green - 0.73) < 0.12, abs(bottom.green - 0.23) < 0.12, top.alpha > 0.99, bottom.alpha > 0.99 else {
+                throw ConversionError("top \(describe(top)), bottom \(describe(bottom))")
+            }
+            return result.outputs
+        }
+
+        await check("Background: blur keeps the original's colours behind the subject") {
+            var edit = ImageEdit()
+            edit.background = BackgroundEdit(fill: .blur(0.6))
+            let result = try await ImageEditEngine.apply(edit, to: circlePNG, options: opts, subjectMask: knownMask)
+            let out = try one(result)
+            let corner = try sample(out, 0.02, 0.02)
+            let middle = try sample(out, 0.5, 0.5)
+            guard corner.blue > 0.5, corner.red < 0.45, corner.alpha > 0.99, middle.red > 0.75 else {
+                throw ConversionError("corner \(describe(corner)), middle \(describe(middle))")
+            }
+            return result.outputs
+        }
+
+        await check("Background: a picture behind the subject fills the frame") {
+            var edit = ImageEdit()
+            edit.background = BackgroundEdit(fill: .image(photo))
+            let result = try await ImageEditEngine.apply(edit, to: circlePNG, options: opts, subjectMask: knownMask)
+            let out = try one(result)
+            let image = try ImageConverter.loadCGImage(out)
+            guard image.width == 400, image.height == 300 else { throw ConversionError("size \(image.width)×\(image.height)") }
+            let found = try corners(out)
+            guard found.allSatisfy({ $0.alpha > 0.99 && $0.blue < 0.9 }) else {
+                throw ConversionError("corners should show the picture: \(found.map(describe))")
+            }
+            return result.outputs
+        }
+
+        // Every kind of image the app opens, cut out with the known shape.
+        for input in inputs where FileKind.of(input) == .image {
+            let ext = input.pathExtension.lowercased()
+            let expected: String
+            switch ext {
+            case "heic", "heif": expected = canWriteHEIC ? ext : "png"
+            case "tif", "tiff": expected = ext
+            default: expected = "png"
+            }
+            await check("Background: \(input.lastPathComponent) → transparent \(expected.uppercased())") {
+                let result = try await ImageEditEngine.apply(.removingBackground, to: input, options: opts, subjectMask: knownMask)
+                let out = try one(result)
+                guard out.pathExtension.lowercased() == expected else {
+                    throw ConversionError("expected .\(expected), got \(out.lastPathComponent)")
+                }
+                try expectCutOut(out)
+                return result.outputs
+            }
+        }
+
+        // Vision on this Mac. Synthetic pictures may hold no "subject" for it, so a clear
+        // no-subject message is accepted and reported as a skip.
+        for (name, url) in [("red circle on blue", circlePNG), ("product-style photo", photo)] {
+            do {
+                let result = try await Engine.perform(.editImage(.removingBackground), on: url, options: opts) { _ in }
+                let out = try one(result)
+                try expectCutOut(out)
+                record("Background: Vision finds the subject in the \(name)", result.outputs, nil)
+            } catch let error as BackgroundEngine.NoSubject {
+                skipped += 1
+                print("SKIP  Background: Vision found no subject in the \(name): \(error.localizedDescription)")
+                record("Background: no subject gives a clear message (\(name))", [],
+                       (error.errorDescription ?? "").count > 20 ? nil : "message too short")
+            } catch let error as ConversionError where error.message.hasPrefix("Couldn't look for the subject") {
+                skipped += 1
+                print("SKIP  Background: Vision couldn't run on this Mac (\(name)): \(error.message)")
+            } catch {
+                record("Background: Vision finds the subject in the \(name)", nil, error.localizedDescription)
+            }
+        }
+
+        // The macOS 13 way (people only), forced: a red circle has no person in it.
+        do {
+            _ = try BackgroundEngine.subjectMask(for: circle, method: .peopleOnly)
+            print("NOTE  people-only mode reported a person in the red circle")
+            record("Background: macOS 13 mode (people only) runs", [], nil)
+        } catch let error as BackgroundEngine.NoSubject {
+            record("Background: macOS 13 mode says no person was found", [],
+                   (error.errorDescription ?? "").contains("macOS 13") ? nil : "unclear message: \(error.localizedDescription)")
+        } catch {
+            skipped += 1
+            print("SKIP  Background: person segmentation couldn't run on this Mac: \(error.localizedDescription)")
+        }
     }
 
     private static func exercise(_ input: URL, options: ConversionOptions) async {
@@ -1002,5 +1191,88 @@ enum SelfTest {
         ctx.draw(cg, in: CGRect(x: pad, y: pad, width: cg.width, height: cg.height))
         guard let padded = ctx.makeImage() else { throw ConversionError("QR canvas failed") }
         try ImageConverter.data(from: padded, type: .png).write(to: url)
+    }
+}
+
+/// Pictures drawn for the self-test and the window pictures.
+enum SampleArt {
+    private static func canvas(_ width: Int, _ height: Int) -> CGContext? {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        return CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                         space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)
+    }
+
+    /// A red circle (radius 30% of the height) in the middle of a blue picture.
+    static func circleOnBlue(width: Int, height: Int) -> CGImage? {
+        guard let ctx = canvas(width, height) else { return nil }
+        let w = CGFloat(width), h = CGFloat(height)
+        ctx.setFillColor(RGBAColor(hex: 0x1D4ED8).cgColor)
+        ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+        ctx.setFillColor(RGBAColor(hex: 0xE11D48).cgColor)
+        let r = h * 0.3
+        ctx.fillEllipse(in: CGRect(x: w / 2 - r, y: h / 2 - r, width: 2 * r, height: 2 * r))
+        return ctx.makeImage()
+    }
+
+    /// The same circle as a mask: white inside, black outside.
+    static func circleMask(width: Int, height: Int) -> CIImage {
+        guard let ctx = canvas(width, height) else { return CIImage(color: CIColor(red: 1, green: 1, blue: 1)) }
+        let w = CGFloat(width), h = CGFloat(height)
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+        ctx.setFillColor(CGColor(gray: 1, alpha: 1))
+        let r = h * 0.3
+        ctx.fillEllipse(in: CGRect(x: w / 2 - r, y: h / 2 - r, width: 2 * r, height: 2 * r))
+        guard let image = ctx.makeImage() else { return CIImage(color: CIColor(red: 1, green: 1, blue: 1)) }
+        return BackgroundEngine.mask(from: image)
+    }
+
+    /// A product-style photo: an orange with a leaf, a soft shadow, on a studio wall and floor.
+    static func subjectPhoto(width: Int, height: Int) -> CGImage? {
+        guard let ctx = canvas(width, height), let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        let w = CGFloat(width), h = CGFloat(height)
+        func gradient(_ colors: [UInt32], _ locations: [CGFloat]) -> CGGradient? {
+            CGGradient(colorsSpace: space, colors: colors.map { RGBAColor(hex: $0).cgColor } as CFArray, locations: locations)
+        }
+        let horizon = h * 0.34
+        if let wall = gradient([0xF1EEE9, 0xD9D1C7], [0, 1]) {
+            ctx.drawLinearGradient(wall, start: CGPoint(x: 0, y: h), end: CGPoint(x: 0, y: horizon), options: [])
+        }
+        if let floor = gradient([0xCBC1B4, 0xB7AA9A], [0, 1]) {
+            ctx.saveGState()
+            ctx.clip(to: CGRect(x: 0, y: 0, width: w, height: horizon))
+            ctx.drawLinearGradient(floor, start: CGPoint(x: 0, y: horizon), end: .zero, options: [])
+            ctx.restoreGState()
+        }
+        let r = h * 0.25
+        let centre = CGPoint(x: w * 0.5, y: horizon * 0.62 + r)
+        // Contact shadow.
+        ctx.saveGState()
+        ctx.setShadow(offset: .zero, blur: r * 0.4, color: CGColor(gray: 0, alpha: 0.55))
+        ctx.setFillColor(CGColor(gray: 0.25, alpha: 0.45))
+        ctx.fillEllipse(in: CGRect(x: centre.x - r * 0.8, y: centre.y - r * 1.08, width: r * 1.6, height: r * 0.26))
+        ctx.restoreGState()
+        // The fruit.
+        ctx.saveGState()
+        ctx.addEllipse(in: CGRect(x: centre.x - r, y: centre.y - r, width: 2 * r, height: 2 * r * 0.96))
+        ctx.clip()
+        if let skin = gradient([0xFFE7C2, 0xFB923C, 0xEA580C, 0x9A3412], [0, 0.25, 0.65, 1]) {
+            ctx.drawRadialGradient(skin, startCenter: CGPoint(x: centre.x - r * 0.35, y: centre.y + r * 0.4), startRadius: 0,
+                                   endCenter: centre, endRadius: r * 1.08, options: [.drawsAfterEndLocation])
+        }
+        ctx.restoreGState()
+        // Stem and leaf.
+        ctx.setFillColor(RGBAColor(hex: 0x57534E).cgColor)
+        ctx.fill(CGRect(x: centre.x - r * 0.03, y: centre.y + r * 0.9, width: r * 0.06, height: r * 0.16))
+        ctx.saveGState()
+        ctx.translateBy(x: centre.x + r * 0.18, y: centre.y + r * 1.02)
+        ctx.rotate(by: 0.5)
+        if let leaf = gradient([0x4ADE80, 0x15803D], [0, 1]) {
+            ctx.addEllipse(in: CGRect(x: -r * 0.28, y: -r * 0.1, width: r * 0.56, height: r * 0.2))
+            ctx.clip()
+            ctx.drawLinearGradient(leaf, start: CGPoint(x: 0, y: r * 0.1), end: CGPoint(x: 0, y: -r * 0.1), options: [])
+        }
+        ctx.restoreGState()
+        return ctx.makeImage()
     }
 }

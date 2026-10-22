@@ -90,7 +90,7 @@ jobs:
         run: |
           ./build/Spinform.app/Contents/MacOS/Spinform --snapshots "$RUNNER_TEMP/fixtures" "$RUNNER_TEMP/snapshots" 2>&1 | tee logs/snapshots.log &
           PID=$!
-          for i in $(seq 1 120); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+          for i in $(seq 1 200); do kill -0 $PID 2>/dev/null || break; sleep 1; done
           kill $PID 2>/dev/null || true
           ls -la "$RUNNER_TEMP/snapshots" || true
 
