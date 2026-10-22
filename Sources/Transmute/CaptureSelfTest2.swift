@@ -108,8 +108,9 @@ extension SelfTest {
                 points.append(NormPoint(x: 0.1 + Double(i) * 0.004, y: 0.3 + (i % 2 == 0 ? 0.002 : -0.002)))
             }
             let smooth = StrokeSmoothing.smooth(points)
-            let worst = smooth.map { abs($0.y - 0.3) }.max() ?? 1
-            guard smooth.count < 20, smooth.count >= 2, worst < 0.002 else {
+            // The ends stay where the pen went down and up; in between the jitter is gone.
+            let worst = smooth.dropFirst().dropLast().map { abs($0.y - 0.3) }.max() ?? 0
+            guard smooth.count < 20, smooth.count >= 2, worst < 0.001 else {
                 throw ConversionError("\(smooth.count) points, wobble \(worst)")
             }
             guard let redPicture = SampleArt.solid(0xDC2626, width: 50, height: 50) else { throw ConversionError("art") }
@@ -131,15 +132,19 @@ extension SelfTest {
         }
 
         await check("Annotate: seven text styles, the label style on a coloured box") {
+            // A grey canvas, so the outline style's white halo shows.
+            let grey = try writePNG(SampleArt.solid(0x808080, width: 400, height: 300), "grey-2.png")
             var outputs: [URL] = []
-            var looks = Set<Data>()
+            var looks: [Data: String] = [:]
             for style in ImageEdit.TextStyle.allCases {
                 var edit = ImageEdit()
                 edit.annotations = [ImageEdit.Annotation(kind: style == .bold ? .text("Hi there", at: NormPoint(x: 0.1, y: 0.1))
                                                          : .styledText("Hi there", at: NormPoint(x: 0.1, y: 0.1), style: style),
                                                          color: .brightBlue, size: 0.1)]
-                let out = try await edited(edit, on: white)
-                looks.insert(try Data(contentsOf: out))
+                let out = try await edited(edit, on: grey)
+                let data = try Data(contentsOf: out)
+                if let same = looks[data] { throw ConversionError("\(style.label) looks the same as \(same)") }
+                looks[data] = style.label
                 if style == .label {
                     let behind = try sample(out, 0.09, 0.15)
                     guard behind.blue > 0.8, behind.red < 0.2 else { throw ConversionError("label background \(describe(behind))") }
