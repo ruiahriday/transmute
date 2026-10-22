@@ -307,9 +307,10 @@ struct ContentView: View {
                     Label("New Background", systemImage: "photo.on.rectangle")
                 }
                 .menuStyle(.borderlessButton)
+                .tint(Theme.textPrimary)
                 .fixedSize()
                 .padding(.horizontal, 10)
-                .padding(.vertical, 5)
+                .padding(.vertical, 3)
                 .background(Theme.surfaceRaised, in: RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: Theme.Radius.chip, style: .continuous).strokeBorder(Theme.hairline))
                 .disabled(images.isEmpty || busy)

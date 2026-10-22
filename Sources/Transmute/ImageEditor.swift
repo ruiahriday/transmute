@@ -805,10 +805,10 @@ struct ImageEditorView: View {
             }
             Divider()
             sidebar
-                .frame(width: 300)
+                .frame(width: 324)
                 .background(Theme.surface)
         }
-        .frame(minWidth: 780, idealWidth: 1000, minHeight: 560, idealHeight: 700)
+        .frame(minWidth: 800, idealWidth: 1000, minHeight: 560, idealHeight: 700)
         .task(id: url) { await loadPreview() }
         .task(id: previewKey) { await refreshRendered() }
         .task(id: wantsSubject) { await findSubject() }
@@ -1280,7 +1280,7 @@ struct ImageEditorView: View {
 
     /// The editor's tools as a row of symbol tabs.
     private var toolBar: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 2) {
             ForEach(Tool.allCases) { item in
                 let selected = tool == item
                 Button { tool = item } label: {
@@ -1291,7 +1291,7 @@ struct ImageEditorView: View {
                         Text(item.rawValue)
                             .font(.system(size: 10.5, weight: selected ? .semibold : .medium))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.85)
+                            .fixedSize()
                     }
                     .foregroundStyle(selected ? Theme.accentText : Theme.textSecondary)
                     .frame(maxWidth: .infinity)

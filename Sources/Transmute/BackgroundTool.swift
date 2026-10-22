@@ -450,18 +450,24 @@ struct BackgroundPanel: View {
                         gradientButton(preset, selected: preset.top == top && preset.bottom == bottom)
                     }
                 }
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Text("Custom").font(Theme.Fonts.body).foregroundStyle(Theme.textSecondary)
-                    ColorPicker("Top", selection: Binding(
+                    ColorPicker("Top colour", selection: Binding(
                         get: { customTop },
                         set: { customTop = $0; applyCustomGradient() }
                     ), supportsOpacity: false)
-                    ColorPicker("Bottom", selection: Binding(
+                    .labelsHidden()
+                    .help("Top colour")
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.textTertiary)
+                    ColorPicker("Bottom colour", selection: Binding(
                         get: { customBottom },
                         set: { customBottom = $0; applyCustomGradient() }
                     ), supportsOpacity: false)
+                    .labelsHidden()
+                    .help("Bottom colour")
                 }
-                .font(Theme.Fonts.body)
             }
         case .blur(let strength):
             VStack(alignment: .leading, spacing: 6) {
