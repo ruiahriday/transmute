@@ -80,6 +80,8 @@ enum Snapshots {
                 }
             }
 
+            await captureShots(suffix: suffix, output: output, art: art, fixtures: fixtures)
+
             await shoot("drag-wheel-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), clear: true) {
                 WheelView(kind: .tools, items: DragWheelController.items(for: .tools, urls: [fixtures.appendingPathComponent("photo.jpg")])) { _ in }
             }
@@ -102,7 +104,7 @@ enum Snapshots {
     }
 
     /// Shows the view in a window, waits for it to settle, and saves the window as a PNG.
-    private static func shoot<V: View>(_ name: String, _ output: URL, size: CGSize, wait: Double = 1.6, clear: Bool = false,
+    static func shoot<V: View>(_ name: String, _ output: URL, size: CGSize, wait: Double = 1.6, clear: Bool = false,
                                        @ViewBuilder _ view: () -> V) async {
         let window = NSWindow(contentRect: NSRect(origin: CGPoint(x: 120, y: 120), size: size),
                               styleMask: clear ? [.borderless] : [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],

@@ -148,6 +148,13 @@ struct ImageEdit: Equatable, Sendable {
         case arrow(from: NormPoint, to: NormPoint)
         /// A semi-transparent filled box, like a highlighter pen.
         case highlight(NormRect)
+        /// An oval drawn inside the rectangle.
+        case ellipse(NormRect)
+        case line(from: NormPoint, to: NormPoint)
+        /// A numbered circle; `at` is its centre and the size is its diameter.
+        case step(Int, at: NormPoint)
+        /// Dims everything outside the rectangle.
+        case spotlight(NormRect)
     }
 
     struct Annotation: Equatable, Sendable, Identifiable {
@@ -175,6 +182,8 @@ struct ImageEdit: Equatable, Sendable {
     var exposure = 0.0
     var redactions: [Redaction] = []
     var annotations: [Annotation] = []
+    /// Resize after everything else: 1 keeps the size, 0.5 halves it.
+    var scale = 1.0
     /// Cut out the subject and make the rest transparent or something else (BackgroundTool.swift); nil leaves it.
     var background: BackgroundEdit?
     /// nil keeps the input format when macOS can write it, otherwise PNG.
@@ -198,13 +207,15 @@ struct ImageEdit: Equatable, Sendable {
 
     var changesPixels: Bool {
         crop.map { !$0.clamped.isFull } == true || turns != 0 || flipHorizontal || flipVertical
-            || hasColorAdjustments || !redactions.isEmpty || !annotations.isEmpty || background != nil
+            || hasColorAdjustments || !redactions.isEmpty || !annotations.isEmpty || background != nil || isResized
     }
+
+    var isResized: Bool { abs(scale - 1) > 0.0001 }
 
     /// Only the background changes, so the copy is named for that ("photo no-bg.png").
     var onlyBackground: Bool {
         background != nil && crop.map { !$0.clamped.isFull } != true && turns == 0 && !flipHorizontal && !flipVertical
-            && !hasColorAdjustments && redactions.isEmpty && annotations.isEmpty
+            && !hasColorAdjustments && redactions.isEmpty && annotations.isEmpty && !isResized
     }
 
     /// Nothing to do: saving would only copy the image.
@@ -229,6 +240,24 @@ extension ImageEdit.Annotation {
 
     static func highlight(_ rect: NormRect, color: RGBAColor = .yellow) -> ImageEdit.Annotation {
         ImageEdit.Annotation(kind: .highlight(rect), color: color, size: 0)
+    }
+
+    static func ellipse(_ rect: NormRect, lineWidth: Double = 0.008, color: RGBAColor = .brightRed) -> ImageEdit.Annotation {
+        ImageEdit.Annotation(kind: .ellipse(rect), color: color, size: lineWidth)
+    }
+
+    static func line(from start: NormPoint, to end: NormPoint, lineWidth: Double = 0.008,
+                     color: RGBAColor = .brightRed) -> ImageEdit.Annotation {
+        ImageEdit.Annotation(kind: .line(from: start, to: end), color: color, size: lineWidth)
+    }
+
+    static func step(_ number: Int, at point: NormPoint, diameter: Double = 0.06,
+                     color: RGBAColor = .brightRed) -> ImageEdit.Annotation {
+        ImageEdit.Annotation(kind: .step(number, at: point), color: color, size: diameter)
+    }
+
+    static func spotlight(_ rect: NormRect) -> ImageEdit.Annotation {
+        ImageEdit.Annotation(kind: .spotlight(rect), color: .black, size: 0)
     }
 }
 
@@ -363,7 +392,34 @@ enum ImageEditEngine {
             image = try transformed(image, turns: edit.turns,
                                     flipHorizontal: edit.flipHorizontal, flipVertical: edit.flipVertical)
         }
+        if edit.isResized {
+            image = try resized(image, scale: edit.scale)
+        }
         return image
+    }
+
+    /// Scaled by `scale` with high-quality interpolation (at least 1 × 1 pixel).
+    static func resized(_ image: CGImage, scale: Double) throws -> CGImage {
+        let factor = min(max(scale, 0.01), 8)
+        let w = max(1, Int((Double(image.width) * factor).rounded()))
+        let h = max(1, Int((Double(image.height) * factor).rounded()))
+        guard let ctx = makeContext(width: w, height: h, like: image) else { throw ConversionError("Couldn't resize the image.") }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        guard let result = ctx.makeImage() else { throw ConversionError("Couldn't resize the image.") }
+        return result
+    }
+
+    /// How dark the spotlight makes everything around it.
+    static let spotlightDim = 0.55
+
+    /// Corner radius of a spotlight hole, in pixels of an image of the given size.
+    static func spotlightRadius(width: CGFloat, height: CGFloat) -> CGFloat { min(width, height) * 0.012 }
+
+    /// The text colour on a step circle: white, or black on light colours.
+    static func stepTextColor(_ color: RGBAColor) -> RGBAColor {
+        let luminance = 0.2126 * color.red + 0.7152 * color.green + 0.0722 * color.blue
+        return luminance > 0.62 ? .black : .white
     }
 
     /// The editor's live preview: background, redactions and colour (SwiftUI draws the rest on top).
@@ -495,11 +551,61 @@ enum ImageEditEngine {
                           width: CGFloat(c.width) * w, height: CGFloat(c.height) * h)
         }
 
+        // Spotlights first, as one dimmed layer with a hole for each, so markup stays bright.
+        let spots = annotations.compactMap { annotation -> NormRect? in
+            if case .spotlight(let r) = annotation.kind { return r }
+            return nil
+        }
+        if !spots.isEmpty {
+            let radius = spotlightRadius(width: w, height: h)
+            let path = CGMutablePath()
+            path.addRect(CGRect(x: 0, y: 0, width: w, height: h))
+            for spot in spots {
+                let box = rect(spot)
+                guard box.width > 1, box.height > 1 else { continue }
+                path.addPath(CGPath(roundedRect: box, cornerWidth: min(radius, box.width / 2), cornerHeight: min(radius, box.height / 2),
+                                    transform: nil))
+            }
+            ctx.saveGState()
+            ctx.addPath(path)
+            ctx.setFillColor(CGColor(gray: 0, alpha: CGFloat(spotlightDim)))
+            ctx.fillPath(using: .evenOdd)
+            ctx.restoreGState()
+        }
+
         for annotation in annotations {
             let color = annotation.color.cgColor
             let lineWidth = max(1, CGFloat(annotation.size) * h)
             ctx.saveGState()
             switch annotation.kind {
+            case .spotlight:
+                break
+            case .ellipse(let r):
+                let box = rect(r)
+                if box.width > lineWidth && box.height > lineWidth {
+                    ctx.setStrokeColor(color)
+                    ctx.setLineWidth(lineWidth)
+                    ctx.strokeEllipse(in: box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2))
+                }
+            case .line(let from, let to):
+                ctx.setStrokeColor(color)
+                ctx.setLineWidth(lineWidth)
+                ctx.setLineCap(.round)
+                ctx.beginPath()
+                ctx.move(to: point(from))
+                ctx.addLine(to: point(to))
+                ctx.strokePath()
+            case .step(let number, let at):
+                let diameter = max(8, CGFloat(annotation.size) * h)
+                let centre = point(at)
+                let circle = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
+                ctx.setFillColor(color)
+                ctx.fillEllipse(in: circle)
+                ctx.setStrokeColor(CGColor(gray: 1, alpha: 0.9))
+                ctx.setLineWidth(max(1, diameter * 0.06))
+                ctx.strokeEllipse(in: circle.insetBy(dx: diameter * 0.03, dy: diameter * 0.03))
+                drawCentredText("\(number)", centre: centre, fontSize: diameter * 0.56,
+                                color: stepTextColor(annotation.color).cgColor, in: ctx)
             case .rectangle(let r):
                 let box = rect(r)
                 if box.width > lineWidth && box.height > lineWidth {
@@ -537,6 +643,19 @@ enum ImageEditEngine {
         }
         guard let result = ctx.makeImage() else { throw ConversionError("Couldn't draw the annotations.") }
         return result
+    }
+
+    /// Bold text centred on a point (CoreGraphics coordinates), for step numbers.
+    private static func drawCentredText(_ string: String, centre: CGPoint, fontSize: CGFloat, color: CGColor, in ctx: CGContext) {
+        let font = CTFontCreateUIFontForLanguage(.emphasizedSystem, fontSize, nil)
+            ?? CTFontCreateWithName("Helvetica-Bold" as CFString, fontSize, nil)
+        let attributes: [CFString: Any] = [kCTFontAttributeName: font, kCTForegroundColorAttributeName: color]
+        guard let attributed = CFAttributedStringCreate(nil, string as CFString, attributes as CFDictionary) else { return }
+        let line = CTLineCreateWithAttributedString(attributed)
+        let bounds = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+        ctx.textMatrix = .identity
+        ctx.textPosition = CGPoint(x: centre.x - bounds.midX, y: centre.y - bounds.midY)
+        CTLineDraw(line, ctx)
     }
 
     /// One line of bold system text. `topLeft` is in CoreGraphics coordinates (y up),
@@ -697,7 +816,9 @@ struct ImageEditorView: View {
     let onCancel: () -> Void
 
     /// `showcase` opens on the Background panel with that background chosen (for the window pictures).
-    init(url: URL, showcase: BackgroundEdit? = nil, onSave: @escaping (ImageEdit) -> Void, onCancel: @escaping () -> Void) {
+    /// `startOnMarkup` opens on the Markup tools (for captures); `markup` adds annotations to start with.
+    init(url: URL, showcase: BackgroundEdit? = nil, startOnMarkup: Bool = false, markup: [ImageEdit.Annotation] = [],
+         onSave: @escaping (ImageEdit) -> Void, onCancel: @escaping () -> Void) {
         self.url = url
         self.onSave = onSave
         self.onCancel = onCancel
@@ -706,6 +827,13 @@ struct ImageEditorView: View {
             edit.background = showcase
             _edit = State(initialValue: edit)
             _tool = State(initialValue: .background)
+        } else if startOnMarkup || !markup.isEmpty {
+            var edit = ImageEdit()
+            edit.annotations = markup
+            _edit = State(initialValue: edit)
+            _addedOrder = State(initialValue: markup.map(\.id))
+            _tool = State(initialValue: .annotate)
+            _markup = State(initialValue: .arrow)
         }
     }
 
@@ -742,8 +870,22 @@ struct ImageEditorView: View {
     }
 
     private enum Markup: String, CaseIterable, Identifiable {
-        case text = "Text", rectangle = "Box", arrow = "Arrow", highlight = "Highlight"
+        case arrow = "Arrow", rectangle = "Box", ellipse = "Oval", line = "Line",
+             text = "Text", step = "Steps", highlight = "Highlight", spotlight = "Spotlight"
         var id: String { rawValue }
+
+        var symbol: String {
+            switch self {
+            case .arrow: "arrow.up.right"
+            case .rectangle: "rectangle"
+            case .ellipse: "circle"
+            case .line: "line.diagonal"
+            case .text: "textformat"
+            case .step: "1.circle.fill"
+            case .highlight: "highlighter"
+            case .spotlight: "light.max"
+            }
+        }
     }
 
     private struct DragState {
@@ -768,6 +910,7 @@ struct ImageEditorView: View {
     /// Slider level (1…10) → fraction of the image height.
     private static let textScale = 0.012
     private static let lineScale = 0.002
+    private static let stepScale = 0.014
     private static let formats: [OutputFormat] = [.jpeg, .png, .heic, .tiff]
 
     @State private var edit = ImageEdit()
@@ -922,6 +1065,21 @@ struct ImageEditorView: View {
         for redaction in edit.redactions {
             outline(Self.viewRect(redaction.rect, in: size), in: &context, shaded: false)
         }
+        var spots = edit.annotations.compactMap { annotation -> NormRect? in
+            if case .spotlight(let r) = annotation.kind { return r }
+            return nil
+        }
+        if let drag, tool == .annotate, markup == .spotlight {
+            spots.append(NormRect(from: drag.start, to: drag.current))
+        }
+        if !spots.isEmpty {
+            var dim = Path(CGRect(origin: .zero, size: size))
+            let radius = ImageEditEngine.spotlightRadius(width: size.width, height: size.height)
+            for spot in spots {
+                dim.addRoundedRect(in: Self.viewRect(spot.clamped, in: size), cornerSize: CGSize(width: radius, height: radius))
+            }
+            context.fill(dim, with: .color(.black.opacity(ImageEditEngine.spotlightDim)), style: FillStyle(eoFill: true))
+        }
         for annotation in edit.annotations {
             drawAnnotation(annotation, in: &context, size: size)
         }
@@ -929,7 +1087,7 @@ struct ImageEditorView: View {
             let box = NormRect(from: drag.start, to: drag.current)
             if tool == .redact {
                 outline(Self.viewRect(box, in: size), in: &context, shaded: true)
-            } else if tool == .annotate, let kind = draftKind(for: drag) {
+            } else if tool == .annotate, markup != .spotlight, let kind = draftKind(for: drag) {
                 let draft = ImageEdit.Annotation(kind: kind, color: color, size: annotationSize(for: kind))
                 drawAnnotation(draft, in: &context, size: size)
             }
@@ -957,6 +1115,29 @@ struct ImageEditorView: View {
         let shade = annotation.color.swiftUI
         let lineWidth = max(1, CGFloat(annotation.size) * size.height)
         switch annotation.kind {
+        case .spotlight:
+            break
+        case .ellipse(let r):
+            let box = Self.viewRect(r.clamped, in: size)
+            if box.width > lineWidth && box.height > lineWidth {
+                context.stroke(Path(ellipseIn: box.insetBy(dx: lineWidth / 2, dy: lineWidth / 2)), with: .color(shade),
+                               lineWidth: lineWidth)
+            }
+        case .line(let from, let to):
+            var path = Path()
+            path.move(to: Self.viewPoint(from, in: size))
+            path.addLine(to: Self.viewPoint(to, in: size))
+            context.stroke(path, with: .color(shade), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+        case .step(let number, let at):
+            let diameter = max(8, CGFloat(annotation.size) * size.height)
+            let centre = Self.viewPoint(at, in: size)
+            let circle = CGRect(x: centre.x - diameter / 2, y: centre.y - diameter / 2, width: diameter, height: diameter)
+            context.fill(Path(ellipseIn: circle), with: .color(shade))
+            context.stroke(Path(ellipseIn: circle.insetBy(dx: diameter * 0.03, dy: diameter * 0.03)),
+                           with: .color(.white.opacity(0.9)), lineWidth: max(1, diameter * 0.06))
+            let textColor = ImageEditEngine.stepTextColor(annotation.color).swiftUI
+            context.draw(Text("\(number)").font(.system(size: diameter * 0.56, weight: .bold)).foregroundColor(textColor),
+                         at: centre, anchor: .center)
         case .rectangle(let r):
             let box = Self.viewRect(r.clamped, in: size)
             if box.width > lineWidth && box.height > lineWidth {
@@ -1017,6 +1198,8 @@ struct ImageEditorView: View {
         case .annotate:
             if markup == .text {
                 placeText(at: state.start)
+            } else if markup == .step {
+                add(ImageEdit.Annotation(kind: .step(nextStep, at: state.current), color: color, size: sizeLevel * Self.stepScale))
             } else if !isClick, let kind = draftKind(for: state) {
                 add(ImageEdit.Annotation(kind: kind, color: color, size: annotationSize(for: kind)))
             }
@@ -1076,10 +1259,17 @@ struct ImageEditorView: View {
     private func draftKind(for state: DragState) -> ImageEdit.AnnotationKind? {
         let box = NormRect(from: state.start, to: state.current)
         switch markup {
-        case .text:
+        case .text, .step:
             return nil
         case .rectangle:
             return .rectangle(box)
+        case .ellipse:
+            return .ellipse(box)
+        case .spotlight:
+            return .spotlight(box)
+        case .line:
+            let dx = state.current.x - state.start.x, dy = state.current.y - state.start.y
+            return (dx * dx + dy * dy).squareRoot() > 0.005 ? .line(from: state.start, to: state.current) : nil
         case .highlight:
             return .highlight(box)
         case .arrow:
@@ -1089,8 +1279,21 @@ struct ImageEditorView: View {
     }
 
     private func annotationSize(for kind: ImageEdit.AnnotationKind) -> Double {
-        if case .text = kind { return sizeLevel * Self.textScale }
-        return sizeLevel * Self.lineScale
+        switch kind {
+        case .text: return sizeLevel * Self.textScale
+        case .step: return sizeLevel * Self.stepScale
+        case .spotlight, .highlight: return 0
+        default: return sizeLevel * Self.lineScale
+        }
+    }
+
+    /// The number the next step circle gets.
+    private var nextStep: Int {
+        let numbers = edit.annotations.compactMap { annotation -> Int? in
+            if case .step(let n, _) = annotation.kind { return n }
+            return nil
+        }
+        return (numbers.max() ?? 0) + 1
     }
 
     // MARK: Items
@@ -1242,6 +1445,10 @@ struct ImageEditorView: View {
             h = Int(rect.height)
         }
         if edit.turns % 2 == 1 { swap(&w, &h) }
+        if edit.isResized {
+            w = max(1, Int((Double(w) * edit.scale).rounded()))
+            h = max(1, Int((Double(h) * edit.scale).rounded()))
+        }
         return "\(w) × \(h)"
     }
 
@@ -1327,6 +1534,18 @@ struct ImageEditorView: View {
             }
             Button("Reset Crop") { edit.crop = nil }
                 .disabled(edit.crop == nil)
+            SectionLabel("Resize")
+            Picker("Resize", selection: $edit.scale) {
+                Text("100%").tag(1.0)
+                Text("75%").tag(0.75)
+                Text("50%").tag(0.5)
+                Text("25%").tag(0.25)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            Text("Saved at \(outputSizeText) pixels.")
+                .font(Theme.Fonts.caption)
+                .foregroundStyle(Theme.textSecondary)
         }
     }
 
@@ -1347,11 +1566,9 @@ struct ImageEditorView: View {
 
     private var annotateControls: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Picker("Markup", selection: $markup) {
-                ForEach(Markup.allCases) { Text($0.rawValue).tag($0) }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4), spacing: 6) {
+                ForEach(Markup.allCases) { item in markupTile(item) }
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
             hint(markupHint)
             if markup == .text {
                 TextField("Text", text: $textDraft)
@@ -1359,6 +1576,7 @@ struct ImageEditorView: View {
                     .focused($textFieldFocused)
                     .onSubmit { commitPendingText() }
             }
+            if markup != .spotlight {
             SectionLabel("Colour")
             HStack(spacing: 8) {
                 ForEach(RGBAColor.swatches, id: \.self) { swatch in
@@ -1374,11 +1592,38 @@ struct ImageEditorView: View {
                     .buttonStyle(.plain)
                 }
             }
-            if markup != .highlight {
-                SectionLabel(markup == .text ? "Text size" : "Line width")
+            }
+            if markup != .highlight && markup != .spotlight {
+                SectionLabel(markup == .text ? "Text size" : (markup == .step ? "Circle size" : "Line width"))
                 Slider(value: $sizeLevel, in: 1...10)
             }
         }
+    }
+
+    private func markupTile(_ item: Markup) -> some View {
+        let selected = markup == item
+        return Button { markup = item } label: {
+            VStack(spacing: 4) {
+                Image(systemName: item.symbol)
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(height: 17)
+                Text(item.rawValue)
+                    .font(.system(size: 10.5, weight: selected ? .semibold : .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(selected ? Theme.accentText : Theme.textPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 7)
+            .background(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                .fill(selected ? Theme.accent.opacity(0.12) : Theme.surfaceRaised))
+            .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
+                .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 1.5 : 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(item.rawValue)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private var markupHint: String {
@@ -1393,6 +1638,14 @@ struct ImageEditorView: View {
             return "Drag from where the arrow starts to what it points at."
         case .highlight:
             return "Drag over something to highlight it."
+        case .ellipse:
+            return "Drag to draw an oval around something."
+        case .line:
+            return "Drag to draw a straight line."
+        case .step:
+            return "Click to place numbered steps: 1, 2, 3…"
+        case .spotlight:
+            return "Drag over what matters; everything else is dimmed."
         }
     }
 
@@ -1476,6 +1729,10 @@ struct ImageEditorView: View {
         case .rectangle: return ("Box", "rectangle")
         case .arrow: return ("Arrow", "arrow.up.right")
         case .highlight: return ("Highlight", "highlighter")
+        case .ellipse: return ("Oval", "circle")
+        case .line: return ("Line", "line.diagonal")
+        case .step(let n, _): return ("Step \(n)", "\(min(max(n, 1), 50)).circle.fill")
+        case .spotlight: return ("Spotlight", "light.max")
         }
     }
 

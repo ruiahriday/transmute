@@ -22,6 +22,12 @@
     <string>13.0</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>Spinform asks Pages, Keynote or Numbers to export documents when you convert iWork, Word, PowerPoint or Excel files.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Spinform records your voice with a screen recording when you turn on Microphone. Recordings stay on this Mac.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Spinform shows your camera in a bubble in a screen recording when you turn on Camera. Recordings stay on this Mac.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Spinform takes screenshots and screen recordings when you ask it to. Everything stays on this Mac.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

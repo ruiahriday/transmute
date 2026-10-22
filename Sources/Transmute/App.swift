@@ -63,6 +63,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         controller.start()
         wheel = controller
         summoner.start()
+        // Capture shortcuts work in every app.
+        HotkeyCenter.shared.onAction = { action in CaptureCoordinator.shared.perform(action) }
+        HotkeyCenter.shared.start()
+        let days = CaptureSettings.historyDays
+        if days > 0 { CaptureHistory.shared.prune(keepingDays: days) }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
@@ -81,6 +86,8 @@ struct MenuContent: View {
             NSApp.activate(ignoringOtherApps: true)
         }
         Button("Show Floating Files") { FloatingShelf.shared.toggle() }
+        Divider()
+        CaptureMenuItems()
         Divider()
         Button("Send Feedback…") { Feedback.openForm() }
         Divider()
@@ -262,6 +269,7 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
+                CaptureSettingsSections()
                 Section("Floating files") {
                     Toggle("Open when I shake files while dragging them", isOn: $shakeToShelf)
                     Toggle("Open when I drag files up to the notch", isOn: $notchToShelf)
@@ -353,5 +361,46 @@ struct SettingsView: View {
     private var hasKeyClash: Bool {
         let keys = [convertKey, toolsKey, actionsKey].filter { $0 != WheelKey.off.rawValue }
         return Set(keys).count != keys.count
+    }
+}
+
+
+/// The capture tools in the menu bar menu, with their shortcuts.
+struct CaptureMenuItems: View {
+    @ObservedObject private var recorder = ScreenRecorder.shared
+
+    var body: some View {
+        if recorder.isActive {
+            Button("Stop Recording") { recorder.stop() }
+        }
+        item(.area)
+        item(.window)
+        item(.fullscreen)
+        item(.previous)
+        item(.scrolling)
+        item(.text)
+        Menu("Record Screen") {
+            item(.recordArea)
+            item(.recordWindow)
+            item(.recordScreen)
+        }
+        Button("Pin Image…") { PinController.choose() }
+        if PinController.lockedCount > 0 {
+            Button("Unlock Pinned Images") { PinController.unlockAll() }
+        }
+        if !PinController.all.isEmpty {
+            Button("Close Pinned Images") { PinController.closeAll() }
+        }
+        item(.history)
+    }
+
+    @ViewBuilder
+    private func item(_ action: CaptureAction) -> some View {
+        let button = Button(action.title + (action == .history ? "…" : "")) { CaptureCoordinator.shared.perform(action) }
+        if let hotkey = HotkeyStore.hotkey(for: action), let key = hotkey.keyEquivalent {
+            button.keyboardShortcut(key, modifiers: hotkey.eventModifiers)
+        } else {
+            button
+        }
     }
 }

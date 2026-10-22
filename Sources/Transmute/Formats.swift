@@ -223,6 +223,7 @@ enum Prefs {
             notchToShelf: true,
             outputMode: OutputMode.besideOriginal.rawValue,
         ])
+        registerCaptureDefaults()
     }
 }
 

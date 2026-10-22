@@ -10,6 +10,7 @@ struct ContentView: View {
     @AppStorage(Prefs.revealWhenDone) private var revealWhenDone = true
 
     @State private var mode: Mode = .convert
+    @State private var area: Area = .files
     @State private var choices: [FileKind: OutputFormat] = [:]
     @State private var compressBy: CompressBy = .percent
     @State private var percent = 50.0
@@ -33,9 +34,17 @@ struct ContentView: View {
 
     enum CompressBy { case percent, size }
 
+    /// The two halves of the window: files to convert, and the screen capture tools.
+    enum Area: String, CaseIterable, Identifiable {
+        case files = "Files", capture = "Capture"
+        var id: String { rawValue }
+        var symbol: String { self == .files ? "doc.on.doc" : "camera.viewfinder" }
+    }
+
     /// `initialMode` picks the tab shown first (the window pictures show the Tools tab too).
-    init(initialMode: Mode = .convert) {
+    init(initialMode: Mode = .convert, initialArea: Area = .files) {
         _mode = State(initialValue: initialMode)
+        _area = State(initialValue: initialArea)
     }
 
     var body: some View {
@@ -43,20 +52,27 @@ struct ContentView: View {
             AppBackground()
             VStack(spacing: 12) {
                 header.layoutPriority(1)
-                Group {
-                    if queue.jobs.isEmpty {
-                        emptyState.transition(.opacity.combined(with: .scale(scale: 0.97)))
-                    } else {
-                        fileList.transition(.opacity)
+                if area == .capture {
+                    CaptureHomeView()
+                        .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                        .transition(.opacity)
+                } else {
+                    Group {
+                        if queue.jobs.isEmpty {
+                            emptyState.transition(.opacity.combined(with: .scale(scale: 0.97)))
+                        } else {
+                            fileList.transition(.opacity)
+                        }
                     }
+                    .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                    controls.crispCard(padding: 14).layoutPriority(1)
                 }
-                .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                controls.crispCard(padding: 14).layoutPriority(1)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
             .padding(.top, 4)
             .animation(Theme.spring, value: queue.jobs.isEmpty)
+            .animation(Theme.spring, value: area)
         }
         .onDrop(of: [.fileURL], isTargeted: $dropTargeted) { providers in
             load(providers)
@@ -89,14 +105,15 @@ struct ContentView: View {
                 Text("Spinform")
                     .font(Theme.Fonts.wordmark)
                     .foregroundStyle(Theme.brandText)
-                Text("Drop. Pick a format. Done.")
+                Text(area == .capture ? "Capture. Mark up. Share." : "Drop. Pick a format. Done.")
                     .font(Theme.Fonts.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
-            if !queue.jobs.isEmpty {
+            if !queue.jobs.isEmpty && area == .files {
                 summaryChip.transition(.scale.combined(with: .opacity))
             }
+            SlidingPicker(options: Area.allCases, selection: $area, title: \.rawValue, symbol: \.symbol)
         }
     }
 
@@ -393,7 +410,7 @@ struct EditorHost: View {
         let id = request.jobID
         switch request.mode {
         case .image:
-            ImageEditorView(url: request.url, onSave: { edit in
+            ImageEditorView(url: request.url, startOnMarkup: request.startOnMarkup, onSave: { edit in
                 close()
                 run(id, .editImage(edit))
             }, onCancel: close)
@@ -431,6 +448,8 @@ struct EditRequest: Identifiable {
     let jobID: UUID
     let url: URL
     let mode: Mode
+    /// Open the photo editor on its Markup tools (for screenshots).
+    var startOnMarkup = false
 
     init(job: Job, mode: Mode) {
         jobID = job.id

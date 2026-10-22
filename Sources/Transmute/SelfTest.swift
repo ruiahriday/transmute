@@ -21,9 +21,9 @@ enum SelfTest {
         exit(1)
     }
 
-    private static var passed = 0
-    private static var skipped = 0
-    private static var failed: [String] = []
+    static var passed = 0
+    static var skipped = 0
+    static var failed: [String] = []
 
     /// HEIC encoding needs a hardware HEVC encoder, which macOS virtual machines
     /// (like GitHub's Apple-silicon runners) don't have.
@@ -824,6 +824,8 @@ enum SelfTest {
             return []
         }
 
+        await captureChecks(outDir: outDir, inputs: inputs)
+
         print("\n\(passed) passed, \(failed.count) failed, \(skipped) skipped")
         for name in failed { print("  FAILED: \(name)") }
         return failed.count
@@ -1130,7 +1132,7 @@ enum SelfTest {
     }
 
     /// Runs one operation and checks every output exists, isn't empty, and (for images) decodes.
-    private static func check(_ name: String, _ body: () async throws -> [URL]) async {
+    static func check(_ name: String, _ body: () async throws -> [URL]) async {
         do {
             let outputs = try await body()
             for url in outputs {
@@ -1142,7 +1144,7 @@ enum SelfTest {
         }
     }
 
-    private static func record(_ name: String, _ outputs: [URL]?, _ error: String?) {
+    static func record(_ name: String, _ outputs: [URL]?, _ error: String?) {
         if let error {
             failed.append(name)
             print("FAIL  \(name): \(error)")

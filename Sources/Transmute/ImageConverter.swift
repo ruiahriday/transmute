@@ -324,10 +324,15 @@ enum ImageConverter {
         guard let image = CIImage(contentsOf: url) else {
             throw ConversionError("Couldn't open \(url.lastPathComponent).")
         }
-        let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil,
-                                  options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
-        let messages = (detector?.features(in: image) ?? []).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
+        let messages = qrMessages(in: image)
         guard !messages.isEmpty else { throw ConversionError("No QR code found.") }
         return messages.joined(separator: "\n")
+    }
+
+    /// Every QR code's contents in a picture (also used by the capture tools' text recognition).
+    static func qrMessages(in image: CIImage) -> [String] {
+        let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil,
+                                  options: [CIDetectorAccuracy: CIDetectorAccuracyHigh])
+        return (detector?.features(in: image) ?? []).compactMap { ($0 as? CIQRCodeFeature)?.messageString }
     }
 }
