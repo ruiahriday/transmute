@@ -5,11 +5,11 @@
         Style="{StaticResource BaseWindow}" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Icon="pack://application:,,,/Assets/app.ico">
     <DockPanel>
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,10">
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,11">
             <Button Content="Done" Style="{StaticResource Primary}" MinWidth="90" HorizontalAlignment="Right" IsDefault="True" IsCancel="True" Click="OnDone" />
         </Border>
         <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="20,6,20,20">
+            <StackPanel Margin="22,4,22,22">
                 <TextBlock Text="Output" Style="{StaticResource SectionTitle}" />
                 <RadioButton x:Name="BesideOriginal" Content="Save results next to the original" Margin="0,3" Click="OnOutputMode" />
                 <RadioButton x:Name="InFolder" Content="Save results in a folder" Margin="0,3" Click="OnOutputMode" />
@@ -65,6 +65,11 @@
 
                 <TextBlock Text="ffmpeg" Style="{StaticResource SectionTitle}" />
                 <TextBlock x:Name="FfmpegLabel" TextWrapping="Wrap" />
+
+                <TextBlock Text="Background removal" Style="{StaticResource SectionTitle}" />
+                <TextBlock x:Name="ModelLabel" TextWrapping="Wrap" />
+                <Button Content="Third-party Notices" HorizontalAlignment="Left" Margin="0,8,0,0" Click="OnNotices"
+                        ToolTip="Licences of the open-source parts Spinform is built with" />
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

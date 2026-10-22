@@ -25,6 +25,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The background-removal model is too big for the source branch; it lives on its own branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: windows-models
+          path: windows-models
+          sparse-checkout: isnet-general-use.onnx
+          sparse-checkout-cone-mode: false
+
+      - name: Put the background model in place
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force models | Out-Null
+          Move-Item ..\windows-models\isnet-general-use.onnx models\isnet-general-use.onnx -Force
+          $hash = (Get-FileHash models\isnet-general-use.onnx -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "isnet-general-use.onnx $hash $((Get-Item models\isnet-general-use.onnx).Length) bytes"
+          if ($hash -ne "d419b6ff60c9bd10fbc6f98da9faeb7d1d73361f97a35dfe6d278a9db66ba987") { throw "the background model's checksum doesn't match" }
+
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -67,6 +84,7 @@ jobs:
             $out = "out\publish\$arch"
             dotnet publish src/Transmute/Transmute.csproj -c Release -r "win-$arch" --self-contained true -p:Version=$env:VERSION -o $out
             if ($LASTEXITCODE -ne 0) { throw "publish $arch failed" }
+            if (-not (Test-Path "$out\models\isnet-general-use.onnx")) { throw "the background model is missing from the $arch build" }
             New-Item -ItemType Directory -Force "$out\ffmpeg" | Out-Null
             Copy-Item "ffmpeg-dl\ffmpeg-$ff.exe" "$out\ffmpeg\ffmpeg.exe"
             if (Test-Path "ffmpeg-dl\LICENSE-$ff.txt") { Copy-Item "ffmpeg-dl\LICENSE-$ff.txt" "$out\ffmpeg\LICENSE.txt" }
@@ -154,6 +172,8 @@ jobs:
           $exe = "$dir\Spinform.exe"
           Check (Test-Path $exe) "Spinform.exe installed in $dir"
           Check (Test-Path "$dir\ffmpeg\ffmpeg.exe") "ffmpeg installed"
+          Check (Test-Path "$dir\models\isnet-general-use.onnx") "background model installed"
+          Check (Test-Path "$dir\THIRD-PARTY-NOTICES.txt") "third-party notices installed"
           Check (Test-Path "$menu\Spinform.lnk") "Start menu shortcut Spinform"
           Check (Test-Path "$sendto\Spinform.lnk") "Send to › Spinform"
           Check (Test-Path -LiteralPath 'HKCU:\Software\Classes\*\shell\Spinform\command') "right-click Convert with Spinform"
@@ -305,6 +325,8 @@ jobs:
           set -euo pipefail
           cat > notes.md <<'EOF'
           **Spinform for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs. Spinform is the new name for Transmute.
+
+          New: **remove or change the background of any picture** (JPEG, PNG, WebP, HEIC, TIFF, GIF, BMP, SVG), offline on your PC: one click in Tools, the No BG bubble on the drag wheel, or the Background panel in the photo editor (colour, gradient, blur or your own picture). And a sharper, cleaner look throughout.
 
           **Download [Spinform-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Spinform-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
 

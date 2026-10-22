@@ -29,6 +29,16 @@ static class Editors
     public static void Run(Job job, JobOperation operation) =>
         _ = JobQueue.Shared.Start([(job, operation)], Settings.Current.RevealWhenDone);
 
+    /// A picture's pixels for the screen, keeping transparency.
+    public static BitmapSource Pixels(ImageMagick.MagickImage image)
+    {
+        int w = (int)image.Width, h = (int)image.Height;
+        var bytes = image.GetPixels().ToByteArray(ImageMagick.PixelMapping.BGRA)!;
+        var bitmap = BitmapSource.Create(w, h, 96, 96, PixelFormats.Bgra32, null, bytes, w * 4);
+        bitmap.Freeze();
+        return bitmap;
+    }
+
     public static BitmapSource Bitmap(byte[] encoded)
     {
         var image = new BitmapImage();
@@ -58,9 +68,10 @@ static class Ui
     public static TextBlock Caption(string text) => new() { Text = text, Style = Res("Caption") };
     public static TextBlock Label(string text) => new() { Text = text, VerticalAlignment = VerticalAlignment.Center };
 
-    public static Button Button(string text, RoutedEventHandler click, bool primary = false, string? tip = null)
+    public static Button Button(string text, RoutedEventHandler click, bool primary = false, string? tip = null, object? contentOverride = null, string? icon = null)
     {
-        var button = new Button { Content = text, Margin = new Thickness(0, 0, 6, 6), ToolTip = tip };
+        object content = contentOverride ?? (icon is not null ? Icons.WithText(icon, text, 14) : text);
+        var button = new Button { Content = content, Margin = new Thickness(0, 0, 6, 6), ToolTip = tip };
         if (primary) button.Style = Res("Primary");
         button.Click += click;
         return button;
@@ -78,10 +89,10 @@ static class Ui
     {
         var slider = new Slider { Minimum = min, Maximum = max, Value = value, VerticalAlignment = VerticalAlignment.Center };
         if (step > 0) { slider.TickFrequency = step; slider.IsSnapToTickEnabled = true; }
-        var shown = new TextBlock { Text = format(value), Width = 64, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center };
+        var shown = new TextBlock { Text = format(value), Width = 58, TextAlignment = TextAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Foreground = Brush("Secondary") };
         slider.ValueChanged += (_, e) => { shown.Text = format(e.NewValue); changed(e.NewValue); };
-        var grid = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
-        var label = new TextBlock { Text = title, Width = 92, VerticalAlignment = VerticalAlignment.Center };
+        var grid = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
+        var label = new TextBlock { Text = title, Width = 86, VerticalAlignment = VerticalAlignment.Center };
         DockPanel.SetDock(label, Dock.Left);
         DockPanel.SetDock(shown, Dock.Right);
         grid.Children.Add(label);
@@ -108,7 +119,7 @@ static class Ui
     public static DockPanel Labelled(string title, FrameworkElement control)
     {
         var row = new DockPanel { Margin = new Thickness(0, 3, 0, 3) };
-        var label = new TextBlock { Text = title, Width = 92, VerticalAlignment = VerticalAlignment.Center };
+        var label = new TextBlock { Text = title, Width = 86, VerticalAlignment = VerticalAlignment.Center };
         DockPanel.SetDock(label, Dock.Left);
         row.Children.Add(label);
         row.Children.Add(control);
@@ -122,7 +133,7 @@ static class Ui
     /// right, Cancel and Save at the bottom.
     public static DockPanel EditorLayout(UIElement preview, UIElement controls, Button cancel, Button save, UIElement? footerLeft = null)
     {
-        var footer = new DockPanel { Margin = new Thickness(16, 10, 16, 10), LastChildFill = false };
+        var footer = new DockPanel { Margin = new Thickness(16, 11, 16, 11), LastChildFill = false };
         save.Margin = new Thickness(0);
         cancel.Margin = new Thickness(0, 0, 8, 0);
         DockPanel.SetDock(save, Dock.Right);
@@ -133,18 +144,18 @@ static class Ui
         var footerBorder = new Border { Child = footer, Background = Brush("Card"), BorderBrush = Brush("Line"), BorderThickness = new Thickness(0, 1, 0, 0) };
         var side = new Border
         {
-            Width = 320,
+            Width = 330,
             Background = Brush("Card"),
             BorderBrush = Brush("Line"),
             BorderThickness = new Thickness(1, 0, 0, 0),
-            Child = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = new Border { Padding = new Thickness(16, 4, 16, 16), Child = controls } },
+            Child = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = new Border { Padding = new Thickness(18, 2, 18, 18), Child = controls } },
         };
         var root = new DockPanel();
         DockPanel.SetDock(footerBorder, Dock.Bottom);
         DockPanel.SetDock(side, Dock.Right);
         root.Children.Add(footerBorder);
         root.Children.Add(side);
-        root.Children.Add(new Border { Background = new SolidColorBrush(Color.FromRgb(0x2B, 0x2B, 0x2B)), Child = preview });
+        root.Children.Add(new Border { Background = Brush("Stage"), Child = preview });
         return root;
     }
 

@@ -197,7 +197,16 @@ sealed class ShelfWindow : Window
         row.SetValue(MarginProperty, new Thickness(2, 3, 2, 3));
         var remove = new FrameworkElementFactory(typeof(Button));
         remove.SetValue(DockPanel.DockProperty, Dock.Right);
-        remove.SetValue(ContentProperty, "✕");
+        var cross = new FrameworkElementFactory(typeof(System.Windows.Shapes.Path));
+        cross.SetValue(System.Windows.Shapes.Path.DataProperty, Icons.Geometry("close"));
+        cross.SetValue(System.Windows.Shapes.Shape.StrokeProperty, Application.Current.FindResource("Secondary"));
+        cross.SetValue(System.Windows.Shapes.Shape.StrokeThicknessProperty, 1.6);
+        cross.SetValue(System.Windows.Shapes.Shape.StrokeStartLineCapProperty, PenLineCap.Round);
+        cross.SetValue(System.Windows.Shapes.Shape.StrokeEndLineCapProperty, PenLineCap.Round);
+        cross.SetValue(System.Windows.Shapes.Shape.StretchProperty, Stretch.Uniform);
+        cross.SetValue(WidthProperty, 10.0);
+        cross.SetValue(HeightProperty, 10.0);
+        remove.AppendChild(cross);
         remove.SetValue(StyleProperty, Application.Current.FindResource("Flat"));
         remove.SetValue(ToolTipProperty, "Remove from shelf");
         remove.AddHandler(Button.ClickEvent, new RoutedEventHandler((s, _) => { if (((FrameworkElement)s).DataContext is string p) shelf.Remove(p); }));

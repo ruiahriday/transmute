@@ -61,6 +61,10 @@ public static class Engine
             case JobOperation.WriteMetadata m:
                 return JobResult.Of(await MetadataTool.Write(m.Edit, input, options, token));
 
+            case JobOperation.Background b:
+                if (kind != FileKind.Image) throw new ConversionException("Backgrounds can only be changed in pictures.");
+                return await Backgrounds.Run(b.Edit, input, options, progress, token);
+
             case JobOperation.Snapshot s:
                 if (kind != FileKind.Video) throw new ConversionException("Snapshots can only be taken from videos.");
                 return JobResult.Of(await VideoEditEngine.Snapshot(input, s.Seconds, options, token));

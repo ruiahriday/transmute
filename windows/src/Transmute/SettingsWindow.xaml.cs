@@ -39,8 +39,12 @@ public partial class SettingsWindow : Window
         }
         VersionLabel.Text = $"Spinform {Feedback.Version} (formerly Transmute)";
         FfmpegLabel.Text = Tools.Ffmpeg is { } path
-            ? $"✓ Found at {path}"
-            : "⚠ Not found. It comes with Spinform, so reinstalling should bring it back. Video, audio and some image formats need it.";
+            ? $"Found at {path}"
+            : "Not found. It comes with Spinform, so reinstalling should bring it back. Video, audio and some image formats need it.";
+        if (Tools.Ffmpeg is null) FfmpegLabel.Foreground = (System.Windows.Media.Brush)FindResource("Danger");
+        ModelLabel.Text = Backgrounds.IsAvailable
+            ? "Ready. Subjects are found on this PC by the IS-Net segmentation model (Apache License 2.0); pictures are never uploaded."
+            : "The background model is missing. Reinstalling Spinform brings it back.";
         var office = new[] { OfficeApps.App.Word, OfficeApps.App.Excel, OfficeApps.App.PowerPoint }.Where(OfficeApps.Has).Select(a => a.ToString()).ToList();
         OfficeStatus.Text = (office.Count, OfficeApps.LibreOffice) switch
         {
@@ -115,4 +119,11 @@ public partial class SettingsWindow : Window
     void OnFeedback(object sender, RoutedEventArgs e) => Feedback.OpenForm();
     void OnCopyDetails(object sender, RoutedEventArgs e) => Feedback.CopyDetails();
     void OnDone(object sender, RoutedEventArgs e) => Close();
+
+    void OnNotices(object sender, RoutedEventArgs e)
+    {
+        var file = System.IO.Path.Combine(AppContext.BaseDirectory, "THIRD-PARTY-NOTICES.txt");
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(file) { UseShellExecute = true }); }
+        catch { MessageBox.Show(this, "The notices file isn't there. Reinstalling Spinform brings it back.", "Spinform"); }
+    }
 }

@@ -86,11 +86,17 @@ Type: files; Name: "{userdesktop}\Transmute.lnk"
 Type: files; Name: "{usersendto}\Transmute.lnk"
 
 [Files]
+; The background model is the same file for both kinds of PC, so it's stored once.
 #if Arch == "x64" || Arch == "universal"
-Source: "{#SourceRoot}\x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not IsArm64
+Source: "{#SourceRoot}\x64\*"; Excludes: "*.onnx"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: not IsArm64
 #endif
 #if Arch == "arm64" || Arch == "universal"
-Source: "{#SourceRoot}\arm64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsArm64
+Source: "{#SourceRoot}\arm64\*"; Excludes: "*.onnx"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsArm64
+#endif
+#if Arch == "arm64"
+Source: "{#SourceRoot}\arm64\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion
+#else
+Source: "{#SourceRoot}\x64\models\*.onnx"; DestDir: "{app}\models"; Flags: ignoreversion
 #endif
 
 [Icons]

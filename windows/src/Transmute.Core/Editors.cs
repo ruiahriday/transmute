@@ -86,6 +86,8 @@ public sealed record ImageEdit
     public double Exposure { get; init; }
     public IReadOnlyList<Redaction> Redactions { get; init; } = [];
     public IReadOnlyList<Annotation> Annotations { get; init; } = [];
+    /// Remove or replace the background (null or Keep leaves it).
+    public BackgroundEdit? Background { get; init; }
     /// null keeps the input format when Spinform can write it, otherwise PNG.
     public OutputFormat? OutputFormat { get; init; }
 
@@ -101,7 +103,8 @@ public static class ImageEditEngine
     public static OutputFormat FormatFor(ImageEdit edit, string input)
     {
         if (edit.OutputFormat is { } chosen && Formats.Contains(chosen)) return chosen;
-        if (Kinds.FormatFor(Path.GetExtension(input)) is { } same && Formats.Contains(same)) return same;
+        var transparent = edit.Background is { KeepsTransparency: true };
+        if (Kinds.FormatFor(Path.GetExtension(input)) is { } same && Formats.Contains(same) && (!transparent || Backgrounds.HoldsTransparency(same))) return same;
         return OutputFormat.Png;
     }
 
@@ -141,6 +144,13 @@ public static class ImageEditEngine
         var image = ImageConverter.LoadFirst(input);
         try
         {
+            // The background first, so the subject is found in the untouched picture.
+            if (edit.Background is { Mode: not BackgroundMode.Keep } background)
+            {
+                var replaced = Backgrounds.Apply(image, input, background);
+                image.Dispose();
+                image = replaced;
+            }
             int w = (int)image.Width, h = (int)image.Height;
             foreach (var r in edit.Redactions) Redact(image, r, w, h);
             foreach (var a in edit.Annotations) Annotate(image, a, w, h);

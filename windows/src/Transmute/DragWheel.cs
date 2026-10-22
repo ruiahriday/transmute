@@ -136,6 +136,7 @@ sealed class ShakeDetector
 
 enum FileAction { Float, Copy, CopyPath, Terminal, Move, ShowInFolder }
 
+/// Glyph is the name of one of Spinform's icons (Icons.cs).
 sealed record WheelItem(string Label, string Glyph, JobOperation? Operation = null, BatchTool? Batch = null, FileAction? Action = null, bool Edit = false);
 
 static class WheelItems
@@ -149,21 +150,22 @@ static class WheelItems
         if (WheelLayout.Format(id) is { } format) return new(format.Label(), Glyph(format), new JobOperation.Convert(format));
         return id switch
         {
-            "tool:edit" => new("Edit", "✎", Edit: true),
-            "tool:half" => new("Half size", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.5))),
-            "tool:quarter" => new("Quarter", "⇲", new JobOperation.Compress(new CompressionTarget.Percent(0.25))),
-            "tool:clean" => new("Clean", "⌀", new JobOperation.StripMetadata()),
-            "tool:split" => new("Split", "▥", new JobOperation.SplitPdf()),
-            "tool:merge" => new("Merge", "❐", Batch: new BatchTool.MergePdfs()),
-            "tool:topdf" => new("To PDF", "📄", Batch: new BatchTool.ImagesToPdf()),
-            "tool:qr" => new("QR", "▦", new JobOperation.ReadQr()),
-            "tool:zip" => new("Zip", "🗜", Batch: new BatchTool.Archive(OutputFormat.Zip)),
-            "action:float" => new("Float", "📌", Action: FileAction.Float),
-            "action:copy" => new("Copy", "⧉", Action: FileAction.Copy),
-            "action:copypath" => new("Copy Path", "🔗", Action: FileAction.CopyPath),
-            "action:terminal" => new("Terminal", ">_", Action: FileAction.Terminal),
-            "action:move" => new("Move…", "📁", Action: FileAction.Move),
-            "action:show" => new("Show", "🔍", Action: FileAction.ShowInFolder),
+            "tool:edit" => new("Edit", "edit", Edit: true),
+            "tool:half" => new("Half size", "compress", new JobOperation.Compress(new CompressionTarget.Percent(0.5))),
+            "tool:quarter" => new("Quarter", "compress", new JobOperation.Compress(new CompressionTarget.Percent(0.25))),
+            "tool:clean" => new("Clean", "eraser", new JobOperation.StripMetadata()),
+            "tool:split" => new("Split", "split", new JobOperation.SplitPdf()),
+            "tool:merge" => new("Merge", "merge", Batch: new BatchTool.MergePdfs()),
+            "tool:topdf" => new("To PDF", "document", Batch: new BatchTool.ImagesToPdf()),
+            "tool:qr" => new("QR", "qr", new JobOperation.ReadQr()),
+            "tool:zip" => new("Zip", "zip", Batch: new BatchTool.Archive(OutputFormat.Zip)),
+            "tool:nobg" => new("No BG", "cutout", new JobOperation.Background(new BackgroundEdit { Mode = BackgroundMode.Remove })),
+            "action:float" => new("Float", "pin", Action: FileAction.Float),
+            "action:copy" => new("Copy", "copy", Action: FileAction.Copy),
+            "action:copypath" => new("Copy Path", "link", Action: FileAction.CopyPath),
+            "action:terminal" => new("Terminal", "terminal", Action: FileAction.Terminal),
+            "action:move" => new("Move…", "move", Action: FileAction.Move),
+            "action:show" => new("Show", "search", Action: FileAction.ShowInFolder),
             _ => null,
         };
     }
@@ -184,6 +186,7 @@ static class WheelItems
             "tool:topdf" => "Images to one PDF",
             "tool:qr" => "Read QR code",
             "tool:zip" => "Zip",
+            "tool:nobg" => "Remove background (PNG with a see-through background)",
             "action:float" => "Float (floating files)",
             "action:copy" => "Copy",
             "action:copypath" => "Copy path",
@@ -197,13 +200,12 @@ static class WheelItems
     public static string Glyph(OutputFormat format) => format switch
     {
         OutputFormat.Mp3 or OutputFormat.M4a or OutputFormat.Wav or OutputFormat.Flac or OutputFormat.Ogg or OutputFormat.Opus
-            or OutputFormat.Aiff or OutputFormat.Wma => "♪",
-        OutputFormat.Mp4 or OutputFormat.Mov or OutputFormat.Mkv or OutputFormat.Avi or OutputFormat.Wmv or OutputFormat.Webm => "▶",
-        OutputFormat.Pdf => "📄",
-        OutputFormat.Zip or OutputFormat.Tgz => "🗜",
+            or OutputFormat.Aiff or OutputFormat.Wma => "audio",
+        OutputFormat.Mp4 or OutputFormat.Mov or OutputFormat.Mkv or OutputFormat.Avi or OutputFormat.Wmv or OutputFormat.Webm => "video",
+        OutputFormat.Zip or OutputFormat.Tgz or OutputFormat.Extract => "zip",
         OutputFormat.Jpeg or OutputFormat.Png or OutputFormat.Webp or OutputFormat.Heic or OutputFormat.Avif or OutputFormat.Tiff
-            or OutputFormat.Bmp or OutputFormat.Gif or OutputFormat.Ico or OutputFormat.Svg => "🖼",
-        _ => "📝",
+            or OutputFormat.Bmp or OutputFormat.Gif or OutputFormat.Ico or OutputFormat.Svg => "image",
+        _ => "document",
     };
 
     public static void Run(WheelItem item, IReadOnlyList<string> paths)
@@ -316,7 +318,9 @@ sealed class WheelWindow : Window
         ShowActivated = false;
         ResizeMode = ResizeMode.NoResize;
         AllowDrop = true;
-        FontFamily = new FontFamily("Segoe UI");
+        FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI");
+        UseLayoutRounding = true;
+        TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
         Content = canvas;
         DragEnter += OnDragOver;
         DragOver += OnDragOver;
@@ -386,10 +390,10 @@ sealed class WheelWindow : Window
             Width = ringSize,
             Height = ringSize,
             // Nearly clear but not fully: fully transparent pixels don't receive the drag.
-            Fill = new RadialGradientBrush(Color.FromArgb(0xF0, 0xF5, 0xF3, 0xFF), Color.FromArgb(0xE8, 0xFA, 0xF5, 0xFF)),
+            Fill = new SolidColorBrush(Color.FromArgb(0xF4, 0xF8, 0xF7, 0xFC)),
             Stroke = Theme.Brand,
-            StrokeThickness = 2,
-            Effect = new DropShadowEffect { BlurRadius = 26, ShadowDepth = 0, Opacity = 0.45, Color = Theme.Violet },
+            StrokeThickness = 1.5,
+            Effect = new DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Direction = 270, Opacity = 0.22, Color = Color.FromRgb(0x15, 0x13, 0x2B) },
             RenderTransformOrigin = new Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(0.7, 0.7),
             Opacity = 0,
@@ -402,8 +406,8 @@ sealed class WheelWindow : Window
         Canvas.SetTop(ring, (Size - ringSize) / 2);
         canvas.Children.Add(ring);
 
-        var title = new TextBlock { Text = kind.Title(), FontSize = 15, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center };
-        var subtitle = new TextBlock { FontSize = 11, Foreground = Brushes.DimGray, HorizontalAlignment = HorizontalAlignment.Center };
+        var title = new TextBlock { Text = kind.Title(), FontSize = 15, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, Foreground = Ui.Brush("Ink") };
+        var subtitle = new TextBlock { FontSize = 11, Foreground = Ui.Brush("Secondary"), HorizontalAlignment = HorizontalAlignment.Center };
         var items = paths is null ? [] : WheelItems.For(kind, paths);
         subtitle.Text = paths is null ? "Move onto the wheel" : items.Count == 0 ? "Nothing for these files" : "Drop on a bubble";
         var caption = new StackPanel { Width = 140 };
@@ -446,8 +450,10 @@ sealed class WheelWindow : Window
 
     Border MakeBubble(WheelItem item, double diameter)
     {
-        var glyph = new TextBlock { Text = item.Glyph, FontSize = 17, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol, Segoe UI") };
-        var label = new TextBlock { Text = item.Label, FontSize = 10.5, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = diameter - 6 };
+        var ink = Ui.Brush("Ink");
+        var glyphPath = new System.Windows.Shapes.Path { Data = Icons.Geometry(item.Glyph), Stroke = Ui.Brush("Accent"), StrokeThickness = 1.7, StrokeStartLineCap = PenLineCap.Round, StrokeEndLineCap = PenLineCap.Round, StrokeLineJoin = PenLineJoin.Round };
+        var glyph = new Viewbox { Width = 20, Height = 20, Child = new Canvas { Width = 24, Height = 24, Children = { glyphPath } }, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 2) };
+        var label = new TextBlock { Text = item.Label, FontSize = 10.5, FontWeight = FontWeights.SemiBold, Foreground = ink, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = diameter - 6 };
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         stack.Children.Add(glyph);
         stack.Children.Add(label);
@@ -457,18 +463,20 @@ sealed class WheelWindow : Window
             Height = diameter,
             CornerRadius = new CornerRadius(diameter / 2),
             Background = Brushes.White,
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
+            BorderBrush = Ui.Brush("LineStrong"),
             BorderThickness = new Thickness(1),
             Child = stack,
             AllowDrop = true,
+            SnapsToDevicePixels = true,
             RenderTransformOrigin = new Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(1, 1),
-            Effect = new DropShadowEffect { BlurRadius = 6, ShadowDepth = 1, Opacity = 0.2 },
         };
         void Highlight(bool on)
         {
             bubble.Background = on ? Theme.Brand : Brushes.White;
-            glyph.Foreground = label.Foreground = on ? Brushes.White : Brushes.Black;
+            bubble.BorderBrush = on ? Brushes.Transparent : Ui.Brush("LineStrong");
+            label.Foreground = on ? Brushes.White : ink;
+            glyphPath.Stroke = on ? Brushes.White : Ui.Brush("Accent");
             var scale = (ScaleTransform)bubble.RenderTransform;
             Theme.To(scale, ScaleTransform.ScaleXProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
             Theme.To(scale, ScaleTransform.ScaleYProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
@@ -495,7 +503,7 @@ sealed class Hud : Window
     public static Hud Shared => shared ??= new Hud();
     static Hud? shared;
 
-    readonly TextBlock icon = new() { FontSize = 22, Width = 30, VerticalAlignment = VerticalAlignment.Center, FontFamily = new FontFamily("Segoe UI Symbol, Segoe UI") };
+    readonly ContentControl icon = new() { Width = 34, VerticalAlignment = VerticalAlignment.Center, Focusable = false };
     readonly TextBlock title = new() { FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis };
     readonly TextBox detail = new() { FontSize = 12, IsReadOnly = true, BorderThickness = new Thickness(0), Background = Brushes.Transparent, TextWrapping = TextWrapping.Wrap, MaxHeight = 34, Padding = new Thickness(0), MinHeight = 0 };
     readonly ProgressBar bar = new() { Maximum = 1, Margin = new Thickness(0, 6, 0, 0) };
@@ -514,7 +522,9 @@ sealed class Hud : Window
         ShowInTaskbar = false;
         ShowActivated = false;
         ResizeMode = ResizeMode.NoResize;
-        FontFamily = new FontFamily("Segoe UI");
+        FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI");
+        UseLayoutRounding = true;
+        TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
         var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
         text.Children.Add(title);
         text.Children.Add(detail);
@@ -523,17 +533,30 @@ sealed class Hud : Window
         DockPanel.SetDock(icon, Dock.Left);
         row.Children.Add(icon);
         row.Children.Add(text);
-        Content = new Border
+        // The shadow is its own layer under the card, so the card's text stays crisp.
+        var shadow = new Border
         {
             Background = Brushes.White,
             CornerRadius = new CornerRadius(10),
-            BorderBrush = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
+            Margin = new Thickness(8),
+            Effect = new DropShadowEffect { BlurRadius = 16, ShadowDepth = 3, Direction = 270, Opacity = 0.18 },
+        };
+        var card = new Border
+        {
+            Background = Brushes.White,
+            CornerRadius = new CornerRadius(10),
+            BorderBrush = Ui.Brush("Line"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(14, 10, 14, 10),
             Margin = new Thickness(8),
-            Effect = new DropShadowEffect { BlurRadius = 14, ShadowDepth = 2, Opacity = 0.25 },
             Child = row,
+            SnapsToDevicePixels = true,
         };
+        UseLayoutRounding = true;
+        TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
+        title.Foreground = Ui.Brush("Ink");
+        detail.Foreground = Ui.Brush("Secondary");
+        Content = new Grid { Children = { shadow, card } };
         MouseLeftButtonUp += (_, _) => { Hide(); App.Current.ShowMain(); };
         poll.Tick += (_, _) => Update();
         hide.Tick += (_, _) => { hide.Stop(); Hide(); };
@@ -560,8 +583,7 @@ sealed class Hud : Window
         bar.Value = jobs.Count == 0 ? 1 : jobs.Average(j => j.IsFinished ? 1 : j.Fraction);
         if (!allDone)
         {
-            icon.Text = "⟳";
-            icon.Foreground = (Brush)Application.Current.FindResource("Accent");
+            icon.Content = Icons.Make("working", 22, Ui.Brush("Accent"), 1.8);
             title.Text = $"Working on {noun}…";
             detail.Visibility = Visibility.Collapsed;
             bar.Visibility = Visibility.Visible;
@@ -569,8 +591,7 @@ sealed class Hud : Window
         }
         poll.Stop();
         bar.Visibility = Visibility.Collapsed;
-        icon.Text = failed.Count == 0 ? "✔" : "⚠";
-        icon.Foreground = (Brush)Application.Current.FindResource(failed.Count == 0 ? "Success" : "Warning");
+        icon.Content = Icons.Make(failed.Count == 0 ? "check" : "warning", 22, Ui.Brush(failed.Count == 0 ? "Success" : "Warning"), 2);
         title.Text = failed.Count == 0 ? $"Done: {noun}" : failed.Count == jobs.Count ? $"Couldn't process {noun}" : $"Done, {failed.Count} failed";
         var message = failed.FirstOrDefault()?.Error ?? jobs.Select(j => j.Message).FirstOrDefault(m => m is not null);
         detail.Text = message ?? "";

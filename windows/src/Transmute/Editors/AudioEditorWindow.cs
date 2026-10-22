@@ -62,7 +62,7 @@ sealed class AudioEditorWindow : Window
         };
 
         var controls = new StackPanel();
-        playButton = Ui.Button("▶ Play", (_, _) => TogglePlay(), tip: "Plays the selection, or the whole file");
+        playButton = Ui.Button("Play", (_, _) => TogglePlay(), tip: "Plays the selection, or the whole file", icon: "play");
         controls.Children.Add(Ui.Heading("Listen"));
         controls.Children.Add(Ui.Row(playButton));
         controls.Children.Add(Ui.Caption("Plays the original. Drag on the waveform to select a part."));
@@ -153,7 +153,7 @@ sealed class AudioEditorWindow : Window
         foreach (var bleep in edit.Bleeps)
         {
             var row = new DockPanel { Margin = new Thickness(0, 2, 0, 2) };
-            var remove = new Button { Content = "✕", Style = Ui.Res("Flat"), ToolTip = "Remove this bleep" };
+            var remove = new Button { Content = Icons.Make("close", 13), Style = Ui.Res("Flat"), ToolTip = "Remove this bleep" };
             remove.Click += (_, _) => SetEdit(edit with { Bleeps = edit.Bleeps.Where(b => !ReferenceEquals(b, bleep)).ToList() });
             DockPanel.SetDock(remove, Dock.Right);
             row.Children.Add(remove);
@@ -238,7 +238,7 @@ sealed class AudioEditorWindow : Window
             stopAt = end;
             player.Play();
             playhead.Start();
-            playButton.Content = "■ Stop";
+            playButton.Content = Icons.WithText("stop", "Stop", 14);
         }
         catch
         {
@@ -251,6 +251,6 @@ sealed class AudioEditorWindow : Window
         player.Pause();
         playhead.Stop();
         playLine.Visibility = Visibility.Collapsed;
-        playButton.Content = "▶ Play";
+        playButton.Content = Icons.WithText("play", "Play", 14);
     }
 }

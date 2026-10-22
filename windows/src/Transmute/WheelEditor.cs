@@ -60,7 +60,7 @@ sealed class WheelEditorWindow : Window
 
         // Wheel tabs and the kind of file.
         var tabs = new StackPanel { Orientation = Orientation.Horizontal };
-        var tabBack = new Border { Background = new SolidColorBrush(Color.FromArgb(0x12, 0x1E, 0x1B, 0x3A)), CornerRadius = new CornerRadius(17), Padding = new Thickness(2), Child = tabs, HorizontalAlignment = HorizontalAlignment.Left };
+        var tabBack = new Border { Style = (Style)Application.Current.FindResource("SegmentTrack"), Child = tabs };
         foreach (var w in Enum.GetValues<WheelKind>())
         {
             var tab = new RadioButton { Style = (Style)Application.Current.FindResource("SegmentPill"), GroupName = "wheel", IsChecked = w == wheel };
@@ -238,14 +238,14 @@ sealed class WheelEditorWindow : Window
         if (id == WheelLayout.Gap) name.Foreground = (Brush)Application.Current.FindResource("Secondary");
         Button Small(string text, string tip, bool enabled, Action click)
         {
-            var b = new Button { Content = text, ToolTip = tip, Style = (Style)Application.Current.FindResource("Flat"), IsEnabled = enabled, MinWidth = 28, Padding = new Thickness(4, 1, 4, 1) };
+            var b = new Button { Content = Icons.Make(text, 14), ToolTip = tip, Style = (Style)Application.Current.FindResource("Flat"), IsEnabled = enabled, MinWidth = 28, Padding = new Thickness(5, 3, 5, 3), Foreground = (Brush)Application.Current.FindResource("Secondary") };
             b.Click += (_, e) => { e.Handled = true; click(); };
             return b;
         }
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
-        buttons.Children.Add(Small("▲", "Move up (anticlockwise)", index > 0, () => Change(() => (slots[index - 1], slots[index]) = (slots[index], slots[index - 1]), index - 1)));
-        buttons.Children.Add(Small("▼", "Move down (clockwise)", index < slots.Count - 1, () => Change(() => (slots[index + 1], slots[index]) = (slots[index], slots[index + 1]), index + 1)));
-        buttons.Children.Add(Small("✕", "Remove from the wheel", true, () => Change(() => slots.RemoveAt(index), -1)));
+        buttons.Children.Add(Small("up", "Move up (anticlockwise)", index > 0, () => Change(() => (slots[index - 1], slots[index]) = (slots[index], slots[index - 1]), index - 1)));
+        buttons.Children.Add(Small("down", "Move down (clockwise)", index < slots.Count - 1, () => Change(() => (slots[index + 1], slots[index]) = (slots[index], slots[index + 1]), index + 1)));
+        buttons.Children.Add(Small("close", "Remove from the wheel", true, () => Change(() => slots.RemoveAt(index), -1)));
         var row = new DockPanel { LastChildFill = true, MinWidth = 300 };
         DockPanel.SetDock(buttons, Dock.Right);
         row.Children.Add(buttons);
@@ -295,8 +295,8 @@ sealed class WheelEditorWindow : Window
         {
             Width = ringSize,
             Height = ringSize,
-            Fill = new SolidColorBrush(Color.FromRgb(0xF5, 0xF3, 0xFF)),
-            Stroke = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)),
+            Fill = new SolidColorBrush(Color.FromRgb(0xF7, 0xF6, 0xFC)),
+            Stroke = (Brush)Application.Current.FindResource("Line"),
         };
         Canvas.SetLeft(ring, (PreviewSize - ringSize) / 2);
         Canvas.SetTop(ring, (PreviewSize - ringSize) / 2);
@@ -326,10 +326,13 @@ sealed class WheelEditorWindow : Window
         var stack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false };
         if (item is not null)
         {
-            stack.Children.Add(new TextBlock { Text = item.Glyph, FontSize = 15, HorizontalAlignment = HorizontalAlignment.Center, FontFamily = new FontFamily("Segoe UI Emoji, Segoe UI Symbol, Segoe UI") });
-            stack.Children.Add(new TextBlock { Text = item.Label, FontSize = 10, FontWeight = FontWeights.Bold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = size - 6 });
+            var glyph = Icons.Make(item.Glyph, 18, accent, 1.7);
+            glyph.HorizontalAlignment = HorizontalAlignment.Center;
+            glyph.Margin = new Thickness(0, 0, 0, 2);
+            stack.Children.Add(glyph);
+            stack.Children.Add(new TextBlock { Text = item.Label, FontSize = 10, FontWeight = FontWeights.SemiBold, HorizontalAlignment = HorizontalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = size - 6 });
         }
-        else stack.Children.Add(new TextBlock { Text = "empty", FontSize = 10, Foreground = Brushes.Gray, HorizontalAlignment = HorizontalAlignment.Center });
+        else stack.Children.Add(new TextBlock { Text = "empty", FontSize = 10, Foreground = (Brush)Application.Current.FindResource("Tertiary"), HorizontalAlignment = HorizontalAlignment.Center });
         var isSelected = index == selected;
         var bubble = new Border
         {
@@ -337,8 +340,9 @@ sealed class WheelEditorWindow : Window
             Height = size,
             CornerRadius = new CornerRadius(size / 2),
             Background = item is null ? Brushes.Transparent : Brushes.White,
-            BorderBrush = isSelected ? accent : new SolidColorBrush(Color.FromArgb(item is null ? (byte)0x60 : (byte)0x30, 0, 0, 0)),
-            BorderThickness = new Thickness(isSelected ? 2.5 : 1),
+            BorderBrush = isSelected ? accent : (Brush)Application.Current.FindResource(item is null ? "Line" : "LineStrong"),
+            BorderThickness = new Thickness(isSelected ? 2 : 1),
+            SnapsToDevicePixels = true,
             Child = stack,
             AllowDrop = true,
             Cursor = Cursors.SizeAll,

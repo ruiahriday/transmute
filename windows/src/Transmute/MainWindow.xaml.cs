@@ -38,7 +38,7 @@ public partial class MainWindow : Window
         Refresh();
     }
 
-    // The look: drifting glows, the drop zone's orbit and pulse, the sliding tab highlight.
+    // The look: the drop zone's orbit and pulse, the sliding tab highlight.
 
     static readonly (string Label, FileKind Kind)[] OrbitChips =
     [
@@ -50,25 +50,15 @@ public partial class MainWindow : Window
 
     void StartAnimations()
     {
-        void Drift(Ellipse glow, double dx, double dy, double seconds)
-        {
-            var t = (TranslateTransform)glow.RenderTransform;
-            Theme.Wave(t, TranslateTransform.XProperty, -dx, dx, seconds);
-            Theme.Wave(t, TranslateTransform.YProperty, -dy, dy, seconds * 1.3);
-        }
-        Drift(GlowA, 60, 40, 9);
-        Drift(GlowB, 50, 60, 11);
-        Drift(GlowC, 90, 30, 13);
-
         foreach (var (label, kind) in OrbitChips)
         {
             var chip = new Border
             {
                 Background = new SolidColorBrush(Theme.Tint(kind)),
-                CornerRadius = new CornerRadius(9),
-                Padding = new Thickness(8, 2, 8, 3),
-                Child = new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 10, FontWeight = FontWeights.Bold },
-                Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 6, ShadowDepth = 2, Direction = 270, Opacity = 0.3, Color = Theme.Tint(kind) },
+                CornerRadius = new CornerRadius(5),
+                Padding = new Thickness(7, 2, 7, 3),
+                Child = new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 10, FontWeight = FontWeights.SemiBold },
+                SnapsToDevicePixels = true,
             };
             Orbit.Children.Add(chip);
             chips.Add(chip);
@@ -185,6 +175,7 @@ public partial class MainWindow : Window
         ZipButton.IsEnabled = jobs.Count > 0 && !busy;
         CleanButton.IsEnabled = jobs.Any(j => j.Kind.CanStripMetadata()) && !busy;
         QrButton.IsEnabled = images > 0 && !busy;
+        RemoveBackgroundButton.IsEnabled = ChangeBackgroundButton.IsEnabled = images > 0 && !busy;
         FloatButton.IsEnabled = jobs.Count > 0;
         var kinds = Queue.KindsPresent.ToList();
         QualityRow.Visibility = kinds.Contains(FileKind.Image) || kinds.Contains(FileKind.Pdf) ? Visibility.Visible : Visibility.Collapsed;
@@ -375,6 +366,15 @@ public partial class MainWindow : Window
 
     void OnQr(object sender, RoutedEventArgs e) =>
         _ = Queue.Start(Of(FileKind.Image).Select(j => (j, (JobOperation)new JobOperation.ReadQr())).ToList(), false);
+
+    void OnRemoveBackground(object sender, RoutedEventArgs e) =>
+        _ = Queue.Start(Of(FileKind.Image).Select(j => (j, (JobOperation)new JobOperation.Background(new BackgroundEdit { Mode = BackgroundMode.Remove }))).ToList(), Reveal);
+
+    void OnChangeBackground(object sender, RoutedEventArgs e)
+    {
+        var pictures = Of(FileKind.Image);
+        if (pictures.Count > 0) BackgroundWindow.Open(pictures, this);
+    }
 
     void OnFloat(object sender, RoutedEventArgs e) => Shelf.Shared.Add(Queue.Jobs.Select(j => j.Path));
 }

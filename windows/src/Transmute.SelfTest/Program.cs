@@ -245,6 +245,7 @@ static class Tests
         });
 
         await PhotoEditorChecks(Fixture("sample.png"), options with { OutputFolder = Sub("photo-edit") });
+        await BackgroundChecks(Fixture, images, options with { OutputFolder = Sub("background") });
         if (Tools.Ffmpeg is not null)
         {
             await VideoChecks(Fixture("clip.mp4"), Fixture("movie.mkv"), options with { OutputFolder = Sub("video-edit") });
@@ -420,6 +421,115 @@ static class Tests
             using var image = new MagickImage(result.Outputs[0]);
             var p = image.GetPixels().GetPixel(600, 20).ToColor()!;
             Expect(Math.Abs(p.R - p.G) < 12 && Math.Abs(p.G - p.B) < 12, $"saturation 0 should be grey, got {p}");
+            return result.Outputs;
+        });
+    }
+
+    // Backgrounds
+
+    static (double R, double G, double B, double A) Pixel(MagickImage image, int x, int y)
+    {
+        var c = image.GetPixels().GetPixel(x, y).ToColor()!;
+        return (c.R / 255.0, c.G / 255.0, c.B / 255.0, image.HasAlpha ? c.A / 255.0 : 1);
+    }
+
+    static async Task BackgroundChecks(Func<string, string> fixture, IReadOnlyList<string> images, ConversionOptions options)
+    {
+        Console.WriteLine($"Background model: {Backgrounds.ModelPath ?? "missing"}");
+        var product = fixture("product.jpg");
+        async Task<string> Run(BackgroundEdit edit, string input) =>
+            (await Engine.Perform(new JobOperation.Background(edit), input, options, _ => { }, default)).Outputs[0];
+
+        await Check("Remove background: product.jpg → PNG with see-through corners and a solid subject", async () =>
+        {
+            var output = await Run(new BackgroundEdit { Mode = BackgroundMode.Remove }, product);
+            Expect(Path.GetExtension(output) == ".png", $"made {Path.GetFileName(output)}");
+            using var image = new MagickImage(output);
+            Expect(image.HasAlpha, "no transparency");
+            Expect(image.Width == 800 && image.Height == 600, $"size was {image.Width}×{image.Height}");
+            int w = (int)image.Width, h = (int)image.Height;
+            foreach (var (x, y) in new[] { (8, 8), (w - 9, 8), (8, h - 9), (w - 9, h - 9), (w / 2, 10), (40, h / 2) })
+                Expect(Pixel(image, x, y).A < 0.08, $"background at {x},{y} has alpha {Pixel(image, x, y).A:0.00}");
+            foreach (var (x, y) in new[] { (w / 2, (int)(h * 0.47)), (w / 2 - 80, (int)(h * 0.47) - 60), (w / 2 + 90, (int)(h * 0.47) + 70) })
+                Expect(Pixel(image, x, y).A > 0.92, $"subject at {x},{y} has alpha {Pixel(image, x, y).A:0.00}");
+            // The edge is feathered: some pixels between see-through and solid.
+            var alpha = image.Separate(Channels.Alpha).First();
+            var partial = alpha.Histogram().Where(p => p.Key.R > 20 && p.Key.R < 235).Sum(p => (long)p.Value);
+            Expect(partial > 200, $"edge has only {partial} soft pixels");
+            return [output];
+        });
+        await Check("Replace background with a colour: product.jpg stays a JPEG with green corners", async () =>
+        {
+            var green = new Rgba(0.13, 0.55, 0.27);
+            var output = await Run(new BackgroundEdit { Mode = BackgroundMode.Color, Color = green }, product);
+            Expect(Path.GetExtension(output) == ".jpg", $"made {Path.GetFileName(output)}");
+            using var image = new MagickImage(output);
+            int w = (int)image.Width, h = (int)image.Height;
+            foreach (var (x, y) in new[] { (6, 6), (w - 7, 6), (6, h - 7), (w - 7, h - 7) })
+            {
+                var p = Pixel(image, x, y);
+                Expect(Math.Abs(p.R - green.R) < 0.06 && Math.Abs(p.G - green.G) < 0.06 && Math.Abs(p.B - green.B) < 0.06, $"corner {x},{y} was {p.R:0.00},{p.G:0.00},{p.B:0.00}");
+            }
+            var middle = Pixel(image, w / 2 - 60, (int)(h * 0.47) - 40);
+            Expect(middle.R > middle.G + 0.2 && middle.R > middle.B + 0.3, $"the orange ball is gone: {middle.R:0.00},{middle.G:0.00},{middle.B:0.00}");
+            return [output];
+        });
+        await Check("Replace background with a gradient, a blur and a picture", async () =>
+        {
+            var preset = Backgrounds.Gradients[0];
+            var gradient = await Run(new BackgroundEdit { Mode = BackgroundMode.Gradient, GradientFrom = preset.From, GradientTo = preset.To, GradientAngle = 0, OutputFormat = OutputFormat.Png }, product);
+            using (var image = new MagickImage(gradient))
+            {
+                var left = Pixel(image, 2, 300);
+                var right = Pixel(image, 797, 300);
+                Expect(Math.Abs(left.R - preset.From.R) < 0.05 && Math.Abs(left.B - preset.From.B) < 0.05, $"left edge {left}");
+                Expect(Math.Abs(right.R - preset.To.R) < 0.05 && Math.Abs(right.B - preset.To.B) < 0.05, $"right edge {right}");
+                Expect(!image.HasAlpha || Pixel(image, 2, 2).A > 0.99, "a replaced background must be solid");
+            }
+            var blurred = await Run(new BackgroundEdit { Mode = BackgroundMode.Blur, BlurAmount = 0.8 }, product);
+            using (var image = new MagickImage(blurred))
+            {
+                // Just left of the ball: blurred backdrop, without an orange halo from the ball.
+                var near = Pixel(image, 196, 282);
+                Expect(near.R - near.B < 0.12, $"orange halo next to the subject: {near.R:0.00},{near.G:0.00},{near.B:0.00}");
+            }
+            var backdrop = Path.Combine(Path.GetDirectoryName(blurred)!, "backdrop.png");
+            using (var b = Backgrounds.Gradient(300, 500, Rgba.Black, Rgba.White, 90)) b.Write(backdrop, MagickFormat.Png);
+            var picture = await Run(new BackgroundEdit { Mode = BackgroundMode.Picture, PicturePath = backdrop }, product);
+            using (var image = new MagickImage(picture))
+            {
+                Expect(image.Width == 800 && image.Height == 600, $"size was {image.Width}×{image.Height}");
+                // Scaled to fill and cropped: the top is dark, the bottom light.
+                Expect(Pixel(image, 4, 4).R < 0.35 && Pixel(image, 4, 595).R > 0.65, "the picture wasn't scaled to fill");
+            }
+            return [gradient, blurred, picture];
+        });
+        await Check("Remove background from every kind of picture (JPEG, PNG, WebP, BMP, TIFF, GIF, HEIC, SVG)", async () =>
+        {
+            var bmp = Path.Combine(Sub("background-kinds"), "sample.bmp");
+            using (var s = new MagickImage(fixture("sample.png"))) s.Write(bmp, MagickFormat.Bmp3);
+            var outputs = new List<string>();
+            foreach (var input in images.Append(bmp))
+            {
+                var output = await Run(new BackgroundEdit { Mode = BackgroundMode.Remove }, input);
+                using var original = ImageConverter.LoadFirst(input);
+                using var image = new MagickImage(output);
+                Expect(image.HasAlpha && image.Format == MagickFormat.Png, $"{Path.GetFileName(input)} gave {image.Format} without transparency");
+                Expect(image.Width == original.Width && image.Height == original.Height, $"{Path.GetFileName(input)}: {image.Width}×{image.Height}, expected {original.Width}×{original.Height}");
+                outputs.Add(output);
+            }
+            Console.WriteLine($"      {string.Join(", ", images.Append(bmp).Select(Path.GetExtension).Distinct())}");
+            return outputs;
+        });
+        await Check("Photo editor: remove the background, crop, keep PNG transparency", async () =>
+        {
+            var edit = new ImageEdit { Background = new BackgroundEdit { Mode = BackgroundMode.Remove }, Crop = new NormRect(0.1, 0.1, 0.8, 0.8) };
+            Expect(ImageEditEngine.FormatFor(edit, product) == OutputFormat.Png, "a JPEG without its background should save as PNG");
+            var result = await Engine.Perform(new JobOperation.EditImage(edit), product, options, _ => { }, default);
+            using var image = new MagickImage(result.Outputs[0]);
+            Expect(image.HasAlpha && Pixel(image, 3, 3).A < 0.08 && Pixel(image, 320, 222).A > 0.9, "transparency lost in the editor");
+            var solid = edit with { Background = new BackgroundEdit { Mode = BackgroundMode.Color, Color = Rgba.White } };
+            Expect(ImageEditEngine.FormatFor(solid, product) == OutputFormat.Jpeg, "a new solid background keeps JPEG");
             return result.Outputs;
         });
     }
@@ -652,6 +762,10 @@ static class Tests
             Expect(clean.Count == WheelLayout.MaxSlots && clean[0] == "convert:pdf" && !clean.Contains("tool:qr") && !clean.Contains("nonsense"), string.Join(", ", clean));
             Same(WheelLayout.Clean(["convert:pdf", "convert:pdf", "gap"], FileKind.Document), "convert:pdf", "gap");
             Expect(WheelLayout.Available(FileKind.Image).Contains("tool:qr") && WheelLayout.Available(FileKind.Document).Contains("action:terminal"), "available items");
+            // Remove background: on the image tools wheel and in Customize Wheels for pictures only.
+            Expect(WheelLayout.Available(FileKind.Image).Contains("tool:nobg") && !WheelLayout.Available(FileKind.Pdf).Contains("tool:nobg"), "remove background item");
+            Expect(WheelLayout.Resolve(WheelKind.Tools, [FileKind.Image], null).Contains("tool:nobg"), "remove background on the tools wheel");
+            Expect(!WheelLayout.Fits("tool:nobg", [FileKind.Image, FileKind.Video]), "remove background must not offer itself for videos");
             return Done();
         });
     }

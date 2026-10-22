@@ -53,6 +53,7 @@ static class SmokeTest
             var clip = Copy("clip.mp4");
             var tone = Copy("tone.wav");
             var report = Copy("report.docx");
+            var product = Copy("product.jpg");
             var pdfSource = Directory.GetFiles(fixtures, "*.pdf").FirstOrDefault();
             await Step("main window empty", async () =>
             {
@@ -167,6 +168,55 @@ static class SmokeTest
                 await Wait(4);
                 return Application.Current.Windows.OfType<AudioEditorWindow>().Single();
             });
+            // Background removal: through the queue, in the photo editor, and for several pictures.
+            var productJob = JobQueue.Shared.Add([product])[0];
+            await Step("remove background through the queue", async () =>
+            {
+                await JobQueue.Shared.Start([(productJob, new JobOperation.Background(new BackgroundEdit { Mode = BackgroundMode.Remove }))], reveal: false);
+                if (productJob.Status != JobStatus.Done) throw new Exception($"product.jpg remove background ended {productJob.Status}: {productJob.Error}");
+                using var cut = new ImageMagick.MagickImage(productJob.Result!.Outputs[0]);
+                var corner = cut.GetPixels().GetPixel(5, 5).ToColor()!;
+                if (!cut.HasAlpha || corner.A > 20) throw new Exception($"corner alpha {corner.A}, expected see-through");
+                Log($"      made {Path.GetFileName(productJob.Result!.Outputs[0])}");
+                return main;
+            });
+            async Task<ImageEditorWindow> BackgroundEditor(BackgroundMode mode, GradientPreset? gradient = null)
+            {
+                var editor = Application.Current.Windows.OfType<ImageEditorWindow>().SingleOrDefault();
+                if (editor is null)
+                {
+                    Editors.Open(productJob, main);
+                    await Wait(2);
+                    editor = Application.Current.Windows.OfType<ImageEditorWindow>().Single();
+                }
+                var before = editor.RenderCount;
+                editor.BackgroundControls.Choose(mode, gradient);
+                editor.BringIntoViewBackground();
+                for (var i = 0; i < 120 && !(editor.RenderedBackground && editor.RenderCount > before); i++) await Wait(0.25);
+                await Wait(0.6);
+                if (!editor.RenderedBackground) throw new Exception("the background preview didn't appear within 30 s");
+                return editor;
+            }
+            await Step("photo editor background removed", async () => await BackgroundEditor(BackgroundMode.Remove));
+            await Step("photo editor background gradient", async () => await BackgroundEditor(BackgroundMode.Gradient, Backgrounds.Gradients[1]));
+            foreach (var w in Application.Current.Windows.OfType<ImageEditorWindow>().ToList()) w.Close();
+            await Step("change background window", async () =>
+            {
+                var window = BackgroundWindow.Open([productJob, jobs[0]], main);
+                for (var i = 0; i < 120 && !window.Rendered; i++) await Wait(0.25);
+                await Wait(0.5);
+                if (!window.Rendered) throw new Exception("the preview didn't appear within 30 s");
+                return window;
+            });
+            Application.Current.Windows.OfType<BackgroundWindow>().SingleOrDefault()?.Close();
+            await Step("main window tools", async () =>
+            {
+                main.ToolsTab.IsChecked = true;
+                await Wait(1);
+                return main;
+            });
+            main.ConvertTab.IsChecked = true;
+
             await Step("info", async () =>
             {
                 new MetadataWindow(jobs[0]) { Owner = main }.Show();

@@ -51,6 +51,8 @@ static class Fixtures
               <circle cx="60" cy="60" r="30" fill="#ffffff"/>
             </svg>
             """);
+        // A product shot: a lit ball on a plain studio backdrop, for background removal.
+        using (var product = ProductShot(800, 600)) { product.Quality = 92; product.Write(P("product.jpg"), MagickFormat.Jpeg); }
 
         // Video and audio
         await Ff("-f", "lavfi", "-i", "testsrc=duration=3:size=320x240:rate=25", "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
@@ -193,5 +195,45 @@ static class Fixtures
     {
         using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
         foreach (var (name, text) in files) Add(zip, name, text, name == "mimetype" ? CompressionLevel.NoCompression : CompressionLevel.Optimal);
+    }
+
+    /// A photo-like picture with one clear subject: an orange ball lit from the top left, with a
+    /// soft shadow, on a light grey backdrop with a little grain.
+    public static MagickImage ProductShot(int w, int h)
+    {
+        var pixels = new byte[w * h * 3];
+        var random = new Random(7);
+        double cx = w * 0.5, cy = h * 0.47, r = Math.Min(w, h) * 0.3;
+        // Light from the upper left, towards the viewer.
+        double lx = -0.45, ly = -0.55, lz = 0.7, ll = Math.Sqrt(lx * lx + ly * ly + lz * lz);
+        lx /= ll; ly /= ll; lz /= ll;
+        for (var y = 0; y < h; y++)
+        for (var x = 0; x < w; x++)
+        {
+            // Backdrop: a gentle fall-off from top to bottom, darker under the ball.
+            double bg = 236 - 18.0 * y / h;
+            double sx = (x - cx) / (r * 1.1), sy = (y - (cy + r * 0.98)) / (r * 0.22);
+            bg -= 60 * Math.Exp(-(sx * sx + sy * sy) * 1.6);
+            double red = bg, green = bg + 2, blue = bg + 6;
+            double dx = (x - cx) / r, dy = (y - cy) / r, d2 = dx * dx + dy * dy;
+            if (d2 <= 1)
+            {
+                var dz = Math.Sqrt(1 - d2);
+                var diffuse = Math.Max(0, dx * lx + dy * ly + dz * lz);
+                var hz = dz + lz; var hx = dx + lx; var hy = dy + ly;
+                var spec = Math.Pow(Math.Max(0, (hx * lx + hy * ly + hz * lz) / Math.Sqrt(hx * hx + hy * hy + hz * hz)), 40);
+                var shade = 0.22 + 0.78 * diffuse;
+                // Anti-aliased rim.
+                var edge = Math.Clamp((1 - Math.Sqrt(d2)) * r, 0, 1);
+                double br = 236 * shade + 255 * spec * 0.8, bgc = 112 * shade + 255 * spec * 0.8, bb = 38 * shade + 255 * spec * 0.8;
+                red = red + (br - red) * edge; green = green + (bgc - green) * edge; blue = blue + (bb - blue) * edge;
+            }
+            var grain = (random.NextDouble() - 0.5) * 6;
+            var i = (y * w + x) * 3;
+            pixels[i] = (byte)Math.Clamp(red + grain, 0, 255);
+            pixels[i + 1] = (byte)Math.Clamp(green + grain, 0, 255);
+            pixels[i + 2] = (byte)Math.Clamp(blue + grain, 0, 255);
+        }
+        return new MagickImage(pixels, new PixelReadSettings((uint)w, (uint)h, StorageType.Char, PixelMapping.RGB));
     }
 }

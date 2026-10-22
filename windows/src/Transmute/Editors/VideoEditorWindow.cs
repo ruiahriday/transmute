@@ -70,9 +70,9 @@ sealed class VideoEditorWindow : Window
         controls.Children.Add(Ui.Heading("Picture"));
         controls.Children.Add(Ui.Labelled("Shape", Ui.Combo(Enum.GetValues<CropAspect>().Select(a => (a.Label(), a)), edit.Crop, a => { edit = edit with { Crop = a }; Refresh(); })));
         controls.Children.Add(Ui.Row(
-            Ui.Button("⟲ Left", (_, _) => { edit = edit with { QuarterTurns = edit.QuarterTurns - 1 }; Refresh(); }),
-            Ui.Button("⟳ Right", (_, _) => { edit = edit with { QuarterTurns = edit.QuarterTurns + 1 }; Refresh(); }),
-            Ui.Button("⇋ Flip", (_, _) => { edit = edit with { FlipHorizontal = !edit.FlipHorizontal }; Refresh(); })));
+            Ui.Button("Left", (_, _) => { edit = edit with { QuarterTurns = edit.QuarterTurns - 1 }; Refresh(); }, icon: "rotateleft", tip: "Turn left"),
+            Ui.Button("Right", (_, _) => { edit = edit with { QuarterTurns = edit.QuarterTurns + 1 }; Refresh(); }, icon: "rotateright", tip: "Turn right"),
+            Ui.Button("Flip", (_, _) => { edit = edit with { FlipHorizontal = !edit.FlipHorizontal }; Refresh(); }, icon: "fliph", tip: "Flip left to right")));
         controls.Children.Add(Ui.Labelled("Speed", Ui.Combo([("0.25×", 0.25), ("0.5×", 0.5), ("0.75×", 0.75), ("Normal", 1.0), ("1.25×", 1.25), ("1.5×", 1.5), ("2×", 2.0), ("4×", 4.0)], 1.0, s => { edit = edit with { Speed = s }; Refresh(); })));
 
         controls.Children.Add(Ui.Heading("Sound"));

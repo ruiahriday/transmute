@@ -9,8 +9,8 @@ using ImageMagick;
 
 namespace Transmute.App;
 
-/// The photo editor: crop, turn, flip, colour, blur or black out parts, and draw arrows, boxes,
-/// highlights and text. Saves an edited copy next to the original.
+/// The photo editor: crop, turn, flip, colour, remove or replace the background, blur or black out
+/// parts, and draw arrows, boxes, highlights and text. Saves an edited copy next to the original.
 sealed class ImageEditorWindow : Window
 {
     enum Tool { Crop, Redact, Annotate }
@@ -29,6 +29,7 @@ sealed class ImageEditorWindow : Window
     // Preview: the picture with marks and colours applied; crop, turns and flips are shown with
     // WPF transforms so the marks keep the original's coordinates.
     readonly Image picture = new() { Stretch = Stretch.Fill };
+    readonly Border checker = new() { Visibility = Visibility.Collapsed };
     readonly Canvas overlay = new() { Background = Brushes.Transparent, ClipToBounds = true };
     readonly Grid stage = new();
     readonly Viewbox viewbox = new() { Stretch = Stretch.Uniform, Margin = new Thickness(20) };
@@ -39,8 +40,14 @@ sealed class ImageEditorWindow : Window
     Point? dragFrom;
     int pixelWidth = 1, pixelHeight = 1;
     int renderGeneration;
+    /// Whether the last preview had the background changed (for the smoke test).
+    public bool RenderedBackground { get; private set; }
+    public int RenderCount { get; private set; }
+
+    public void BringIntoViewBackground() => backgroundPanel.BringIntoView();
     readonly StackPanel toolOptions = new();
     readonly ComboBox formatBox;
+    readonly BackgroundPanel backgroundPanel;
     readonly Button undoButton;
 
     public ImageEditorWindow(Job job)
@@ -48,6 +55,7 @@ sealed class ImageEditorWindow : Window
         this.job = job;
         Ui.SetUpEditorWindow(this, $"Edit {job.Name}");
 
+        stage.Children.Add(checker);
         stage.Children.Add(picture);
         stage.Children.Add(overlay);
         overlay.Children.Add(cropShade);
@@ -64,10 +72,10 @@ sealed class ImageEditorWindow : Window
         var controls = new StackPanel();
         controls.Children.Add(Ui.Heading("Turn and flip"));
         controls.Children.Add(Ui.Row(
-            Ui.Button("⟲ Left", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns - 1 })),
-            Ui.Button("⟳ Right", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns + 1 })),
-            Ui.Button("⇋ Flip", (_, _) => Update(edit with { FlipHorizontal = !edit.FlipHorizontal })),
-            Ui.Button("⇵ Flip", (_, _) => Update(edit with { FlipVertical = !edit.FlipVertical }), tip: "Flip upside down")));
+            Ui.Button("Left", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns - 1 }), icon: "rotateleft", tip: "Turn left"),
+            Ui.Button("Right", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns + 1 }), icon: "rotateright", tip: "Turn right"),
+            Ui.Button("Flip", (_, _) => Update(edit with { FlipHorizontal = !edit.FlipHorizontal }), icon: "fliph", tip: "Flip left to right"),
+            Ui.Button("Flip", (_, _) => Update(edit with { FlipVertical = !edit.FlipVertical }), icon: "flipv", tip: "Flip upside down")));
 
         controls.Children.Add(Ui.Heading("Colour"));
         var sliders = new List<Slider>();
@@ -85,6 +93,16 @@ sealed class ImageEditorWindow : Window
         {
             sliders[0].Value = 0; sliders[1].Value = 0; sliders[2].Value = 1; sliders[3].Value = 1;
         })));
+
+        controls.Children.Add(Ui.Heading("Background"));
+        backgroundPanel = new BackgroundPanel(BackgroundMode.Keep, true, background =>
+        {
+            Update(edit with { Background = background });
+            // A see-through background needs a format that keeps it.
+            if (background is { KeepsTransparency: true } && formatBox?.SelectedItem is ComboBoxItem { Tag: OutputFormat f } && !Backgrounds.HoldsTransparency(f))
+                SelectFormat(OutputFormat.Png);
+        });
+        controls.Children.Add(backgroundPanel);
 
         controls.Children.Add(Ui.Heading("Draw on the picture"));
         var toolBox = Ui.Combo([("Arrows, boxes and text", Tool.Annotate), ("Hide something", Tool.Redact), ("Crop", Tool.Crop)], tool, t => { tool = t; BuildToolOptions(); });
@@ -114,6 +132,15 @@ sealed class ImageEditorWindow : Window
             if (e.Key == Key.Escape) Close();
         };
     }
+
+    void SelectFormat(OutputFormat format)
+    {
+        foreach (ComboBoxItem item in formatBox.Items)
+            if (item.Tag is OutputFormat f && f == format) { formatBox.SelectedItem = item; break; }
+    }
+
+    /// Shows the Background section with a choice made (for the smoke test).
+    public BackgroundPanel BackgroundControls => backgroundPanel;
 
     void BuildToolOptions()
     {
@@ -177,6 +204,7 @@ sealed class ImageEditorWindow : Window
             (pixelWidth, pixelHeight) = (width, height);
             stage.Width = width > height ? 1600 : 1600.0 * width / height;
             stage.Height = width > height ? 1600.0 * height / width : 1600;
+            checker.Background = BackgroundPanel.Checkerboard(32);
             await Render();
         }
         catch (Exception e)
@@ -215,16 +243,21 @@ sealed class ImageEditorWindow : Window
         // Marks and colours only; the crop and turns are shown by the preview itself.
         var previewEdit = edit with { Crop = null, QuarterTurns = 0, FlipHorizontal = false, FlipVertical = false };
         var source = previewSource;
+        var background = previewEdit.Background is { Mode: not BackgroundMode.Keep };
+        if (background) status.Text = "Finding the subject…";
         try
         {
-            var bytes = await Task.Run(() =>
+            var bitmap = await Task.Run(() =>
             {
                 using var image = ImageEditEngine.Render(source, previewEdit);
-                return image.ToByteArray(MagickFormat.Bmp);
+                return Editors.Pixels(image);
             });
             if (generation != renderGeneration) return;
-            picture.Source = Editors.Bitmap(bytes);
+            picture.Source = bitmap;
+            checker.Visibility = previewEdit.Background is { KeepsTransparency: true } ? Visibility.Visible : Visibility.Collapsed;
             status.Text = $"{pixelWidth} × {pixelHeight}";
+            RenderedBackground = background;
+            RenderCount++;
         }
         catch (Exception e)
         {

@@ -142,6 +142,7 @@ public abstract record JobOperation
     public sealed record EditAudio(AudioEdit Edit) : JobOperation;
     public sealed record WriteMetadata(MetadataEdit Edit) : JobOperation;
     public sealed record Snapshot(double Seconds) : JobOperation;
+    public sealed record Background(BackgroundEdit Edit) : JobOperation;
 }
 
 /// Tools that take several files and produce one output.

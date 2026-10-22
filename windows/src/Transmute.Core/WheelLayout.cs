@@ -4,14 +4,14 @@ public enum WheelKind { Convert, Tools, Actions }
 
 /// Which bubbles each drag wheel shows, and where. A layout is a list of item ids going clockwise
 /// from the top; "gap" leaves a position empty so the others stay where the user put them.
-/// Ids: "convert:pdf", "tool:edit" (and half, quarter, clean, split, merge, topdf, qr, zip),
+/// Ids: "convert:pdf", "tool:edit" (and half, quarter, clean, split, merge, topdf, qr, zip, nobg),
 /// "action:float" (and copy, copypath, terminal, move, show). Any item can go on any wheel.
 public static class WheelLayout
 {
     public const string Gap = "gap";
     public const int MaxSlots = 12;
 
-    public static readonly string[] Tools = ["edit", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"];
+    public static readonly string[] Tools = ["edit", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip", "nobg"];
     public static readonly string[] Actions = ["float", "copy", "copypath", "terminal", "move", "show"];
 
     /// Where a customized layout is kept in settings: "convert.document", "tools.image"…
@@ -53,7 +53,7 @@ public static class WheelLayout
         "clean" => kinds.All(k => k.CanStripMetadata()),
         "split" => kinds.All(k => k == FileKind.Pdf),
         "merge" => kinds.All(k => k == FileKind.Pdf) && count > 1,
-        "topdf" or "qr" => kinds.All(k => k == FileKind.Image),
+        "topdf" or "qr" or "nobg" => kinds.All(k => k == FileKind.Image),
         "zip" => true,
         "edit" => kinds.All(k => k is FileKind.Image or FileKind.Video or FileKind.Audio),
         _ => false,
