@@ -57,16 +57,30 @@ public readonly record struct Rgba(double R, double G, double B, double A = 1)
     public string Hex => $"{B8(R):X2}{B8(G):X2}{B8(B):X2}";
 }
 
-public enum RedactionStyle { Blackout, Pixelate, Blur }
+/// Pixelate scrambles each block a little so the original can't be rebuilt from it; Blur is a
+/// smooth blur; SecureBlur shrinks, scrambles and blurs, so nothing readable survives.
+public enum RedactionStyle { Blackout, Pixelate, Blur, SecureBlur }
 
 public sealed record Redaction(NormRect Rect, RedactionStyle Style);
 
-public enum AnnotationKind { Text, Rectangle, Arrow, Highlight }
+/// A picture dropped onto the editor's canvas, stretched into `Rect`.
+public sealed record PlacedImage(string Path, NormRect Rect);
 
-/// Text: `Text` at `From` (its top-left). Rectangle and highlight: the box from `From` to `To`.
-/// Arrow: from `From` pointing at `To`. `Size` is a fraction of the picture's height: the font size
-/// for text, the line width for shapes.
-public sealed record Annotation(AnnotationKind Kind, NormPoint From, NormPoint To, Rgba Color, double Size, string Text = "");
+public enum AnnotationKind { Text, Rectangle, Arrow, Highlight, Ellipse, Line, Step, Spotlight, FilledRectangle, Pencil }
+
+/// Arrow looks: a filled head, an open head, heads at both ends, or a curve.
+public enum ArrowStyle { Filled, Open, Double, Curved }
+
+/// Text looks: plain, with a contrasting outline, on a filled label, or with a soft shadow.
+public enum TextStyle { Plain, Outlined, Label, Shadow }
+
+/// Text: `Text` at `From` (its top-left). Rectangle, filled rectangle, oval, highlight and
+/// spotlight: the box from `From` to `To`. Arrow and line: from `From` to `To`. Step: a numbered
+/// circle centred on `From` showing `Text`. Pencil: the stroke through `Points`. `Size` is a
+/// fraction of the picture's height: the font size for text and steps, the line width for the
+/// rest. `Style` is an ArrowStyle for arrows and a TextStyle for text.
+public sealed record Annotation(AnnotationKind Kind, NormPoint From, NormPoint To, Rgba Color, double Size, string Text = "",
+    int Style = 0, IReadOnlyList<NormPoint>? Points = null);
 
 /// Everything the photo editor can do to one picture.
 public sealed record ImageEdit
@@ -90,6 +104,10 @@ public sealed record ImageEdit
     public BackgroundEdit? Background { get; init; }
     /// null keeps the input format when Spinform can write it, otherwise PNG.
     public OutputFormat? OutputFormat { get; init; }
+    /// 0.05…1: the result's size as a fraction of the (cropped) picture.
+    public double Scale { get; init; } = 1;
+    /// Other pictures placed on top, in the original's coordinates.
+    public IReadOnlyList<PlacedImage> Overlays { get; init; } = [];
 
     public int Turns => ((QuarterTurns % 4) + 4) % 4;
     public bool HasColorAdjustments => Brightness != 0 || Contrast != 1 || Saturation != 1 || Exposure != 0;
@@ -152,7 +170,9 @@ public static class ImageEditEngine
                 image = replaced;
             }
             int w = (int)image.Width, h = (int)image.Height;
+            foreach (var o in edit.Overlays) Place(image, o, w, h);
             foreach (var r in edit.Redactions) Redact(image, r, w, h);
+            Spotlight(image, edit.Annotations.Where(a => a.Kind == AnnotationKind.Spotlight).ToList(), w, h);
             foreach (var a in edit.Annotations) Annotate(image, a, w, h);
             if (edit.Crop is { } crop && !crop.Clamped.IsFull)
             {
@@ -173,6 +193,11 @@ public static class ImageEditEngine
             if (edit.Turns != 0) image.Rotate(90 * edit.Turns);
             if (edit.FlipHorizontal) image.Flop();
             if (edit.FlipVertical) image.Flip();
+            if (edit.Scale is > 0 and < 0.999)
+            {
+                var scale = Math.Clamp(edit.Scale, 0.05, 1);
+                image.Resize(new MagickGeometry((uint)Math.Max(1, Math.Round(image.Width * scale)), (uint)Math.Max(1, Math.Round(image.Height * scale))) { IgnoreAspectRatio = true });
+            }
             return image;
         }
         catch
@@ -187,6 +212,8 @@ public static class ImageEditEngine
         var px = redaction.Rect.Pixels(w, h);
         if (px.Width < 1 || px.Height < 1) return;
         var area = new MagickGeometry(px.X, px.Y, (uint)px.Width, (uint)px.Height);
+        // The same marks always give the same picture, so previews don't flicker.
+        var random = new Random(HashCode.Combine(px.X, px.Y, px.Width, px.Height));
         switch (redaction.Style)
         {
             case RedactionStyle.Blackout:
@@ -200,6 +227,7 @@ public static class ImageEditEngine
                 var block = Math.Max(8, Math.Max(w, h) / 40);
                 piece.FilterType = FilterType.Box;
                 piece.Resize(new MagickGeometry((uint)Math.Max(1, px.Width / block), (uint)Math.Max(1, px.Height / block)) { IgnoreAspectRatio = true });
+                Scramble(piece, random, 18);
                 piece.FilterType = FilterType.Point;
                 piece.Resize(new MagickGeometry((uint)px.Width, (uint)px.Height) { IgnoreAspectRatio = true });
                 image.Composite(piece, px.X, px.Y, CompositeOperator.Over);
@@ -208,10 +236,19 @@ public static class ImageEditEngine
             case RedactionStyle.Blur:
             {
                 using var piece = (MagickImage)image.CloneArea(area);
+                var sigma = Math.Max(6, Math.Max(w, h) / 90.0);
+                piece.Blur(0, sigma);
+                image.Composite(piece, px.X, px.Y, CompositeOperator.Over);
+                break;
+            }
+            case RedactionStyle.SecureBlur:
+            {
+                using var piece = (MagickImage)image.CloneArea(area);
                 var sigma = Math.Max(8, Math.Max(w, h) / 60.0);
-                // Shrinking first makes a heavy blur fast and impossible to undo.
-                piece.Resize(new Percentage(25));
-                piece.Blur(0, sigma / 4);
+                // Shrinking and scrambling first makes a heavy blur fast and impossible to undo.
+                var small = Math.Max(4, Math.Max(w, h) / 120);
+                piece.Resize(new MagickGeometry((uint)Math.Max(1, px.Width / small), (uint)Math.Max(1, px.Height / small)) { IgnoreAspectRatio = true });
+                Scramble(piece, random, 24);
                 piece.Resize(new MagickGeometry((uint)px.Width, (uint)px.Height) { IgnoreAspectRatio = true });
                 piece.Blur(0, sigma / 2);
                 image.Composite(piece, px.X, px.Y, CompositeOperator.Over);
@@ -219,6 +256,66 @@ public static class ImageEditEngine
             }
         }
     }
+
+    /// Nudges every pixel of a (small) picture by a random amount, and swaps a few neighbours,
+    /// so the blocks no longer hold the exact averages of what was under them.
+    static void Scramble(MagickImage piece, Random random, int amount)
+    {
+        var data = piece.GetPixels().ToByteArray(PixelMapping.RGBA)!;
+        const int stride = 4;
+        for (var i = 0; i < data.Length; i += stride)
+        {
+            var shift = random.Next(-amount, amount + 1);
+            for (var c = 0; c < 3; c++) data[i + c] = (byte)Math.Clamp(data[i + c] + shift + random.Next(-amount / 3, amount / 3 + 1), 0, 255);
+        }
+        var count = data.Length / stride;
+        for (var n = 0; n < count / 6; n++)
+        {
+            int a = random.Next(count), b = Math.Clamp(a + random.Next(-2, 3), 0, count - 1);
+            for (var c = 0; c < 3; c++) (data[a * stride + c], data[b * stride + c]) = (data[b * stride + c], data[a * stride + c]);
+        }
+        piece.ReadPixels(data, new PixelReadSettings(piece.Width, piece.Height, StorageType.Char, PixelMapping.RGBA));
+    }
+
+    static void Place(MagickImage image, PlacedImage placed, int w, int h)
+    {
+        if (!File.Exists(placed.Path)) return;
+        var px = placed.Rect.Pixels(w, h);
+        using var other = ImageConverter.LoadFirst(placed.Path);
+        other.Resize(new MagickGeometry((uint)px.Width, (uint)px.Height) { IgnoreAspectRatio = true });
+        image.Composite(other, px.X, px.Y, CompositeOperator.Over);
+    }
+
+    /// Dims everything outside the spotlit boxes.
+    static void Spotlight(MagickImage image, IReadOnlyList<Annotation> spots, int w, int h)
+    {
+        if (spots.Count == 0) return;
+        using var mask = new MagickImage(MagickColors.White, (uint)w, (uint)h);
+        IDrawables<byte> d = new Drawables().FillColor(MagickColors.Black).StrokeColor(MagickColors.Transparent);
+        foreach (var s in spots)
+        {
+            var r = NormRect.Between(s.From, s.To);
+            var radius = Math.Min(r.Width * w, r.Height * h) * 0.08;
+            d = d.RoundRectangle(r.X * w, r.Y * h, r.MaxX * w, r.MaxY * h, radius, radius);
+        }
+        d.Draw(mask);
+        mask.Alpha(AlphaOption.Off);
+        using var dim = new MagickImage(MagickColors.Black, (uint)w, (uint)h);
+        dim.Alpha(AlphaOption.Set);
+        dim.Composite(mask, CompositeOperator.CopyAlpha);
+        dim.Evaluate(Channels.Alpha, EvaluateOperator.Multiply, 0.6);
+        image.Composite(dim, 0, 0, CompositeOperator.Over);
+    }
+
+    static IDrawables<byte> TextDrawables(MagickColor fill, double size)
+    {
+        IDrawables<byte> d = new Drawables().FillColor(fill).StrokeColor(MagickColors.Transparent).FontPointSize(size).Gravity(Gravity.Northwest);
+        if (Fonts.BoldSansFile() is { } font) d = d.Font(font);
+        return d;
+    }
+
+    /// The colour that reads best on top of `c`: white on dark colours, near-black on light ones.
+    public static Rgba Contrast(Rgba c) => 0.2126 * c.R + 0.7152 * c.G + 0.0722 * c.B > 0.6 ? new Rgba(0.08, 0.08, 0.12) : Rgba.White;
 
     static void Annotate(MagickImage image, Annotation a, int w, int h)
     {
@@ -228,20 +325,60 @@ public static class ImageEditEngine
         switch (a.Kind)
         {
             case AnnotationKind.Text:
+            {
                 if (string.IsNullOrWhiteSpace(a.Text)) return;
-                var d = new Drawables().FillColor(color).StrokeColor(MagickColors.Transparent).FontPointSize(size)
-                    .Gravity(Gravity.Northwest);
-                if (Fonts.BoldSansFile() is { } font) d = d.Font(font);
                 // Lines one under the other, the first with its top at the point.
                 var lines = a.Text.Replace("\r", "").Split('\n');
+                var style = (TextStyle)a.Style;
+                if (style == TextStyle.Label)
+                {
+                    // A rounded label behind the text, sized from the longest line.
+                    var longest = lines.Max(l => l.Length);
+                    double bw = longest * size * 0.6 + size * 0.8, bh = lines.Length * size * 1.2 + size * 0.4;
+                    new Drawables().FillColor(color).StrokeColor(MagickColors.Transparent)
+                        .RoundRectangle(x0 - size * 0.4, y0 - size * 0.2, x0 - size * 0.4 + bw, y0 - size * 0.2 + bh, size * 0.3, size * 0.3).Draw(image);
+                    color = Contrast(a.Color).Magick;
+                }
+                if (style is TextStyle.Outlined or TextStyle.Shadow)
+                {
+                    var under = style == TextStyle.Outlined ? Contrast(a.Color).Magick : MagickColor.FromRgba(0, 0, 0, 110);
+                    var reach = style == TextStyle.Outlined ? Math.Max(1, size * 0.06) : Math.Max(1, size * 0.08);
+                    var offsets = style == TextStyle.Outlined
+                        ? new[] { (-1.0, 0.0), (1.0, 0.0), (0.0, -1.0), (0.0, 1.0), (-0.7, -0.7), (0.7, 0.7), (-0.7, 0.7), (0.7, -0.7) }
+                        : new[] { (0.6, 0.9) };
+                    foreach (var (ox, oy) in offsets)
+                    {
+                        var back = TextDrawables(under, size);
+                        for (var i = 0; i < lines.Length; i++) back = back.Text(x0 + ox * reach, y0 + oy * reach + i * size * 1.2, lines[i]);
+                        back.Draw(image);
+                    }
+                }
+                var d = TextDrawables(color, size);
                 for (var i = 0; i < lines.Length; i++) d = d.Text(x0, y0 + i * size * 1.2, lines[i]);
                 d.Draw(image);
                 break;
+            }
             case AnnotationKind.Rectangle:
             {
                 var r = NormRect.Between(a.From, a.To);
-                new Drawables().FillColor(MagickColors.Transparent).StrokeColor(color).StrokeWidth(size)
+                new Drawables().FillColor(MagickColors.Transparent).StrokeColor(color).StrokeWidth(size).StrokeLineJoin(LineJoin.Round)
                     .Rectangle(r.X * w, r.Y * h, r.MaxX * w, r.MaxY * h).Draw(image);
+                break;
+            }
+            case AnnotationKind.FilledRectangle:
+            {
+                var r = NormRect.Between(a.From, a.To);
+                new Drawables().FillColor(color).StrokeColor(MagickColors.Transparent)
+                    .Rectangle(r.X * w, r.Y * h, r.MaxX * w, r.MaxY * h).Draw(image);
+                break;
+            }
+            case AnnotationKind.Ellipse:
+            {
+                var r = NormRect.Between(a.From, a.To);
+                double rx = r.Width * w / 2, ry = r.Height * h / 2;
+                if (rx < 1 || ry < 1) return;
+                new Drawables().FillColor(MagickColors.Transparent).StrokeColor(color).StrokeWidth(size)
+                    .Ellipse(r.X * w + rx, r.Y * h + ry, rx, ry, 0, 360).Draw(image);
                 break;
             }
             case AnnotationKind.Highlight:
@@ -251,22 +388,88 @@ public static class ImageEditEngine
                     .Rectangle(r.X * w, r.Y * h, r.MaxX * w, r.MaxY * h).Draw(image);
                 break;
             }
+            case AnnotationKind.Spotlight:
+                break; // drawn together, before the other marks
+            case AnnotationKind.Line:
+                if (Math.Abs(x1 - x0) + Math.Abs(y1 - y0) < 1) return;
+                new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).FillColor(MagickColors.Transparent)
+                    .Line(x0, y0, x1, y1).Draw(image);
+                break;
+            case AnnotationKind.Pencil:
+            {
+                var points = (a.Points ?? []).Select(p => new PointD(p.X * w, p.Y * h)).ToList();
+                if (points.Count == 0) return;
+                if (points.Count == 1) points.Add(new PointD(points[0].X + 0.5, points[0].Y + 0.5));
+                new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round)
+                    .FillColor(MagickColors.Transparent).Polyline(points).Draw(image);
+                break;
+            }
+            case AnnotationKind.Step:
+            {
+                var radius = Math.Max(6, size * 0.9);
+                new Drawables().FillColor(color).StrokeColor(Rgba.White.Magick).StrokeWidth(Math.Max(1, radius * 0.12))
+                    .Circle(x0, y0, x0 + radius, y0).Draw(image);
+                var label = string.IsNullOrWhiteSpace(a.Text) ? "1" : a.Text.Trim();
+                var font = radius * (label.Length > 1 ? 0.95 : 1.15);
+                var d = new Drawables().FillColor(Contrast(a.Color).Magick).StrokeColor(MagickColors.Transparent).FontPointSize(font)
+                    .TextAlignment(TextAlignment.Center);
+                if (Fonts.BoldSansFile() is { } bold) d = d.Font(bold);
+                d.Text(x0, y0 + font * 0.36, label).Draw(image);
+                break;
+            }
             case AnnotationKind.Arrow:
             {
                 var length = Math.Sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
                 if (length < 1) return;
-                double ux = (x1 - x0) / length, uy = (y1 - y0) / length;
+                var style = (ArrowStyle)a.Style;
                 var head = Math.Min(length * 0.5, size * 4.5);
-                // The shaft stops where the head starts so its square end doesn't poke out.
-                double bx = x1 - ux * head, by = y1 - uy * head;
-                double px = -uy * head * 0.55, py = ux * head * 0.55;
-                new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).FillColor(MagickColors.Transparent)
-                    .Line(x0, y0, bx, by).Draw(image);
-                new Drawables().FillColor(color).StrokeColor(MagickColors.Transparent)
-                    .Polygon(new PointD(x1, y1), new PointD(bx + px, by + py), new PointD(bx - px, by - py)).Draw(image);
+                if (style == ArrowStyle.Curved)
+                {
+                    // A gentle bend to the left of the direction of travel; the head follows the curve's end.
+                    double mx = (x0 + x1) / 2, my = (y0 + y1) / 2, nx = -(y1 - y0) / length, ny = (x1 - x0) / length;
+                    double cx = mx + nx * length * 0.22, cy = my + ny * length * 0.22;
+                    var curve = new List<PointD>();
+                    for (var i = 0; i <= 32; i++)
+                    {
+                        var t = i / 32.0;
+                        curve.Add(new PointD((1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * cx + t * t * x1, (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * cy + t * t * y1));
+                    }
+                    double tx = x1 - cx, ty = y1 - cy, tl = Math.Max(1e-6, Math.Sqrt(tx * tx + ty * ty));
+                    double ux = tx / tl, uy = ty / tl;
+                    var shaft = curve.Where(p => (p.X - x1) * (p.X - x1) + (p.Y - y1) * (p.Y - y1) > head * head * 0.6).ToList();
+                    if (shaft.Count >= 2)
+                        new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round)
+                            .FillColor(MagickColors.Transparent).Polyline(shaft).Draw(image);
+                    Head(image, x1, y1, ux, uy, head, size, color, filled: true);
+                    break;
+                }
+                {
+                    double ux = (x1 - x0) / length, uy = (y1 - y0) / length;
+                    var filled = style != ArrowStyle.Open;
+                    // The shaft stops where a filled head starts so its square end doesn't poke out.
+                    double sx = x0, sy = y0, ex = filled ? x1 - ux * head * 0.8 : x1, ey = filled ? y1 - uy * head * 0.8 : y1;
+                    if (style == ArrowStyle.Double) { sx = x0 + ux * head * 0.8; sy = y0 + uy * head * 0.8; }
+                    new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).FillColor(MagickColors.Transparent)
+                        .Line(sx, sy, ex, ey).Draw(image);
+                    Head(image, x1, y1, ux, uy, head, size, color, filled);
+                    if (style == ArrowStyle.Double) Head(image, x0, y0, -ux, -uy, head, size, color, true);
+                }
                 break;
             }
         }
+    }
+
+    /// An arrowhead with its tip at (x, y) pointing along (ux, uy).
+    static void Head(MagickImage image, double x, double y, double ux, double uy, double head, double size, MagickColor color, bool filled)
+    {
+        double bx = x - ux * head, by = y - uy * head;
+        double px = -uy * head * 0.55, py = ux * head * 0.55;
+        if (filled)
+            new Drawables().FillColor(color).StrokeColor(MagickColors.Transparent)
+                .Polygon(new PointD(x, y), new PointD(bx + px, by + py), new PointD(bx - px, by - py)).Draw(image);
+        else
+            new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round).FillColor(MagickColors.Transparent)
+                .Polyline(new PointD(bx + px, by + py), new PointD(x, y), new PointD(bx - px, by - py)).Draw(image);
     }
 }
 

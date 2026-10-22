@@ -48,8 +48,16 @@ public partial class App : Application
         SetUpTray();
         watcher = new DragWatcher();
         watcher.Start();
+        Hotkeys.Start();
+        RecordingSession.StateChanged += () => { if (tray?.ContextMenuStrip is { } m) BuildMenu(m); };
+        _ = Task.Run(() => { try { CaptureKit.History.Prune(Settings.Current.HistoryDays); } catch { } });
 
         var background = args.Remove("--background");
+        if (Automation.Has(args))
+        {
+            Dispatcher.BeginInvoke(() => Automation.Run(args), DispatcherPriority.ApplicationIdle);
+            return;
+        }
         var files = args.Where(a => !a.StartsWith("--")).ToList();
         if (files.Count > 0 || !background) ShowMain(files);
     }
@@ -57,6 +65,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         watcher?.Stop();
+        Hotkeys.Stop();
         if (tray is not null) { tray.Visible = false; tray.Dispose(); }
         instance?.Dispose();
         installerSignal?.Dispose();
@@ -92,6 +101,12 @@ public partial class App : Application
 
     // Tray icon
 
+    /// The tray icon's hover text, e.g. the time while recording; null puts back "Spinform".
+    public void SetTrayStatus(string? text)
+    {
+        if (tray is not null) tray.Text = text is null ? "Spinform" : text.Length > 120 ? text[..120] : text;
+    }
+
     void SetUpTray()
     {
         tray = new Forms.NotifyIcon
@@ -117,6 +132,50 @@ public partial class App : Application
         menu.Items.Add("Open Spinform", null, (_, _) => ShowMain());
         menu.Items.Add("Show Floating Files", null, (_, _) => Shelf.Shared.Toggle());
         menu.Items.Add(new Forms.ToolStripSeparator());
+        if (RecordingSession.Current is { } recording)
+        {
+            menu.Items.Add(recording.IsRecording ? $"Stop Recording ({CaptureHistory.Duration(recording.Elapsed.TotalSeconds)})" : "Cancel Recording", null,
+                (_, _) => { if (recording.IsRecording) _ = recording.Stop(); else _ = recording.Cancel(); });
+            menu.Items.Add(new Forms.ToolStripSeparator());
+        }
+        Forms.ToolStripMenuItem CaptureEntry(string text, CaptureAction action)
+        {
+            var item = new Forms.ToolStripMenuItem(text, null, (_, _) => _ = Capture.Run(action));
+            var keys = Hotkeys.Label(action);
+            if (keys.Length > 0) item.ShortcutKeyDisplayString = keys;
+            return item;
+        }
+        menu.Items.Add(CaptureEntry("Capture…", CaptureAction.AllInOne));
+        menu.Items.Add(CaptureEntry("Capture Area", CaptureAction.Area));
+        menu.Items.Add(CaptureEntry("Capture Window", CaptureAction.Window));
+        var displays = Transmute.Desktop.Screens.Monitors();
+        if (displays.Count > 1)
+        {
+            var sub = new Forms.ToolStripMenuItem("Capture Display");
+            var all = new Forms.ToolStripMenuItem("All Displays", null, (_, _) => _ = Capture.Screen(null));
+            sub.DropDownItems.Add(all);
+            foreach (var d in displays) sub.DropDownItems.Add(new Forms.ToolStripMenuItem(d.Label, null, (_, _) => _ = Capture.Screen(d)));
+            menu.Items.Add(sub);
+        }
+        else menu.Items.Add(CaptureEntry("Capture Full Screen", CaptureAction.FullScreen));
+        menu.Items.Add(CaptureEntry("Capture Previous Area", CaptureAction.Previous));
+        menu.Items.Add(CaptureEntry("Scrolling Capture", CaptureAction.Scrolling));
+        menu.Items.Add(CaptureEntry("Copy Text from Screen", CaptureAction.Text));
+        if (RecordingSession.Current is null)
+        {
+            menu.Items.Add(CaptureEntry("Record Area", CaptureAction.RecordArea));
+            menu.Items.Add("Record Window", null, (_, _) => _ = Capture.RecordWindow());
+            menu.Items.Add(CaptureEntry("Record Full Screen", CaptureAction.RecordScreen));
+        }
+        menu.Items.Add(CaptureEntry("Capture History", CaptureAction.History));
+        if (QuickAccess.CanRestore) menu.Items.Add("Bring Back Last Thumbnail", null, (_, _) => QuickAccess.Restore());
+        if (QuickAccess.Open.Count > 0) menu.Items.Add(QuickAccess.AllHidden ? "Show Thumbnails" : "Hide Thumbnails", null, (_, _) => QuickAccess.ToggleHidden());
+        if (PinWindow.Open.Count > 0)
+        {
+            menu.Items.Add("Unlock Pinned Pictures", null, (_, _) => PinWindow.UnlockAll());
+            menu.Items.Add("Close Pinned Pictures", null, (_, _) => PinWindow.CloseAll());
+        }
+        menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Send Feedback…", null, (_, _) => Feedback.OpenForm());
         menu.Items.Add("Settings…", null, (_, _) => SettingsWindow.Open());
         var settings = Settings.Current;
@@ -139,7 +198,7 @@ public partial class App : Application
         {
             using var pipe = new NamedPipeClientStream(".", InstanceName, PipeDirection.Out);
             pipe.Connect(3000);
-            var payload = string.Join("\n", args.Count == 0 ? ["--show"] : args.Select(a => a.StartsWith("--") ? a : Path.GetFullPath(a)));
+            var payload = string.Join("\n", args.Count == 0 ? ["--show"] : args.Select(a => a.StartsWith("--") || Automation.IsLink(a) ? a : Path.GetFullPath(a)));
             var bytes = Encoding.UTF8.GetBytes(payload);
             pipe.Write(bytes, 0, bytes.Length);
         }
@@ -158,6 +217,11 @@ public partial class App : Application
                     pipe.WaitForConnection();
                     using var reader = new StreamReader(pipe, Encoding.UTF8);
                     var lines = reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                    if (Automation.Has(lines))
+                    {
+                        Dispatcher.BeginInvoke(() => Automation.Run(lines));
+                        continue;
+                    }
                     var files = lines.Where(l => !l.StartsWith("--")).ToList();
                     var background = lines.Contains("--background");
                     Dispatcher.BeginInvoke(() => { if (files.Count > 0 || !background) ShowMain(files); });

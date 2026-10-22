@@ -37,6 +37,64 @@ public sealed class Settings
     public double[]? ShelfBounds { get; set; }
     public Dictionary<string, string> Choices { get; set; } = [];
 
+    // Capture (screenshots and recordings)
+
+    /// Shortcut per CaptureAction name; a missing entry means the default, "" means none.
+    public Dictionary<string, string> CaptureHotkeys { get; set; } = [];
+    public bool PrintScreenTakeover { get; set; }
+    /// Where screenshots and recordings are saved; empty means Pictures\Spinform and Videos\Spinform.
+    public string CaptureFolder { get; set; } = "";
+    public string RecordingFolder { get; set; } = "";
+    public string CaptureFormat { get; set; } = "png";
+    public bool CaptureAutoSave { get; set; } = true;
+    public bool CaptureCopy { get; set; } = true;
+    public bool CaptureOverlay { get; set; } = true;
+    public string OverlayCorner { get; set; } = "right";
+    /// Seconds before the thumbnail tucks itself away; 0 keeps it until closed.
+    public int OverlaySeconds { get; set; } = 10;
+    public double OverlaySize { get; set; } = 1;
+    public bool HideDesktopIcons { get; set; }
+    public int SelfTimer { get; set; }
+    public bool ShowMagnifier { get; set; } = true;
+    public bool ShowCrosshair { get; set; } = true;
+    public bool FreezeScreen { get; set; } = true;
+    /// Days to keep captures in history: -1 forever, 0 none.
+    public int HistoryDays { get; set; } = 30;
+    public string? LastArea { get; set; }
+    public string? LockedAspect { get; set; }
+    public bool WindowShadow { get; set; } = true;
+    public bool WindowTransparentCorners { get; set; } = true;
+    public string WindowBackground { get; set; } = "none";
+    public string OcrLanguage { get; set; } = "";
+    public bool OcrKeepLineBreaks { get; set; } = true;
+    public int RecordFps { get; set; } = 30;
+    public string RecordQuality { get; set; } = "High";
+    public int RecordMaxSide { get; set; }
+    public string RecordFormat { get; set; } = "mp4";
+    public string RecordEncoder { get; set; } = "auto";
+    public int RecordCountdown { get; set; } = 3;
+    public bool RecordCursor { get; set; } = true;
+    public bool RecordMicrophone { get; set; }
+    public bool RecordSystemAudio { get; set; }
+    public bool RecordClicks { get; set; } = true;
+    public string ClickColor { get; set; } = "F59E0B";
+    public int ClickSize { get; set; } = 22;
+    public bool ClickFilled { get; set; }
+    public bool ClickAnimated { get; set; } = true;
+    public bool RecordKeystrokes { get; set; }
+    public bool KeystrokesShortcutsOnly { get; set; }
+    public int KeystrokePosition { get; set; }
+    public int KeystrokeSize { get; set; } = 22;
+    public bool KeystrokesDark { get; set; } = true;
+    public bool RecordCamera { get; set; }
+    public string CameraShape { get; set; } = "Circle";
+    public string? CameraPosition { get; set; } = "bottom-right";
+    public int CameraSize { get; set; } = 180;
+    public bool OpenEditorAfterRecording { get; set; }
+    public List<FramePreset> FramePresets { get; set; } = [];
+    public FrameStyle? LastFrame { get; set; }
+    public List<string> CustomColors { get; set; } = [];
+
     public static void Load()
     {
         try

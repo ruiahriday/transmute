@@ -11,6 +11,8 @@ if (args.Length == 2 && args[0] == "--make-fixtures")
     await Fixtures.Make(args[1]);
     return 0;
 }
+if (args.Length == 1 && args[0] == "--capture-only")
+    return await Tests.RunCaptureOnly();
 if (args.Length != 1 || !Directory.Exists(args[0]))
 {
     Console.WriteLine("Usage: Transmute.SelfTest --make-fixtures <folder>\n       Transmute.SelfTest <folder>");
@@ -18,7 +20,7 @@ if (args.Length != 1 || !Directory.Exists(args[0]))
 }
 return await Tests.Run(args[0]);
 
-static class Tests
+static partial class Tests
 {
     static int passed, skipped;
     static readonly List<string> Failed = [];
@@ -40,6 +42,7 @@ static class Tests
         string Fixture(string name) => inputs.FirstOrDefault(f => Path.GetFileName(f) == name) ?? throw new Exception($"fixture {name} missing");
 
         await WheelLayoutChecks();
+        await CaptureChecks(options with { OutputFolder = Sub("capture") });
 
         // Pass 1: every input through every operation it supports.
         foreach (var input in inputs) await Exercise(input, options);
