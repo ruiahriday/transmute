@@ -931,7 +931,7 @@ final class CursorTracker {
     private var track = CursorTrack()
     private var timer: Timer?
     private var monitors: [Any] = []
-    private var start = Date()
+    private var startDate = Date()
 
     init(area: CGRect) {
         self.area = area
@@ -940,7 +940,7 @@ final class CursorTracker {
     }
 
     func start() {
-        start = Date()
+        startDate = Date()
         sample()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.sample() }
@@ -961,7 +961,7 @@ final class CursorTracker {
 
     private func point() -> CursorTrack.Sample {
         let p = NSEvent.mouseLocation
-        return CursorTrack.Sample(t: Date().timeIntervalSince(start),
+        return CursorTrack.Sample(t: Date().timeIntervalSince(startDate),
                                   x: Double((p.x - area.minX) / max(area.width, 1)),
                                   y: Double((area.maxY - p.y) / max(area.height, 1)))
     }
