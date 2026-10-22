@@ -65,6 +65,7 @@ public sealed class Settings
     public bool WindowShadow { get; set; } = true;
     public bool WindowTransparentCorners { get; set; } = true;
     public string WindowBackground { get; set; } = "none";
+    public double WindowPadding { get; set; } = 0.07;
     public string OcrLanguage { get; set; } = "";
     public bool OcrKeepLineBreaks { get; set; } = true;
     public int RecordFps { get; set; } = 30;

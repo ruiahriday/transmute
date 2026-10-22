@@ -9,19 +9,21 @@ namespace Transmute;
 
 public readonly record struct NormPoint(double X, double Y)
 {
-    public NormPoint Clamped => new(Math.Clamp(X, 0, 1), Math.Clamp(Y, 0, 1));
+    public override string ToString() => FormattableString.Invariant($"({X:0.###}, {Y:0.###})");
+    [System.Text.Json.Serialization.JsonIgnore] public NormPoint Clamped => new(Math.Clamp(X, 0, 1), Math.Clamp(Y, 0, 1));
 }
 
 public readonly record struct NormRect(double X, double Y, double Width, double Height)
 {
     public static readonly NormRect Full = new(0, 0, 1, 1);
-    public double MaxX => X + Width;
-    public double MaxY => Y + Height;
+    public override string ToString() => FormattableString.Invariant($"({X:0.###}, {Y:0.###}, {Width:0.###} × {Height:0.###})");
+    [System.Text.Json.Serialization.JsonIgnore] public double MaxX => X + Width;
+    [System.Text.Json.Serialization.JsonIgnore] public double MaxY => Y + Height;
 
     public static NormRect Between(NormPoint a, NormPoint b) =>
         new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Abs(a.X - b.X), Math.Abs(a.Y - b.Y));
 
-    public NormRect Clamped
+    [System.Text.Json.Serialization.JsonIgnore] public NormRect Clamped
     {
         get
         {
@@ -30,7 +32,7 @@ public readonly record struct NormRect(double X, double Y, double Width, double 
         }
     }
 
-    public bool IsFull => X <= 0.0005 && Y <= 0.0005 && MaxX >= 0.9995 && MaxY >= 0.9995;
+    [System.Text.Json.Serialization.JsonIgnore] public bool IsFull => X <= 0.0005 && Y <= 0.0005 && MaxX >= 0.9995 && MaxY >= 0.9995;
 
     /// Whole pixels in a picture of this size; never empty and never outside it.
     public (int X, int Y, int Width, int Height) Pixels(int width, int height)
@@ -53,8 +55,8 @@ public readonly record struct Rgba(double R, double G, double B, double A = 1)
 
     public Rgba WithAlpha(double a) => this with { A = a };
     static byte B8(double v) => (byte)Math.Round(Math.Clamp(v, 0, 1) * 255);
-    public MagickColor Magick => MagickColor.FromRgba(B8(R), B8(G), B8(B), B8(A));
-    public string Hex => $"{B8(R):X2}{B8(G):X2}{B8(B):X2}";
+    [System.Text.Json.Serialization.JsonIgnore] public MagickColor Magick => MagickColor.FromRgba(B8(R), B8(G), B8(B), B8(A));
+    [System.Text.Json.Serialization.JsonIgnore] public string Hex => $"{B8(R):X2}{B8(G):X2}{B8(B):X2}";
 }
 
 /// Pixelate scrambles each block a little so the original can't be rebuilt from it; Blur is a
@@ -109,8 +111,8 @@ public sealed record ImageEdit
     /// Other pictures placed on top, in the original's coordinates.
     public IReadOnlyList<PlacedImage> Overlays { get; init; } = [];
 
-    public int Turns => ((QuarterTurns % 4) + 4) % 4;
-    public bool HasColorAdjustments => Brightness != 0 || Contrast != 1 || Saturation != 1 || Exposure != 0;
+    [System.Text.Json.Serialization.JsonIgnore] public int Turns => ((QuarterTurns % 4) + 4) % 4;
+    [System.Text.Json.Serialization.JsonIgnore] public bool HasColorAdjustments => Brightness != 0 || Contrast != 1 || Saturation != 1 || Exposure != 0;
 }
 
 public static class ImageEditEngine
@@ -400,8 +402,7 @@ public static class ImageEditEngine
                 var points = (a.Points ?? []).Select(p => new PointD(p.X * w, p.Y * h)).ToList();
                 if (points.Count == 0) return;
                 if (points.Count == 1) points.Add(new PointD(points[0].X + 0.5, points[0].Y + 0.5));
-                new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round)
-                    .FillColor(MagickColors.Transparent).Polyline(points).Draw(image);
+                Stroke(image, points, color, size);
                 break;
             }
             case AnnotationKind.Step:
@@ -437,9 +438,7 @@ public static class ImageEditEngine
                     double tx = x1 - cx, ty = y1 - cy, tl = Math.Max(1e-6, Math.Sqrt(tx * tx + ty * ty));
                     double ux = tx / tl, uy = ty / tl;
                     var shaft = curve.Where(p => (p.X - x1) * (p.X - x1) + (p.Y - y1) * (p.Y - y1) > head * head * 0.6).ToList();
-                    if (shaft.Count >= 2)
-                        new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round)
-                            .FillColor(MagickColors.Transparent).Polyline(shaft).Draw(image);
+                    if (shaft.Count >= 2) Stroke(image, shaft, color, size);
                     Head(image, x1, y1, ux, uy, head, size, color, filled: true);
                     break;
                 }
@@ -457,6 +456,14 @@ public static class ImageEditEngine
                 break;
             }
         }
+    }
+
+    /// A round-ended line through the points (ImageMagick's polyline needs three or more).
+    static void Stroke(MagickImage image, List<PointD> points, MagickColor color, double size)
+    {
+        var d = new Drawables().StrokeColor(color).StrokeWidth(size).StrokeLineCap(LineCap.Round).StrokeLineJoin(LineJoin.Round).FillColor(MagickColors.Transparent);
+        if (points.Count == 2) d.Line(points[0].X, points[0].Y, points[1].X, points[1].Y).Draw(image);
+        else d.Polyline(points).Draw(image);
     }
 
     /// An arrowhead with its tip at (x, y) pointing along (ux, uy).

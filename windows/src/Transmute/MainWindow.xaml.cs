@@ -103,7 +103,7 @@ public partial class MainWindow : Window
     /// Slides the gradient highlight under the chosen tab.
     void MoveSegmentHighlight(bool animate)
     {
-        var tab = ConvertTab.IsChecked == true ? ConvertTab : CompressTab.IsChecked == true ? CompressTab : ToolsTab;
+        var tab = ConvertTab.IsChecked == true ? ConvertTab : CompressTab.IsChecked == true ? CompressTab : ToolsTab.IsChecked == true ? ToolsTab : CaptureTab;
         if (tab.ActualWidth == 0) return;
         var x = tab.TranslatePoint(new Point(0, 0), Segments).X;
         var width = tab.ActualWidth - 4;
@@ -289,6 +289,8 @@ public partial class MainWindow : Window
         ConvertPanel.Visibility = ConvertTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         CompressPanel.Visibility = CompressTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         ToolsPanel.Visibility = ToolsTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CapturePanel.Visibility = CaptureTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (CaptureTab.IsChecked == true) BuildCapturePanel();
         MoveSegmentHighlight(IsLoaded);
         if (IsLoaded)
         {

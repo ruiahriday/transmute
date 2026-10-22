@@ -10,6 +10,13 @@ public partial class SettingsWindow : Window
     static Settings Prefs => Settings.Current;
     bool loading = true;
 
+    /// Opens Settings scrolled to a section ("capture").
+    public static void Open(string section)
+    {
+        Open();
+        if (section == "capture" && open is not null) open.Dispatcher.BeginInvoke(() => open?.CaptureSection.BringIntoView(), System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
     public static void Open(Window? owner = null)
     {
         if (open is not null) { open.Activate(); return; }
@@ -37,6 +44,7 @@ public partial class SettingsWindow : Window
             foreach (var option in Enum.GetValues<WheelKey>()) box.Items.Add(new ComboBoxItem { Content = option.Label(), Tag = option });
             box.SelectedIndex = (int)key;
         }
+        BuildCaptureSection();
         VersionLabel.Text = $"Spinform {Feedback.Version} (formerly Transmute)";
         FfmpegLabel.Text = Tools.Ffmpeg is { } path
             ? $"Found at {path}"

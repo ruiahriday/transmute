@@ -56,7 +56,7 @@ public static class ScreenRecording
         {
             "-hide_banner", "-nostdin", "-y", "-loglevel", "error",
             "-f", "rawvideo", "-pix_fmt", "bgra", "-video_size", $"{f.Width}x{f.Height}", "-framerate", f.Fps.ToString(CultureInfo.InvariantCulture),
-            "-use_wallclock_as_timestamps", "1", "-thread_queue_size", "16", "-i", "pipe:0",
+            "-use_wallclock_as_timestamps", "1", "-i", "pipe:0",
             "-vf", string.Join(",", filters), "-fps_mode", "cfr", "-r", f.Fps.ToString(CultureInfo.InvariantCulture),
         };
         args.AddRange(EncoderArgs(f.Encoder, f.Quality));

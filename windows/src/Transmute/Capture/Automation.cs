@@ -27,7 +27,7 @@ static class Automation
     public static bool IsLink(string arg) => arg.StartsWith("spinform:", StringComparison.OrdinalIgnoreCase);
 
     /// Whether the arguments hold a capture command.
-    public static bool Has(IEnumerable<string> args) => args.Any(a => IsLink(a) || Commands.Any(c => c.Switch.Equals(a, StringComparison.OrdinalIgnoreCase)) || a.Equals("--capture-text", StringComparison.OrdinalIgnoreCase));
+    public static bool Has(IEnumerable<string> args) => args.Any(a => IsLink(a) || a.EndsWith(ImageProject.Extension, StringComparison.OrdinalIgnoreCase) || Commands.Any(c => c.Switch.Equals(a, StringComparison.OrdinalIgnoreCase)) || a.Equals("--capture-text", StringComparison.OrdinalIgnoreCase));
 
     /// Turns spinform://capture/area?file=… into ("--capture-area", file).
     public static (string Switch, string? File) FromLink(string link)
@@ -55,6 +55,7 @@ static class Automation
         for (var i = 0; i < args.Count; i++)
         {
             var arg = args[i];
+            if (arg.EndsWith(ImageProject.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(arg)) { Editors.OpenProject(arg, null); return true; }
             string command;
             string? file = i + 1 < args.Count && !args[i + 1].StartsWith("--") && !IsLink(args[i + 1]) ? args[i + 1] : null;
             if (IsLink(arg)) (command, file) = FromLink(arg);

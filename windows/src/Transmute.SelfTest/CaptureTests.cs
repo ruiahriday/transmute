@@ -240,6 +240,59 @@ static partial class Tests
             return result.Outputs;
         });
 
+        await Check("Mark-up: smooth pencil, highlight fits the text, crop shapes snap", () =>
+        {
+            var jagged = new List<NormPoint>();
+            for (var i = 0; i <= 20; i++) jagged.Add(new NormPoint(i * 0.04, i % 2 == 0 ? 0.5 : 0.56));
+            var smooth = Markup.Smooth(jagged);
+            Expect(smooth[0] == jagged[0] && smooth[^1] == jagged[^1], "the stroke's ends stay put");
+            Expect(smooth.Count > jagged.Count, $"corners are cut ({smooth.Count} points)");
+            var wiggle = smooth.Skip(1).Zip(smooth).Max(p => Math.Abs(p.First.Y - p.Second.Y));
+            Expect(wiggle < 0.04, $"steps are softened (largest {wiggle:0.000})");
+            // A white picture with one dark line of "text" at rows 40-52.
+            var page = new BgraImage(200, 120);
+            Array.Fill(page.Pixels, (byte)255);
+            for (var y = 40; y < 52; y++) for (var x = 20; x < 180; x += 3) { var i = (y * 200 + x) * 4; page.Pixels[i] = page.Pixels[i + 1] = page.Pixels[i + 2] = 20; }
+            var fitted = Markup.FitHighlight(page, new NormRect(0.05, 0.1, 0.9, 0.7));
+            var top = fitted.Y * 120; var bottom = fitted.MaxY * 120;
+            Expect(top is > 34 and <= 40 && bottom is >= 52 and < 58, $"highlight rows {top:0}-{bottom:0}");
+            var blank = Markup.FitHighlight(new BgraImage(50, 50, Enumerable.Repeat((byte)255, 50 * 50 * 4).ToArray()), new NormRect(0.1, 0.1, 0.5, 0.5));
+            Expect(blank == new NormRect(0.1, 0.1, 0.5, 0.5), "no text leaves the box alone");
+            var square = Markup.Crop(new NormPoint(0.1, 0.1), new NormPoint(0.9, 0.5), 1000, 500, 1);
+            Expect(Math.Abs(square.Width * 1000 - square.Height * 500) < 1, $"square crop {square}");
+            var snapped = Markup.Crop(new NormPoint(0.006, 0.3), new NormPoint(0.995, 0.7), 1000, 500);
+            Expect(snapped.X == 0 && snapped.MaxX == 1, $"edges snap {snapped}");
+            Expect(Markup.TextPresets.Length >= 7, "seven text presets");
+            return None();
+        });
+        await Check("Mark-up: a .spinform project keeps every mark and placed picture", async () =>
+        {
+            var original = Path.Combine(folder, "project-original.png");
+            var sticker = Path.Combine(folder, "project-sticker.png");
+            using (var a = new MagickImage(MagickColors.SkyBlue, 300, 200)) a.Write(original);
+            using (var b = new MagickImage(MagickColors.Orange, 60, 60)) b.Write(sticker);
+            var edit = new ImageEdit
+            {
+                Annotations = [new Annotation(AnnotationKind.Arrow, new NormPoint(0.1, 0.1), new NormPoint(0.5, 0.5), Rgba.Red, 0.01, Style: (int)ArrowStyle.Curved),
+                    new Annotation(AnnotationKind.Pencil, default, default, Rgba.Blue, 0.01, Points: [new(0.1, 0.9), new(0.2, 0.8)])],
+                Redactions = [new Redaction(new NormRect(0.6, 0.1, 0.2, 0.2), RedactionStyle.SecureBlur)],
+                Overlays = [new PlacedImage(sticker, new NormRect(0.7, 0.6, 0.2, 0.3))],
+                QuarterTurns = 1, Scale = 0.5, Background = null, Crop = new NormRect(0, 0, 0.9, 0.9),
+            };
+            var project = Path.Combine(folder, "markup" + ImageProject.Extension);
+            ImageProject.Save(project, original, edit);
+            var (back, loaded) = ImageProject.Load(project, Path.Combine(folder, "project-open"));
+            Expect(File.Exists(back) && back != original, "the original travels inside the project");
+            Expect(loaded.Annotations.Count == 2 && loaded.Annotations[0].Style == (int)ArrowStyle.Curved && loaded.Annotations[1].Points?.Count == 2, "marks come back");
+            Expect(loaded.Redactions.Single().Style == RedactionStyle.SecureBlur, "redaction comes back");
+            Expect(loaded.Overlays.Single().Path != sticker && File.Exists(loaded.Overlays.Single().Path), "placed picture travels too");
+            Expect(loaded.QuarterTurns == 1 && loaded.Scale == 0.5 && loaded.Crop == edit.Crop, "turns, size and crop come back");
+            var result = await Engine.Perform(new JobOperation.EditImage(loaded with { OutputFormat = OutputFormat.Png }), back, options, _ => { }, default);
+            using var image = new MagickImage(result.Outputs[0]);
+            Expect(image.Width == 90 && image.Height == 135, $"rendered {image.Width}×{image.Height}");
+            return [project, .. result.Outputs];
+        });
+
         await Check("Capture history: add, list, prune by age, delete and reload", () =>
         {
             var dir = Path.Combine(folder, "history");

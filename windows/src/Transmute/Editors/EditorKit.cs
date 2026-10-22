@@ -11,6 +11,11 @@ static class Editors
 {
     public static void Open(Job job, Window? owner)
     {
+        if (job.Path.EndsWith(ImageProject.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            OpenProject(job.Path, owner);
+            return;
+        }
         Window window = job.Kind switch
         {
             FileKind.Image => new ImageEditorWindow(job),
@@ -22,6 +27,24 @@ static class Editors
         else window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
         window.Show();
         window.Activate();
+    }
+
+    /// Opens a .spinform project with every mark still editable.
+    public static void OpenProject(string path, Window? owner)
+    {
+        try
+        {
+            var (original, edit) = ImageProject.Load(path, OutputPaths.TempDir());
+            var window = new ImageEditorWindow(new Job(original), edit, path);
+            if (owner is not null) window.Owner = owner;
+            else window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            window.Show();
+            window.Activate();
+        }
+        catch (Exception e)
+        {
+            MessageBox.Show($"Couldn't open that project: {e.Message}", "Spinform", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     public static bool CanEdit(FileKind kind) => kind is FileKind.Image or FileKind.Video or FileKind.Audio;

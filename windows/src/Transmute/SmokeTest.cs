@@ -8,7 +8,7 @@ namespace Transmute.App;
 /// Run by the build server: opens every window with sample files, saves a picture of each, runs
 /// a conversion through the real queue and checks how File Explorer drags look to the wheel.
 /// Spinform --smoke-test <fixtures folder> <output folder>
-static class SmokeTest
+static partial class SmokeTest
 {
     public static bool Active { get; private set; }
     static readonly List<string> problems = [];
@@ -36,6 +36,7 @@ static class SmokeTest
         log = new StreamWriter(Path.Combine(output, "smoke-test.log"));
         // Keep test settings away from the real ones.
         Environment.SetEnvironmentVariable("TRANSMUTE_SETTINGS_DIR", Path.Combine(output, "settings"));
+        Environment.SetEnvironmentVariable("TRANSMUTE_HISTORY_DIR", Path.Combine(output, "history"));
         Log($"Spinform {Feedback.Version} smoke test on {RuntimeInformation.OSDescription} ({RuntimeInformation.ProcessArchitecture})");
         Log($"ffmpeg: {Tools.Ffmpeg ?? "missing"}");
         var work = Path.Combine(output, "files");
@@ -232,6 +233,8 @@ static class SmokeTest
                 await Wait(4);
                 return Application.Current.Windows.OfType<ImageEditorWindow>().Single();
             });
+
+            await CaptureSteps(main, photo, output, Step);
 
             DragProbe();
         }

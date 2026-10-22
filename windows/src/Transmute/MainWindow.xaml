@@ -200,6 +200,9 @@
                             <RadioButton x:Name="ToolsTab" Style="{StaticResource Segment}" Checked="OnMode">
                                 <local:Icon Glyph="tools" Size="15" Text="Tools" />
                             </RadioButton>
+                            <RadioButton x:Name="CaptureTab" Style="{StaticResource Segment}" Checked="OnMode">
+                                <local:Icon Glyph="capture" Size="15" Text="Capture" />
+                            </RadioButton>
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -284,6 +287,9 @@
                             <Button x:Name="CancelTools" Style="{StaticResource ToolButton}" Content="Cancel" Click="OnCancel" />
                         </WrapPanel>
                     </StackPanel>
+
+                    <!-- Capture: screenshots, recordings and text from the screen. Filled in code. -->
+                    <StackPanel x:Name="CapturePanel" Visibility="Collapsed" />
                 </Grid>
             </StackPanel>
         </Border>

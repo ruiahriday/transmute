@@ -25,7 +25,7 @@ public sealed record BackgroundEdit
     /// null picks one: PNG when the background is removed, otherwise the input's format.
     public OutputFormat? OutputFormat { get; init; }
 
-    public bool KeepsTransparency => Mode == BackgroundMode.Remove;
+    [System.Text.Json.Serialization.JsonIgnore] public bool KeepsTransparency => Mode == BackgroundMode.Remove;
 }
 
 public sealed record GradientPreset(string Name, Rgba From, Rgba To, double Angle);

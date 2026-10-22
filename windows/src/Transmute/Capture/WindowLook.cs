@@ -16,7 +16,7 @@ static class WindowLook
         var style = new FrameStyle
         {
             Background = FrameBackground.Transparent,
-            Padding = background != "none" ? 0.07 : prefs.WindowShadow ? 0.05 : 0,
+            Padding = background != "none" ? Math.Clamp(prefs.WindowPadding, 0, 0.3) : prefs.WindowShadow ? 0.05 : 0,
             Corners = radius / Math.Max(1, Math.Min(image.Width, image.Height)),
             Shadow = prefs.WindowShadow ? 0.7 : 0,
         };

@@ -188,7 +188,7 @@ public sealed class ScreenRecorder : IDisposable
         if (process?.ExitCode != 0 || !File.Exists(video) || new FileInfo(video).Length == 0)
         {
             string detail;
-            lock (stderr!) detail = stderr.ToString().Trim().Split('\n').LastOrDefault() ?? "";
+            lock (stderr!) detail = string.Join(" ", stderr.ToString().Trim().Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).TakeLast(3));
             throw new ConversionException($"The recording couldn't be saved{(failure is null ? "" : $" ({failure})")}. {detail}".Trim());
         }
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(output))!);
