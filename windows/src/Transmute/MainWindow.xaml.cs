@@ -104,7 +104,7 @@ public partial class MainWindow : Window
             var chip = chips[i];
             if (chip.ActualWidth == 0) chip.UpdateLayout();
             Canvas.SetLeft(chip, cx + Math.Cos(a) * r - chip.ActualWidth / 2);
-            Canvas.SetTop(chip, cy + Math.Sin(a) * r * 0.8 - chip.ActualHeight / 2);
+            Canvas.SetTop(chip, cy + Math.Sin(a) * r * 0.72 - chip.ActualHeight / 2);
         }
     }
 

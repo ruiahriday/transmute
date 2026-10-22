@@ -263,9 +263,10 @@
                 <Border x:Name="EmptyState" Style="{StaticResource GlassCard}" CornerRadius="24">
                     <Grid>
                         <Rectangle x:Name="DashedBorder" Margin="12" RadiusX="18" RadiusY="18" StrokeThickness="2" StrokeDashArray="5 4" Stroke="#802A5FD8" IsHitTestVisible="False" />
-                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="24">
-                            <Grid Width="230" Height="190" HorizontalAlignment="Center">
-                                <Canvas x:Name="Orbit" Width="230" Height="190" />
+                        <Viewbox StretchDirection="DownOnly" Margin="24,20">
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <Grid Width="230" Height="176" HorizontalAlignment="Center">
+                                <Canvas x:Name="Orbit" Width="230" Height="176" />
                                 <Ellipse x:Name="RingA" Width="84" Height="84" Stroke="#8043C6AC" StrokeThickness="2" RenderTransformOrigin="0.5,0.5">
                                     <Ellipse.RenderTransform><ScaleTransform /></Ellipse.RenderTransform>
                                 </Ellipse>
@@ -293,6 +294,7 @@
                                 <TextBlock x:Name="WheelTip" Style="{StaticResource Caption}" TextAlignment="Center" MaxWidth="460" />
                             </Border>
                         </StackPanel>
+                        </Viewbox>
                     </Grid>
                 </Border>
                 <ListBox x:Name="FileList" ItemTemplate="{StaticResource JobRow}" ItemContainerStyle="{StaticResource RowContainer}" Visibility="Collapsed"
