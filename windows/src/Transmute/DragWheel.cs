@@ -186,7 +186,7 @@ static class WheelItems
             "tool:topdf" => "Images to one PDF",
             "tool:qr" => "Read QR code",
             "tool:zip" => "Zip",
-            "tool:nobg" => "Remove background (PNG with a see-through background)",
+            "tool:nobg" => "Remove background",
             "action:float" => "Float (floating files)",
             "action:copy" => "Copy",
             "action:copypath" => "Copy path",

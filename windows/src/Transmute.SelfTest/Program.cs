@@ -504,7 +504,7 @@ static class Tests
             }
             return [gradient, blurred, picture];
         });
-        await Check("Remove background from every kind of picture (JPEG, PNG, WebP, BMP, TIFF, GIF, HEIC, SVG)", async () =>
+        await Check("Remove background from every kind of picture (JPEG, PNG, WebP, BMP, TIFF, GIF, SVG, and HEIC where a sample could be made)", async () =>
         {
             var bmp = Path.Combine(Sub("background-kinds"), "sample.bmp");
             using (var s = new MagickImage(fixture("sample.png"))) s.Write(bmp, MagickFormat.Bmp3);

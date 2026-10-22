@@ -180,6 +180,7 @@ static class SmokeTest
                 Log($"      made {Path.GetFileName(productJob.Result!.Outputs[0])}");
                 return main;
             });
+            foreach (var w in Application.Current.Windows.OfType<ImageEditorWindow>().ToList()) w.Close();
             async Task<ImageEditorWindow> BackgroundEditor(BackgroundMode mode, GradientPreset? gradient = null)
             {
                 var editor = Application.Current.Windows.OfType<ImageEditorWindow>().SingleOrDefault();

@@ -74,8 +74,8 @@ sealed class ImageEditorWindow : Window
         controls.Children.Add(Ui.Row(
             Ui.Button("Left", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns - 1 }), icon: "rotateleft", tip: "Turn left"),
             Ui.Button("Right", (_, _) => Update(edit with { QuarterTurns = edit.QuarterTurns + 1 }), icon: "rotateright", tip: "Turn right"),
-            Ui.Button("Flip", (_, _) => Update(edit with { FlipHorizontal = !edit.FlipHorizontal }), icon: "fliph", tip: "Flip left to right"),
-            Ui.Button("Flip", (_, _) => Update(edit with { FlipVertical = !edit.FlipVertical }), icon: "flipv", tip: "Flip upside down")));
+            Ui.Button("", (_, _) => Update(edit with { FlipHorizontal = !edit.FlipHorizontal }), tip: "Flip left to right", contentOverride: Icons.Make("fliph", 15)),
+            Ui.Button("", (_, _) => Update(edit with { FlipVertical = !edit.FlipVertical }), tip: "Flip upside down", contentOverride: Icons.Make("flipv", 15))));
 
         controls.Children.Add(Ui.Heading("Colour"));
         var sliders = new List<Slider>();

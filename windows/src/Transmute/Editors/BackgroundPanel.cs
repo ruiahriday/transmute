@@ -169,7 +169,19 @@ sealed class BackgroundPanel : StackPanel
     static FrameworkElement Swatch(Brush fill, string name, bool selected, Action pick, bool custom = false)
     {
         var inner = new Border { CornerRadius = new CornerRadius(4), Background = fill, BorderBrush = new SolidColorBrush(Color.FromArgb(0x30, 0, 0, 0)), BorderThickness = new Thickness(1) };
-        if (custom) inner.Child = Icons.Make("add", 12, Brushes.White, 2.2);
+        if (custom)
+        {
+            // Custom: the chosen colour on the left, a + on a light tile on the right.
+            var split = new Grid();
+            split.ColumnDefinitions.Add(new ColumnDefinition());
+            split.ColumnDefinitions.Add(new ColumnDefinition());
+            var plus = new Border { Background = Ui.Brush("Subtle"), CornerRadius = new CornerRadius(0, 3, 3, 0), Child = Icons.Make("add", 10, Ui.Brush("Ink"), 2.4) };
+            Grid.SetColumn(plus, 1);
+            split.Children.Add(new Border { Background = fill, CornerRadius = new CornerRadius(3, 0, 0, 3) });
+            split.Children.Add(plus);
+            inner.Background = Brushes.Transparent;
+            inner.Child = split;
+        }
         var chip = new Border
         {
             Width = 32, Height = 32, Padding = new Thickness(2), CornerRadius = new CornerRadius(6), Margin = new Thickness(0, 0, 6, 6), Cursor = Cursors.Hand,
