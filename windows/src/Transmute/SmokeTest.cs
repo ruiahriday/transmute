@@ -273,7 +273,9 @@ static partial class SmokeTest
         using (var dc = frame.RenderOpen())
         {
             dc.DrawRectangle(window.Background is SolidColorBrush { Color.A: > 0 } b ? b : Brushes.White, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
-            dc.DrawRectangle(new VisualBrush(content), null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
+            // Pin the brush to the layout size; otherwise it stretches whatever is drawn to fill.
+            var brush = new VisualBrush(content) { Viewbox = new Rect(0, 0, content.ActualWidth, content.ActualHeight), ViewboxUnits = BrushMappingMode.Absolute, Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
+            dc.DrawRectangle(brush, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
         }
         bitmap.Render(frame);
         var encoder = new PngBitmapEncoder();
