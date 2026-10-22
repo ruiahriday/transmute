@@ -84,7 +84,10 @@ enum AudioEditEngine {
         }
         let format = outputFormat(for: edit, input: input)
         let sourceLength = await MediaInfo.duration(of: input) // 0 when unknown
-        let plan = try filterGraph(for: edit, sourceLength: sourceLength, track: track)
+        var plan = try filterGraph(for: edit, sourceLength: sourceLength, track: track)
+        if let spec = await MediaStreams.read(input, ffmpeg: ffmpeg).audioSpec, spec != "0:a:0" {
+            plan.graph = plan.graph.replacingOccurrences(of: "[0:a:0]", with: "[\(spec)]")
+        }
 
         let out = OutputPaths.destination(for: input, ext: format.fileExtension, suffix: "edited",
                                           folder: options.outputFolder)
@@ -282,10 +285,11 @@ enum AudioEditEngine {
         // aresample pads with silence when the sound starts after the video, so the bars line up
         // with the player's clock and the times bleeps and trims use.
         let raw = OutputPaths.temporaryURL(ext: "pcm")
+        let audioMap = await MediaStreams.read(url, ffmpeg: ffmpeg).audioSpec ?? "0:a:0"
         defer { try? FileManager.default.removeItem(at: raw) }
         do {
             try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-nostats", "-loglevel", "error",
-                                           "-i", url.path, "-map", "0:a:0", "-vn",
+                                           "-i", url.path, "-map", audioMap, "-vn",
                                            "-af", "aresample=async=1:first_pts=0",
                                            "-f", "s16le", "-ac", "1", "-ar", "8000", "-"],
                                   stdoutFile: raw)

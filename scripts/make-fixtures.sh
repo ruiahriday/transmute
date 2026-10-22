@@ -32,6 +32,27 @@ SVG
 ff -f lavfi -i testsrc=duration=3:size=320x240:rate=25 -f lavfi -i sine=frequency=440:duration=3 \
    -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest clip.mp4
 ff -i clip.mp4 -c copy movie.mkv
+# A camcorder-style file with 5.1 sound, which MP3, WMA and Opus can't take as it is.
+ff -f lavfi -i testsrc=duration=2:size=320x240:rate=25 -f lavfi -i sine=frequency=330:duration=2 \
+   -filter_complex "[1]pan=5.1(side)|c0=c0|c1=c0|c2=c0|c3=c0|c4=c0|c5=c0[a]" -map 0 -map "[a]" \
+   -c:v libx264 -pix_fmt yuv420p -c:a ac3 -f mpegts surround.mts
+# Like a recent iPhone video: a normal stereo track plus a default spatial-audio (APAC) track
+# ffmpeg can't decode. The second track is made as AAC and relabelled.
+ff -f lavfi -i testsrc=duration=2:size=320x240:rate=30 -f lavfi -i sine=frequency=440:duration=2 \
+   -f lavfi -i sine=frequency=220:duration=2 -filter_complex "[2]pan=quad|c0=c0|c1=c0|c2=c0|c3=c0[q]" \
+   -map 0 -map 1 -map "[q]" -c:v libx264 -pix_fmt yuv420p -c:a aac -ac:a:0 2 \
+   -disposition:a:0 0 -disposition:a:1 default spatial-src.mov
+python3 - spatial-src.mov spatial.mov <<'PY'
+import sys
+d = bytearray(open(sys.argv[1], 'rb').read())
+t = d.rfind(b'trak')
+m = d.find(b'mp4a', t)
+e = d.find(b'esds', m)
+d[m:m + 4] = b'apac'
+d[e:e + 4] = b'free'
+open(sys.argv[2], 'wb').write(d)
+PY
+rm spatial-src.mov
 ff -f lavfi -i sine=frequency=440:duration=3 tone.wav
 ff -i tone.wav -c:a libmp3lame song.mp3
 

@@ -7,12 +7,34 @@ enum Tools {
         // Lets the self-test exercise the Apple-only fallbacks.
         if ProcessInfo.processInfo.environment["TRANSMUTE_NO_FFMPEG"] != nil { return nil }
         let candidates = [
-            Bundle.main.path(forAuxiliaryExecutable: "ffmpeg"),
+            bundledFFmpeg,
             "/opt/homebrew/bin/ffmpeg",
             "/usr/local/bin/ffmpeg",
         ]
         return candidates.compactMap { $0 }.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
+
+    /// The ffmpeg inside the app. A downloaded app carries the download quarantine flag on every
+    /// file in it, and macOS can refuse to start the bundled ffmpeg even after the app itself was
+    /// allowed, which made every video conversion fail. The flag is cleared, or when the app can't
+    /// be changed (for example when it runs from the disk image), an unflagged copy is used.
+    private static let bundledFFmpeg: String? = {
+        guard let bundled = Bundle.main.path(forAuxiliaryExecutable: "ffmpeg") else { return nil }
+        let flag = "com.apple.quarantine"
+        if getxattr(bundled, flag, nil, 0, 0, 0) < 0 || removexattr(bundled, flag, 0) == 0 { return bundled }
+        let fm = FileManager.default
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+        guard let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return bundled }
+        let dir = support.appendingPathComponent("Transmute/ffmpeg-\(build)", isDirectory: true)
+        let copy = dir.appendingPathComponent("ffmpeg")
+        if !fm.fileExists(atPath: copy.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            guard (try? fm.copyItem(atPath: bundled, toPath: copy.path)) != nil else { return bundled }
+        }
+        removexattr(copy.path, flag, 0)
+        chmod(copy.path, 0o755)
+        return fm.isExecutableFile(atPath: copy.path) ? copy.path : bundled
+    }()
 
     static func requireFFmpeg(for what: String) throws -> String {
         guard let path = ffmpeg else {

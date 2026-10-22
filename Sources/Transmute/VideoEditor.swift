@@ -131,6 +131,8 @@ enum VideoEditEngine {
         let totalWork = segments.map { $0.length(in: sourceLength) }.reduce(0, +)
         var outputs: [URL] = []
         var finished = 0.0
+        // The sound track ffmpeg can decode (iPhones add a spatial-audio one it can't).
+        let audioMap = keepAudio ? (await MediaStreams.read(input, ffmpeg: ffmpeg).audioSpec ?? "0:a:0") : "0:a:0"
         do {
             for segment in segments {
                 let out = OutputPaths.destination(for: input, ext: format.fileExtension, suffix: segment.suffix,
@@ -149,7 +151,7 @@ enum VideoEditEngine {
                 if let end = segment.end { args += ["-t", stamp(end - segment.start)] }
                 args += ["-i", input.path, "-map", "0:V:0"]
                 if keepAudio {
-                    args += ["-map", "0:a:0"]
+                    args += ["-map", audioMap]
                     if !audioChain.isEmpty { args += ["-af", audioChain] }
                 } else {
                     args.append("-an")

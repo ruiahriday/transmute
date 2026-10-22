@@ -13,7 +13,29 @@ enum MediaConverter {
                     throw ConversionError("Can't convert media to \(format.label).")
                 }
                 let meta = options.stripMetadata ? ["-map_metadata", "-1"] : []
-                try await runFFmpeg(ffmpeg, input: input, args: args + meta, output: out, progress: progress)
+                let streams = await MediaStreams.read(input, ffmpeg: ffmpeg)
+                do {
+                    do {
+                        try await runFFmpeg(ffmpeg, input: input, args: streams.maps(for: args) + args + meta,
+                                            output: out, progress: progress)
+                    } catch where !(error is CancellationError) && !args.contains("-an") {
+                        // A second go with plain stereo sound, which most failures on odd camera files come down to.
+                        try? FileManager.default.removeItem(at: out)
+                        try await runFFmpeg(ffmpeg, input: input, args: streams.maps(for: args) + args + meta + ["-ac", "2"],
+                                            output: out, progress: progress)
+                    }
+                } catch let ffmpegError where !(ffmpegError is CancellationError) {
+                    // macOS reads some files ffmpeg can't, so let it try before giving up.
+                    try? FileManager.default.removeItem(at: out)
+                    guard AppleMedia.canConvert(to: format) else {
+                        throw ConversionError(MediaStreams.explain(error: ffmpegError, input: input))
+                    }
+                    do {
+                        try await AppleMedia.convert(input, to: format, output: out, progress: progress)
+                    } catch {
+                        throw ConversionError(MediaStreams.explain(error: ffmpegError, input: input))
+                    }
+                }
             } else {
                 try await AppleMedia.convert(input, to: format, output: out, progress: progress)
             }
@@ -103,7 +125,8 @@ enum MediaConverter {
         let out = OutputPaths.destination(for: input, ext: finalExt, suffix: "compressed", folder: options.outputFolder)
         do {
             if let ffmpeg {
-                try await runFFmpeg(ffmpeg, input: input, args: args, output: out, progress: progress)
+                let streams = await MediaStreams.read(input, ffmpeg: ffmpeg)
+                try await runFFmpeg(ffmpeg, input: input, args: streams.maps(for: args) + args, output: out, progress: progress)
             } else if kind == .video {
                 // Pick an Apple preset by how much smaller it has to get.
                 let ratio = Double(goal) / Double(max(1, OutputPaths.fileSize(input)))
@@ -134,9 +157,9 @@ enum MediaConverter {
         let out = OutputPaths.destination(for: input, ext: input.pathExtension, suffix: "clean", folder: options.outputFolder)
         do {
             if let ffmpeg = Tools.ffmpeg {
-                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-i", input.path,
-                                               "-map", "0", "-map_metadata", "-1", "-map_chapters", "-1",
-                                               "-c", "copy", out.path])
+                let maps = await MediaStreams.read(input, ffmpeg: ffmpeg).copyMaps
+                try await Shell.check(ffmpeg, ["-hide_banner", "-nostdin", "-y", "-i", input.path]
+                                      + maps + ["-map_metadata", "-1", "-map_chapters", "-1", "-c", "copy", out.path])
             } else {
                 let type: AVFileType
                 switch input.pathExtension.lowercased() {
@@ -207,8 +230,136 @@ enum MediaInfo {
     }
 }
 
+/// The tracks in a media file as ffmpeg lists them, so a conversion can pick ones ffmpeg can decode.
+/// Recent iPhones add a spatial-audio track (APAC) next to the normal one; ffmpeg picks the track
+/// with the most channels by default, can't decode it, and the whole conversion fails.
+struct MediaStreams: Equatable {
+    struct Track: Equatable {
+        var type: String        // "Video", "Audio", "Subtitle", "Data"
+        var codec: String       // "h264", "aac", "none" when ffmpeg doesn't know it
+        var channels: Int?
+        var isDefault: Bool
+        var attachedPicture: Bool
+    }
+
+    var tracks: [Track] = []
+
+    /// Codecs ffmpeg lists but can't decode.
+    static let undecodable: Set<String> = ["none", "apac"]
+
+    static func read(_ url: URL, ffmpeg: String) async -> MediaStreams {
+        guard let output = try? await Shell.run(ffmpeg, ["-hide_banner", "-nostdin", "-i", url.path]) else { return MediaStreams() }
+        return parse(output.stderr)
+    }
+
+    /// Reads lines like "Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp (default)".
+    static func parse(_ banner: String) -> MediaStreams {
+        var tracks: [Track] = []
+        let pattern = try? NSRegularExpression(pattern: #"Stream #0:\d+(?:\[0x[0-9a-fA-F]+\])?(?:\([^)]*\))?: (\w+): (.*)"#)
+        for line in banner.split(whereSeparator: \.isNewline).map(String.init) where line.contains("Stream #0:") {
+            let ns = line as NSString
+            guard let match = pattern?.firstMatch(in: line, range: NSRange(location: 0, length: ns.length)) else { continue }
+            let type = ns.substring(with: match.range(at: 1))
+            let details = ns.substring(with: match.range(at: 2))
+            let codec = String(details.prefix { $0 != " " && $0 != "," }).lowercased()
+            var channels: Int?
+            let fields = details.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if type == "Audio", let hz = fields.firstIndex(where: { $0.hasSuffix(" Hz") }), hz + 1 < fields.count {
+                channels = Self.channelCount(fields[hz + 1])
+            }
+            tracks.append(Track(type: type, codec: codec, channels: channels, isDefault: line.contains("(default)"),
+                                attachedPicture: line.contains("attached pic")))
+        }
+        return MediaStreams(tracks: tracks)
+    }
+
+    static func channelCount(_ layout: String) -> Int? {
+        switch layout {
+        case "mono": return 1
+        case "stereo", "downmix": return 2
+        case "2.1", "3.0", "3.0(back)": return 3
+        case "quad", "quad(side)", "4.0": return 4
+        case "5.0", "5.0(side)", "4.1": return 5
+        case "5.1", "5.1(side)", "6.0": return 6
+        case "6.1", "7.0": return 7
+        case "7.1", "7.1(wide)": return 8
+        default:
+            if let n = Int(layout.split(separator: " ").first ?? ""), layout.contains("channel") { return n }
+            return nil
+        }
+    }
+
+    /// "0:a:1": the default sound track if ffmpeg can decode it, otherwise the first one it can.
+    var audioSpec: String? { spec(for: bestAudio, type: "Audio", prefix: "a") }
+    /// "0:V:0": the first real video track (not cover art).
+    var videoSpec: String? {
+        let videos = tracks.filter { $0.type == "Video" && !$0.attachedPicture }
+        guard let index = videos.firstIndex(where: { !Self.undecodable.contains($0.codec) }) else { return nil }
+        return "0:V:\(index)"
+    }
+
+    var audioChannels: Int? { bestAudio?.channels }
+    var hasUndecodableAudio: Bool { tracks.contains { $0.type == "Audio" && Self.undecodable.contains($0.codec) } }
+
+    private var bestAudio: Track? {
+        let audio = tracks.filter { $0.type == "Audio" && !Self.undecodable.contains($0.codec) }
+        return audio.first(where: \.isDefault) ?? audio.first
+    }
+
+    private func spec(for track: Track?, type: String, prefix: String) -> String? {
+        guard let track else { return nil }
+        let same = tracks.filter { $0.type == type }
+        guard let index = same.firstIndex(of: track) else { return nil }
+        return "0:\(prefix):\(index)"
+    }
+
+    /// -map arguments for these encoder arguments (which say "-vn" for sound only, "-an" for no sound).
+    /// Empty when the file couldn't be read, which leaves the choice to ffmpeg.
+    func maps(for args: [String]) -> [String] {
+        guard !tracks.isEmpty else { return [] }
+        var maps: [String] = []
+        if !args.contains("-vn"), let v = videoSpec { maps += ["-map", v] }
+        if !args.contains("-an"), let a = audioSpec { maps += ["-map", a] }
+        if maps.isEmpty { return [] }
+        // MP3 and WMA hold at most two channels, and Opus refuses camera surround layouts like
+        // 5.1(side): surround and spatial sound is mixed down to stereo for those.
+        let twoChannelCodecs: Set<String> = ["libmp3lame", "wmav2", "libopus"]
+        if let channels = audioChannels, channels > 2,
+           let i = args.firstIndex(of: "-c:a"), i + 1 < args.count, twoChannelCodecs.contains(args[i + 1]) {
+            maps += ["-ac", "2"]
+        }
+        // Files with sparse tracks otherwise stop with "Too many packets buffered for output stream".
+        return maps + ["-max_muxing_queue_size", "4096"]
+    }
+
+    /// "-map 0" without the tracks ffmpeg can't read, for copying a file's tracks as they are.
+    var copyMaps: [String] {
+        var maps = ["-map", "0"]
+        let prefixes = ["Video": "v", "Audio": "a", "Subtitle": "s", "Data": "d", "Attachment": "t"]
+        for (type, prefix) in prefixes {
+            for (i, track) in tracks.filter({ $0.type == type }).enumerated() where Self.undecodable.contains(track.codec) {
+                maps += ["-map", "-0:\(prefix):\(i)"]
+            }
+        }
+        return maps
+    }
+
+    /// A plainer message for the errors ffmpeg gives on files it can't read.
+    static func explain(error: Error, input: URL) -> String {
+        let text = error.localizedDescription
+        if text.contains("Decoder") && text.contains("not found") || text.contains("no decoder") {
+            return "\(input.lastPathComponent) uses a codec Transmute can't read yet. (\(text))"
+        }
+        return text
+    }
+}
+
 /// Conversions macOS can do without ffmpeg.
 enum AppleMedia {
+    static func canConvert(to format: OutputFormat) -> Bool {
+        [.mp4, .mov, .m4a, .wav, .aiff, .flac].contains(format)
+    }
+
     static func convert(_ input: URL, to format: OutputFormat, output: URL, progress: @escaping ProgressHandler) async throws {
         switch format {
         case .mp4, .mov:
