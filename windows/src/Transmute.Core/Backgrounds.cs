@@ -350,7 +350,9 @@ public static class Backgrounds
         }
         if (format is Transmute.OutputFormat.Jpeg or Transmute.OutputFormat.Webp or Transmute.OutputFormat.Avif)
             image.Quality = (uint)Math.Clamp(Math.Round(options.Quality * 100), 1, 100);
-        if (format == Transmute.OutputFormat.Png) image.Quality = 95;
+        // zlib level 7 (5 for very big pictures) with adaptive filters: level 9 takes over a minute
+        // on a 24-megapixel photo for a file only about 5% smaller.
+        if (format == Transmute.OutputFormat.Png) image.Quality = image.Width * image.Height > 8_000_000 ? 55u : 75u;
         try
         {
             image.Write(output, ImageConverter.MagickFormatFor(format));
