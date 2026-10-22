@@ -11,7 +11,8 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-15
+    # Trial runs on dev use the Intel pool while Apple Silicon runners are short; main stays on macos-15.
+    runs-on: ${{ github.ref == 'refs/heads/main' && 'macos-15' || 'macos-15-intel' }}
     # Trial runs on dev report problems as annotations without sending failure emails.
     continue-on-error: ${{ github.ref != 'refs/heads/main' }}
     defaults:
