@@ -53,6 +53,12 @@ sealed class Toast : Window
         CaptureKit.MakeToolWindow(toast);
         toast.Show();
         CaptureKit.PlaceAtCorner(toast, Screens.MonitorUnderCursor(), right: true, margin: 6);
+        if (toast.Content is FrameworkElement body)
+        {
+            body.RenderTransform = new TranslateTransform();
+            Theme.To(body, OpacityProperty, 1, 0.2, from: 0);
+            Theme.To((TranslateTransform)body.RenderTransform, TranslateTransform.YProperty, 0, 0.3, Theme.Spring, from: 10);
+        }
         toast.timer.Interval = TimeSpan.FromSeconds(seconds);
         toast.timer.Start();
         return toast;

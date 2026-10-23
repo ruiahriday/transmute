@@ -121,7 +121,7 @@ sealed class HistoryWindow : Window
             if (item.Kind == CaptureKind.Recording)
                 stack.Children.Add(new Border
                 {
-                    Background = new SolidColorBrush(Color.FromArgb(0xD0, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 1, 6, 2),
+                    Background = new SolidColorBrush(Color.FromArgb(0xD0, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 1, 6, 2),
                     HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(6),
                     Child = new TextBlock { Text = CaptureHistory.Duration(item.Seconds), Foreground = Brushes.White, FontSize = 11 },
                 });

@@ -39,7 +39,7 @@ sealed class SelectionOverlay : Window
     readonly Canvas root = new() { Background = Brushes.Black, ClipToBounds = true };
     readonly Path dim = new() { Fill = new SolidColorBrush(Color.FromArgb(0x8C, 0x0B, 0x0A, 0x14)), IsHitTestVisible = false };
     readonly Rectangle outline = new() { Stroke = Brushes.White, IsHitTestVisible = false, Visibility = Visibility.Collapsed };
-    readonly Rectangle outlineDark = new() { Stroke = new SolidColorBrush(Color.FromArgb(0xB0, 0x43, 0x38, 0xCA)), IsHitTestVisible = false, Visibility = Visibility.Collapsed };
+    readonly Rectangle outlineDark = new() { Stroke = new SolidColorBrush(Color.FromArgb(0xB0, 0x00, 0x00, 0x00)), IsHitTestVisible = false, Visibility = Visibility.Collapsed };
     readonly Line hLight = new() { Stroke = new SolidColorBrush(Color.FromArgb(0xD8, 0xFF, 0xFF, 0xFF)), IsHitTestVisible = false };
     readonly Line vLight = new() { Stroke = new SolidColorBrush(Color.FromArgb(0xD8, 0xFF, 0xFF, 0xFF)), IsHitTestVisible = false };
     readonly Line hDark = new() { Stroke = new SolidColorBrush(Color.FromArgb(0x90, 0, 0, 0)), IsHitTestVisible = false };
@@ -116,7 +116,7 @@ sealed class SelectionOverlay : Window
         var magStack = new StackPanel();
         magStack.Children.Add(new Border { Child = magGrid, BorderBrush = Brushes.White, BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(4), ClipToBounds = true });
         magStack.Children.Add(new Border { Child = magText, Margin = new Thickness(0, 4, 0, 0) });
-        magnifier = new Border { Child = magStack, Background = new SolidColorBrush(Color.FromArgb(0xE6, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(8), Padding = new Thickness(5), IsHitTestVisible = false, Visibility = Settings.Current.ShowMagnifier || mode == Mode.Color ? Visibility.Visible : Visibility.Collapsed };
+        magnifier = new Border { Child = magStack, Background = new SolidColorBrush(Color.FromArgb(0xE6, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(8), Padding = new Thickness(5), IsHitTestVisible = false, Visibility = Settings.Current.ShowMagnifier || mode == Mode.Color ? Visibility.Visible : Visibility.Collapsed };
         root.Children.Add(magnifier);
         if (!Settings.Current.ShowCrosshair) foreach (var line in new[] { hDark, vDark, hLight, vLight }) line.Visibility = Visibility.Collapsed;
 
@@ -165,6 +165,7 @@ sealed class SelectionOverlay : Window
         overlay.Closed += (_, _) => { if (Current == overlay) Current = null; };
         LastFrozen = overlay.Frozen;
         overlay.Show();
+        if (overlay.Content is FrameworkElement body) Theme.To(body, OpacityProperty, 1, 0.14, from: 0);
         return overlay.done.Task;
     }
 
@@ -185,7 +186,7 @@ sealed class SelectionOverlay : Window
     static Border Pill(UIElement content) => new()
     {
         Child = content,
-        Background = new SolidColorBrush(Color.FromArgb(0xE6, 0x16, 0x15, 0x1F)),
+        Background = new SolidColorBrush(Color.FromArgb(0xE6, 0x20, 0x20, 0x20)),
         CornerRadius = new CornerRadius(6),
         Padding = new Thickness(9, 4, 9, 5),
         RenderTransformOrigin = new Point(0, 0),
@@ -480,7 +481,7 @@ sealed class SelectionOverlay : Window
         var hover = new Trigger { Property = IsMouseOverProperty, Value = true };
         hover.Setters.Add(new Setter(Border.BackgroundProperty, new SolidColorBrush(Color.FromArgb(0x30, 0xFF, 0xFF, 0xFF)), "Back"));
         var on = new Trigger { Property = ToggleButton.IsCheckedProperty, Value = true };
-        on.Setters.Add(new Setter(Border.BackgroundProperty, Theme.Brand, "Back"));
+        on.Setters.Add(new Setter(Border.BackgroundProperty, ThemeManager.OverlayAccent, "Back"));
         template.Triggers.Add(hover);
         template.Triggers.Add(on);
         style.Setters.Add(new Setter(TemplateProperty, template));

@@ -54,8 +54,8 @@ public partial class MainWindow : Window
         {
             var chip = new Border
             {
-                Background = new SolidColorBrush(Theme.Tint(kind)),
-                CornerRadius = new CornerRadius(5),
+                Background = Theme.TintBrush(kind),
+                CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(7, 2, 7, 3),
                 Child = new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 10, FontWeight = FontWeights.SemiBold },
                 SnapsToDevicePixels = true,
@@ -66,20 +66,18 @@ public partial class MainWindow : Window
         CompositionTarget.Rendering += OnFrame;
         Closed += (_, _) => CompositionTarget.Rendering -= OnFrame;
 
-        foreach (var (ring, delay) in new[] { (RingA, 0.0), (RingB, 1.1) })
+        foreach (var (ring, delay) in Theme.Motion ? new[] { (RingA, 0.0), (RingB, 1.6) } : [])
         {
             var scale = (ScaleTransform)ring.RenderTransform;
             foreach (var axis in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
-                scale.BeginAnimation(axis, new DoubleAnimation(1, 2.1, TimeSpan.FromSeconds(2.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
-            ring.BeginAnimation(OpacityProperty, new DoubleAnimation(0.9, 0, TimeSpan.FromSeconds(2.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+                scale.BeginAnimation(axis, new DoubleAnimation(1, 1.8, TimeSpan.FromSeconds(3.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+            ring.BeginAnimation(OpacityProperty, new DoubleAnimation(0.6, 0, TimeSpan.FromSeconds(3.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
         }
         var core = (ScaleTransform)Core.RenderTransform;
-        Theme.Wave(core, ScaleTransform.ScaleXProperty, 0.97, 1.05, 1.8);
-        Theme.Wave(core, ScaleTransform.ScaleYProperty, 0.97, 1.05, 1.8);
-        Theme.Wave((RotateTransform)CoreGlyph.RenderTransform, RotateTransform.AngleProperty, -14, 14, 2.4);
-        Theme.Loop(DashedBorder, Shape.StrokeDashOffsetProperty, 0, -18, 1.6);
+        Theme.Wave(core, ScaleTransform.ScaleXProperty, 0.99, 1.02, 2.6);
+        Theme.Wave(core, ScaleTransform.ScaleYProperty, 0.99, 1.02, 2.6);
         // The Spinform mark spins into place once when the window opens.
-        Theme.To((RotateTransform)HeaderMark.RenderTransform, RotateTransform.AngleProperty, 0, 1.4, Theme.Spring, from: -240);
+        Theme.To((RotateTransform)HeaderMark.RenderTransform, RotateTransform.AngleProperty, 0, 0.9, Theme.Spring, from: -90);
         MoveSegmentHighlight(false);
     }
 
@@ -222,7 +220,12 @@ public partial class MainWindow : Window
     {
         var files = e.Data.GetDataPresent(DataFormats.FileDrop);
         e.Effects = files ? DragDropEffects.Copy : DragDropEffects.None;
-        DropHighlight.Visibility = files ? Visibility.Visible : Visibility.Collapsed;
+        if (files && DropHighlight.Visibility != Visibility.Visible)
+        {
+            DropHighlight.Visibility = Visibility.Visible;
+            Theme.To(DropHighlight, OpacityProperty, 1, 0.18, from: 0);
+        }
+        else if (!files) DropHighlight.Visibility = Visibility.Collapsed;
         DropTitle.Text = files ? "Let go to add" : "Drop anything here";
         e.Handled = true;
     }
@@ -295,7 +298,7 @@ public partial class MainWindow : Window
         if (IsLoaded)
         {
             Theme.To(Panels, OpacityProperty, 1, 0.25, from: 0);
-            Theme.To((TranslateTransform)Panels.RenderTransform, TranslateTransform.YProperty, 0, 0.3, Theme.Spring, from: 10);
+            Theme.To((TranslateTransform)Panels.RenderTransform, TranslateTransform.YProperty, 0, 0.28, Theme.Spring, from: 6);
         }
     }
 

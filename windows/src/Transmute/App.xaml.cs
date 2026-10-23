@@ -24,6 +24,9 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnCrash;
         var args = e.Args.ToList();
+        if (args.Count >= 1 && args[0] == "--smoke-test") ThemeManager.Forced = false; // light first, dark later
+        ThemeManager.Start();
+        Theme.PressFeedback();
 
         if (args.Count >= 2 && args[0] == "--smoke-test")
         {

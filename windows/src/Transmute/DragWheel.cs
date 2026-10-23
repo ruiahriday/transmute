@@ -390,10 +390,10 @@ sealed class WheelWindow : Window
             Width = ringSize,
             Height = ringSize,
             // Nearly clear but not fully: fully transparent pixels don't receive the drag.
-            Fill = new SolidColorBrush(Color.FromArgb(0xF4, 0xF8, 0xF7, 0xFC)),
-            Stroke = Theme.Brand,
-            StrokeThickness = 1.5,
-            Effect = new DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Direction = 270, Opacity = 0.22, Color = Color.FromRgb(0x15, 0x13, 0x2B) },
+            Fill = ThemeManager.Dark ? new SolidColorBrush(Color.FromArgb(0xF2, 0x26, 0x26, 0x26)) : new SolidColorBrush(Color.FromArgb(0xF2, 0xF7, 0xF7, 0xF7)),
+            Stroke = Ui.Brush("LineStrong"),
+            StrokeThickness = 1,
+            Effect = new DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Direction = 270, Opacity = ThemeManager.Dark ? 0.5 : 0.16, Color = Colors.Black },
             RenderTransformOrigin = new Point(0.5, 0.5),
             RenderTransform = new ScaleTransform(0.7, 0.7),
             Opacity = 0,
@@ -462,7 +462,7 @@ sealed class WheelWindow : Window
             Width = diameter,
             Height = diameter,
             CornerRadius = new CornerRadius(diameter / 2),
-            Background = Brushes.White,
+            Background = Ui.Brush("Card"),
             BorderBrush = Ui.Brush("LineStrong"),
             BorderThickness = new Thickness(1),
             Child = stack,
@@ -473,13 +473,13 @@ sealed class WheelWindow : Window
         };
         void Highlight(bool on)
         {
-            bubble.Background = on ? Theme.Brand : Brushes.White;
+            bubble.Background = on ? Theme.Brand : Ui.Brush("Card");
             bubble.BorderBrush = on ? Brushes.Transparent : Ui.Brush("LineStrong");
-            label.Foreground = on ? Brushes.White : ink;
-            glyphPath.Stroke = on ? Brushes.White : Ui.Brush("Accent");
+            label.Foreground = on ? Ui.Brush("OnAccent") : ink;
+            glyphPath.Stroke = on ? Ui.Brush("OnAccent") : Ui.Brush("Accent");
             var scale = (ScaleTransform)bubble.RenderTransform;
-            Theme.To(scale, ScaleTransform.ScaleXProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
-            Theme.To(scale, ScaleTransform.ScaleYProperty, on ? 1.18 : 1, 0.2, Theme.Spring);
+            Theme.To(scale, ScaleTransform.ScaleXProperty, on ? 1.1 : 1, 0.2, Theme.Spring);
+            Theme.To(scale, ScaleTransform.ScaleYProperty, on ? 1.1 : 1, 0.2, Theme.Spring);
         }
         bubble.DragEnter += (_, e) => { Highlight(true); e.Effects = DragDropEffects.Copy; e.Handled = true; };
         bubble.DragOver += (_, e) => { e.Effects = DragDropEffects.Copy; e.Handled = true; };
@@ -536,15 +536,15 @@ sealed class Hud : Window
         // The shadow is its own layer under the card, so the card's text stays crisp.
         var shadow = new Border
         {
-            Background = Brushes.White,
-            CornerRadius = new CornerRadius(10),
+            Background = Ui.Brush("Card"),
+            CornerRadius = new CornerRadius(8),
             Margin = new Thickness(8),
             Effect = new DropShadowEffect { BlurRadius = 16, ShadowDepth = 3, Direction = 270, Opacity = 0.18 },
         };
         var card = new Border
         {
-            Background = Brushes.White,
-            CornerRadius = new CornerRadius(10),
+            Background = Ui.Brush("Card"),
+            CornerRadius = new CornerRadius(8),
             BorderBrush = Ui.Brush("Line"),
             BorderThickness = new Thickness(1),
             Padding = new Thickness(14, 10, 14, 10),

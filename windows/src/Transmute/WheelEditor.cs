@@ -90,7 +90,7 @@ sealed class WheelEditorWindow : Window
         // The preview on the left, the list on the right.
         var previewCard = new Border
         {
-            Background = Brushes.White,
+            Background = Ui.Brush("Card"),
             CornerRadius = new CornerRadius(8),
             BorderBrush = (Brush)Application.Current.FindResource("Line"),
             BorderThickness = new Thickness(1),
@@ -295,7 +295,7 @@ sealed class WheelEditorWindow : Window
         {
             Width = ringSize,
             Height = ringSize,
-            Fill = new SolidColorBrush(Color.FromRgb(0xF7, 0xF6, 0xFC)),
+            Fill = Ui.Brush("Subtle"),
             Stroke = (Brush)Application.Current.FindResource("Line"),
         };
         Canvas.SetLeft(ring, (PreviewSize - ringSize) / 2);
@@ -339,7 +339,7 @@ sealed class WheelEditorWindow : Window
             Width = size,
             Height = size,
             CornerRadius = new CornerRadius(size / 2),
-            Background = item is null ? Brushes.Transparent : Brushes.White,
+            Background = item is null ? Brushes.Transparent : Ui.Brush("Card"),
             BorderBrush = isSelected ? accent : (Brush)Application.Current.FindResource(item is null ? "Line" : "LineStrong"),
             BorderThickness = new Thickness(isSelected ? 2 : 1),
             SnapsToDevicePixels = true,

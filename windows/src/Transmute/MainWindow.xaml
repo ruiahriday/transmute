@@ -8,7 +8,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="Visible" />
         <DataTemplate x:Key="JobRow" DataType="{x:Type local:Job}">
-            <Border x:Name="Card" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="1"
+            <Border x:Name="Card" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
                     CornerRadius="8" Padding="10,8" Margin="0,0,0,6" SnapsToDevicePixels="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -27,13 +27,13 @@
                                  TextWrapping="Wrap" FontSize="12" Padding="0" MinHeight="0" MaxHeight="54" Margin="0,2,0,0">
                             <TextBox.Style>
                                 <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
-                                    <Setter Property="Foreground" Value="{StaticResource Success}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource Success}" />
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding Message}" Value="{x:Null}">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding Status}" Value="Failed">
-                                            <Setter Property="Foreground" Value="{StaticResource Danger}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource Danger}" />
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
@@ -43,16 +43,16 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                         <ProgressBar Width="110" Maximum="1" Value="{Binding Fraction, Mode=OneWay}" Margin="0,0,10,0"
                                      Visibility="{Binding IsRunning, Converter={StaticResource Visible}}" />
-                        <Button Style="{StaticResource Flat}" Click="OnShow" Foreground="{StaticResource Accent}"
+                        <Button Style="{StaticResource Flat}" Click="OnShow" Foreground="{DynamicResource Accent}"
                                 Visibility="{Binding HasOutputs, Converter={StaticResource Visible}}">
                             <local:Icon Glyph="folder" Size="15" Text="Show in folder" />
                         </Button>
                         <!-- Status: "Ready", or a check or warning mark that pops in. -->
                         <Grid VerticalAlignment="Center" Margin="4,0,8,0" RenderTransformOrigin="0.5,0.5">
                             <Grid.RenderTransform><ScaleTransform /></Grid.RenderTransform>
-                            <TextBlock x:Name="ReadyText" Text="Ready" FontSize="12" Foreground="{StaticResource Tertiary}" Visibility="Collapsed" VerticalAlignment="Center" />
-                            <local:Icon x:Name="DoneMark" Glyph="check" Size="18" Foreground="{StaticResource Success}" Visibility="Collapsed" />
-                            <local:Icon x:Name="FailedMark" Glyph="warning" Size="18" Foreground="{StaticResource Warning}" Visibility="Collapsed" />
+                            <TextBlock x:Name="ReadyText" Text="Ready" FontSize="12" Foreground="{DynamicResource Tertiary}" Visibility="Collapsed" VerticalAlignment="Center" />
+                            <local:Icon x:Name="DoneMark" Glyph="check" Size="18" Foreground="{DynamicResource Success}" Visibility="Collapsed" />
+                            <local:Icon x:Name="FailedMark" Glyph="warning" Size="18" Foreground="{DynamicResource Warning}" Visibility="Collapsed" />
                             <Grid.Style>
                                 <Style TargetType="Grid">
                                     <Style.Triggers>
@@ -78,11 +78,11 @@
                                 Visibility="{Binding CanEdit, Converter={StaticResource Visible}}">
                             <local:Icon Glyph="edit" Size="14" Text="Edit" />
                         </Button>
-                        <Button Style="{StaticResource Flat}" Click="OnInfo" ToolTip="View and edit metadata" Foreground="{StaticResource Secondary}"
+                        <Button Style="{StaticResource Flat}" Click="OnInfo" ToolTip="View and edit metadata" Foreground="{DynamicResource Secondary}"
                                 Visibility="{Binding HasInfo, Converter={StaticResource Visible}}">
                             <local:Icon Glyph="info" Size="16" />
                         </Button>
-                        <Button Style="{StaticResource Flat}" Foreground="{StaticResource Secondary}" Click="OnRemove" ToolTip="Remove from list">
+                        <Button Style="{StaticResource Flat}" Foreground="{DynamicResource Secondary}" Click="OnRemove" ToolTip="Remove from list">
                             <local:Icon Glyph="close" Size="14" />
                         </Button>
                     </StackPanel>
@@ -99,11 +99,11 @@
                     <Setter TargetName="FailedMark" Property="Visibility" Value="Visible" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                    <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource LineStrong}" />
+                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource LineStrong}" />
                 </DataTrigger>
                 <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                    <Setter TargetName="Card" Property="BorderBrush" Value="{StaticResource Accent}" />
-                    <Setter TargetName="Card" Property="Background" Value="#FBFAFF" />
+                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource RowHover}" />
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
@@ -146,10 +146,8 @@
 
     <DockPanel>
         <!-- Header: the mark, the name and what's going on; buttons on the right. A hairline under it. -->
-        <Border DockPanel.Dock="Top" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1">
+        <Border DockPanel.Dock="Top" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1">
             <Grid>
-                <!-- A thin brand line along the very top. -->
-                <Border Height="3" VerticalAlignment="Top" Background="{StaticResource Brand}" />
                 <DockPanel Margin="16,13,14,11">
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
                         <Button Click="OnAddFiles" Margin="0,0,6,0" ToolTip="Add files (or drop them anywhere in this window)">
@@ -159,11 +157,11 @@
                             <local:Icon Glyph="folder" Size="15" Text="Add Folder" />
                         </Button>
                         <Button x:Name="ClearButton" Content="Clear" Click="OnClear" Margin="0,0,10,0" />
-                        <Rectangle Width="1" Fill="{StaticResource Line}" Margin="0,4,10,4" />
-                        <Button Style="{StaticResource Flat}" Click="OnFeedback" ToolTip="Send feedback" Foreground="{StaticResource Secondary}" Margin="0,0,2,0">
+                        <Rectangle Width="1" Fill="{DynamicResource Line}" Margin="0,4,10,4" />
+                        <Button Style="{StaticResource Flat}" Click="OnFeedback" ToolTip="Send feedback" Foreground="{DynamicResource Secondary}" Margin="0,0,2,0">
                             <local:Icon Glyph="feedback" Size="17" />
                         </Button>
-                        <Button Style="{StaticResource Flat}" Click="OnSettings" ToolTip="Settings" Foreground="{StaticResource Secondary}">
+                        <Button Style="{StaticResource Flat}" Click="OnSettings" ToolTip="Settings" Foreground="{DynamicResource Secondary}">
                             <local:Icon Glyph="settings" Size="17" />
                         </Button>
                     </StackPanel>
@@ -174,7 +172,7 @@
                             <Image.RenderTransform><RotateTransform /></Image.RenderTransform>
                         </Image>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Spinform" Style="{StaticResource Title}" Foreground="{StaticResource Ink}" Margin="0,-2,0,0" />
+                            <TextBlock Text="Spinform" Style="{StaticResource Title}" Foreground="{DynamicResource Ink}" Margin="0,-2,0,0" />
                             <TextBlock x:Name="Summary" Text="Drop. Pick a format. Done." Style="{StaticResource Caption}" />
                         </StackPanel>
                     </StackPanel>
@@ -183,11 +181,11 @@
         </Border>
 
         <!-- Controls -->
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,12,16,14">
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16,12,16,14">
             <StackPanel>
                 <Border Style="{StaticResource SegmentTrack}" Margin="0,0,0,12">
                     <Grid>
-                        <Border x:Name="SegmentHighlight" Background="{StaticResource Brand}" CornerRadius="5" HorizontalAlignment="Left" Margin="2">
+                        <Border x:Name="SegmentHighlight" Background="{DynamicResource SelectedPill}" BorderBrush="{DynamicResource LineStrong}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Left" Margin="2">
                             <Border.RenderTransform><TranslateTransform x:Name="SegmentShift" /></Border.RenderTransform>
                         </Border>
                         <StackPanel x:Name="Segments" Orientation="Horizontal">
@@ -211,13 +209,13 @@
                     <Grid.RenderTransform><TranslateTransform /></Grid.RenderTransform>
                     <!-- Convert -->
                     <StackPanel x:Name="ConvertPanel">
-                        <TextBlock x:Name="NoFormats" Text="Add some files to choose output formats." Foreground="{StaticResource Secondary}" Margin="0,0,0,6" />
+                        <TextBlock x:Name="NoFormats" Text="Add some files to choose output formats." Foreground="{DynamicResource Secondary}" Margin="0,0,0,6" />
                         <StackPanel x:Name="FormatPickers" />
                         <DockPanel Margin="0,6,0,0" LastChildFill="False">
                             <StackPanel x:Name="QualityRow" Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
                                 <TextBlock Text="Quality" VerticalAlignment="Center" Margin="0,0,10,0" />
                                 <Slider x:Name="QualitySlider" Width="140" Minimum="0.1" Maximum="1" VerticalAlignment="Center" ValueChanged="OnQuality" />
-                                <TextBlock x:Name="QualityLabel" Width="44" VerticalAlignment="Center" Margin="8,0,12,0" Foreground="{StaticResource Secondary}" />
+                                <TextBlock x:Name="QualityLabel" Width="44" VerticalAlignment="Center" Margin="8,0,12,0" Foreground="{DynamicResource Secondary}" />
                             </StackPanel>
                             <CheckBox x:Name="StripBox" Content="Remove metadata" VerticalAlignment="Center" DockPanel.Dock="Left" Click="OnStripToggle" />
                             <Button DockPanel.Dock="Right" x:Name="ConvertButton" Style="{StaticResource Primary}" Content="Convert" MinWidth="104" Click="OnConvert" IsDefault="True" />
@@ -232,7 +230,7 @@
                             <RadioButton x:Name="BySize" Content="Target size" VerticalAlignment="Center" Margin="0,0,18,0" Checked="OnCompressBy" DockPanel.Dock="Left" />
                             <StackPanel x:Name="PercentRow" Orientation="Horizontal" DockPanel.Dock="Left">
                                 <Slider x:Name="PercentSlider" Width="160" Minimum="10" Maximum="90" Value="50" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnPercent" />
-                                <TextBlock x:Name="PercentLabel" Text="to 50% of original" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{StaticResource Secondary}" />
+                                <TextBlock x:Name="PercentLabel" Text="to 50% of original" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource Secondary}" />
                             </StackPanel>
                             <StackPanel x:Name="SizeRow" Orientation="Horizontal" Visibility="Collapsed" DockPanel.Dock="Left">
                                 <TextBox x:Name="TargetMB" Text="5" Width="64" />
@@ -298,21 +296,21 @@
         <Grid Margin="16,14,16,12">
             <Border x:Name="EmptyState" Style="{StaticResource GlassCard}">
                 <Grid>
-                    <Rectangle x:Name="DashedBorder" Margin="10" RadiusX="8" RadiusY="8" StrokeThickness="1.5" StrokeDashArray="4 3" Stroke="#A9A1DA" IsHitTestVisible="False" />
+                    <Rectangle x:Name="DashedBorder" Margin="10" RadiusX="8" RadiusY="8" StrokeThickness="1.5" StrokeDashArray="4 3" Stroke="{DynamicResource DashLine}" IsHitTestVisible="False" />
                     <Viewbox StretchDirection="DownOnly" Margin="24,18">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <Grid Width="230" Height="168" HorizontalAlignment="Center">
                             <Canvas x:Name="Orbit" Width="230" Height="168" />
-                            <Ellipse x:Name="RingA" Width="80" Height="80" Stroke="#998B5CF6" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse x:Name="RingA" Width="80" Height="80" Stroke="{DynamicResource LineStrong}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
                                 <Ellipse.RenderTransform><ScaleTransform /></Ellipse.RenderTransform>
                             </Ellipse>
-                            <Ellipse x:Name="RingB" Width="80" Height="80" Stroke="#99EC4899" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                            <Ellipse x:Name="RingB" Width="80" Height="80" Stroke="{DynamicResource Line}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
                                 <Ellipse.RenderTransform><ScaleTransform /></Ellipse.RenderTransform>
                             </Ellipse>
                             <Grid x:Name="Core" Width="80" Height="80" RenderTransformOrigin="0.5,0.5">
                                 <Grid.RenderTransform><ScaleTransform /></Grid.RenderTransform>
-                                <Ellipse Fill="{StaticResource Brand}" />
-                                <local:Icon x:Name="CoreGlyph" Glyph="convert" Size="38" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                <Ellipse Fill="{DynamicResource Subtle}" Stroke="{DynamicResource Line}" StrokeThickness="1" />
+                                <local:Icon x:Name="CoreGlyph" Glyph="convert" Size="34" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
                                             RenderTransformOrigin="0.5,0.5">
                                     <local:Icon.RenderTransform><RotateTransform /></local:Icon.RenderTransform>
                                 </local:Icon>
@@ -321,11 +319,11 @@
                         <TextBlock x:Name="DropTitle" Text="Drop anything here" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="24" FontWeight="SemiBold"
                                    HorizontalAlignment="Center" Margin="0,4,0,0" />
                         <TextBlock Text="Images, video, audio, PDFs, documents, e-books, spreadsheets, presentations, subtitles and archives"
-                                   Foreground="{StaticResource Secondary}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420" Margin="0,6,0,14" />
+                                   Foreground="{DynamicResource Secondary}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420" Margin="0,6,0,14" />
                         <Button Style="{StaticResource Primary}" HorizontalAlignment="Center" Padding="18,7" Click="OnAddFiles">
                             <local:Icon Glyph="add" Size="14" Text="Choose Files" />
                         </Button>
-                        <Border Background="{StaticResource Subtle}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,14,0,0" HorizontalAlignment="Center">
+                        <Border Background="{DynamicResource Subtle}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,14,0,0" HorizontalAlignment="Center">
                             <TextBlock x:Name="WheelTip" Style="{StaticResource Caption}" TextAlignment="Center" MaxWidth="460" />
                         </Border>
                     </StackPanel>
@@ -335,7 +333,7 @@
             <ListBox x:Name="FileList" ItemTemplate="{StaticResource JobRow}" ItemContainerStyle="{StaticResource RowContainer}" Visibility="Collapsed"
                      BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionMode="Extended" KeyDown="OnListKey" />
-            <Border x:Name="DropHighlight" BorderBrush="{StaticResource Accent}" BorderThickness="2" CornerRadius="10" Background="#0F4338CA"
+            <Border x:Name="DropHighlight" BorderBrush="{DynamicResource Accent}" BorderThickness="2" CornerRadius="8" Background="{DynamicResource DropTint}"
                     Visibility="Collapsed" IsHitTestVisible="False" />
         </Grid>
     </DockPanel>

@@ -82,7 +82,7 @@ sealed class ScrollCapture
         var cancel = CaptureKit.IconButton("close", "Cancel", () => _ = Finish(false), 12, Brushes.White);
         cancel.Margin = new Thickness(4, 0, 0, 0);
         row.Children.Add(cancel);
-        bar.Content = new Border { Background = new SolidColorBrush(Color.FromArgb(0xEE, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 6, 8, 6), Child = row, Margin = new Thickness(6) };
+        bar.Content = new Border { Background = new SolidColorBrush(Color.FromArgb(0xEE, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(8), Padding = new Thickness(8, 6, 8, 6), Child = row, Margin = new Thickness(6) };
         CaptureKit.MakeToolWindow(bar);
         CaptureKit.KeepOutOfCaptures(bar);
         bar.KeyDown += (_, e) => { if (e.Key == Key.Escape) _ = Finish(false); };
@@ -123,7 +123,7 @@ sealed class ScrollCapture
         back.AppendChild(presenter);
         template.VisualTree = back;
         var on = new Trigger { Property = ToggleButton.IsCheckedProperty, Value = true };
-        on.Setters.Add(new Setter(Border.BackgroundProperty, Theme.Brand, "Back"));
+        on.Setters.Add(new Setter(Border.BackgroundProperty, ThemeManager.OverlayAccent, "Back"));
         template.Triggers.Add(on);
         style.Setters.Add(new Setter(Control.TemplateProperty, template));
         style.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));

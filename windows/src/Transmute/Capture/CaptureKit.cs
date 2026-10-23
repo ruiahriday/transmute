@@ -169,18 +169,18 @@ static class CaptureKit
     public static Brush Brush(string key) => (Brush)Application.Current.FindResource(key);
 
     /// A shadowed white card, the look of Spinform's floating panels.
-    public static FrameworkElement Card(UIElement content, Thickness padding, double radius = 10)
+    public static FrameworkElement Card(UIElement content, Thickness padding, double radius = 8)
     {
         var shadow = new System.Windows.Controls.Border
         {
-            Background = Brushes.White,
+            Background = Brush("Card"),
             CornerRadius = new CornerRadius(radius),
             Margin = new Thickness(10),
-            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Direction = 270, Opacity = 0.2 },
+            Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 18, ShadowDepth = 3, Direction = 270, Opacity = ThemeManager.Dark ? 0.45 : 0.14 },
         };
         var card = new System.Windows.Controls.Border
         {
-            Background = Brushes.White,
+            Background = Brush("Card"),
             CornerRadius = new CornerRadius(radius),
             BorderBrush = Brush("Line"),
             BorderThickness = new Thickness(1),

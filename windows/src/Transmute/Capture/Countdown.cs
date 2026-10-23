@@ -26,14 +26,14 @@ sealed class Countdown : Window
             Width = 132, Height = 132,
             Children =
             {
-                new System.Windows.Shapes.Ellipse { Fill = new SolidColorBrush(Color.FromArgb(0xE0, 0x16, 0x15, 0x1F)) },
-                new System.Windows.Shapes.Ellipse { Stroke = Theme.Brand, StrokeThickness = 4, Margin = new Thickness(3) },
+                new System.Windows.Shapes.Ellipse { Fill = new SolidColorBrush(Color.FromArgb(0xE0, 0x20, 0x20, 0x20)) },
+                new System.Windows.Shapes.Ellipse { Stroke = ThemeManager.OverlayAccent, StrokeThickness = 4, Margin = new Thickness(3) },
                 number,
             },
         });
         stack.Children.Add(new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(0xE0, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4, 10, 5),
+            Background = new SolidColorBrush(Color.FromArgb(0xE0, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 4, 10, 5),
             Margin = new Thickness(0, 10, 0, 0), HorizontalAlignment = HorizontalAlignment.Center,
             Child = new TextBlock { Text = caption, Foreground = Brushes.White, FontSize = 12 },
         });

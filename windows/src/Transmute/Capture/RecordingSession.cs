@@ -62,7 +62,7 @@ sealed class RecordingSession
         row.Children.Add(live);
         bar.Content = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(0xF0, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(10), Padding = new Thickness(8, 6, 8, 6), Child = row, Margin = new Thickness(6),
+            Background = new SolidColorBrush(Color.FromArgb(0xF0, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(8), Padding = new Thickness(8, 6, 8, 6), Child = row, Margin = new Thickness(6),
             Effect = new System.Windows.Media.Effects.DropShadowEffect { BlurRadius = 14, ShadowDepth = 2, Direction = 270, Opacity = 0.3 },
         };
         CaptureKit.MakeToolWindow(bar);

@@ -5,7 +5,7 @@
         Style="{StaticResource BaseWindow}" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Icon="pack://application:,,,/Assets/app.ico">
     <DockPanel>
-        <Border DockPanel.Dock="Bottom" Background="{StaticResource Card}" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="16,11">
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16,11">
             <Button Content="Done" Style="{StaticResource Primary}" MinWidth="90" HorizontalAlignment="Right" IsDefault="True" IsCancel="True" Click="OnDone" />
         </Border>
         <ScrollViewer x:Name="Scroller" VerticalScrollBarVisibility="Auto">
@@ -15,7 +15,7 @@
                 <RadioButton x:Name="InFolder" Content="Save results in a folder" Margin="0,3" Click="OnOutputMode" />
                 <DockPanel x:Name="FolderRow" Margin="22,4,0,4">
                     <Button DockPanel.Dock="Right" Content="Choose…" Click="OnChooseFolder" Margin="8,0,0,0" />
-                    <TextBlock x:Name="FolderLabel" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{StaticResource Secondary}" />
+                    <TextBlock x:Name="FolderLabel" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource Secondary}" />
                 </DockPanel>
                 <CheckBox x:Name="RevealBox" Content="Show results in File Explorer when done" Click="OnChanged" />
 

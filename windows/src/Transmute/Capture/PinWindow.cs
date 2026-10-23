@@ -43,7 +43,7 @@ sealed class PinWindow : Window
         };
         badge = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(0xD8, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 2, 6, 3),
+            Background = new SolidColorBrush(Color.FromArgb(0xD8, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 2, 6, 3),
             HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, 18, 0, 0), Visibility = Visibility.Collapsed,
             Child = new TextBlock { Foreground = Brushes.White, FontSize = 11 },
         };
@@ -173,7 +173,7 @@ sealed class PinWindow : Window
     {
         locked = on;
         CaptureKit.SetClickThrough(this, on);
-        frame.BorderBrush = on ? new SolidColorBrush(Color.FromArgb(0x90, 0x43, 0x38, 0xCA)) : new SolidColorBrush(Color.FromArgb(0x50, 0, 0, 0));
+        frame.BorderBrush = on ? Theme.Brand : new SolidColorBrush(Color.FromArgb(0x50, 0, 0, 0));
         if (on && Opacity > 0.85) Opacity = 0.8;
         Tell(on ? "Locked: clicks go through. Unlock from the tray." : "Unlocked");
     }

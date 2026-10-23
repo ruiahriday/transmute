@@ -71,13 +71,13 @@ sealed class QuickAccess : Window
         var picture = new Border { CornerRadius = new CornerRadius(6), ClipToBounds = true, Background = BackgroundPanel.Checkerboard(8), Child = thumbnail, HorizontalAlignment = HorizontalAlignment.Center, MinWidth = 120, MinHeight = 60 };
         var badge = new Border
         {
-            Background = new SolidColorBrush(Color.FromArgb(0xD0, 0x16, 0x15, 0x1F)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 1, 6, 2),
+            Background = new SolidColorBrush(Color.FromArgb(0xD0, 0x20, 0x20, 0x20)), CornerRadius = new CornerRadius(4), Padding = new Thickness(6, 1, 6, 2),
             HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(6),
             Child = new TextBlock { Text = CaptureHistory.Duration(item.Seconds), Foreground = Brushes.White, FontSize = 11 },
             Visibility = item.Kind == CaptureKind.Recording ? Visibility.Visible : Visibility.Collapsed,
         };
         closeButton = CaptureKit.IconButton("close", "Close", () => Dismiss(0), 10, Brushes.White);
-        closeButton.Background = new SolidColorBrush(Color.FromArgb(0xC0, 0x16, 0x15, 0x1F));
+        closeButton.Background = new SolidColorBrush(Color.FromArgb(0xC0, 0x20, 0x20, 0x20));
         closeButton.Padding = new Thickness(5);
         closeButton.HorizontalAlignment = HorizontalAlignment.Right;
         closeButton.VerticalAlignment = VerticalAlignment.Top;

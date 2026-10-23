@@ -236,6 +236,54 @@ static partial class SmokeTest
 
             await CaptureSteps(main, photo, output, Step);
 
+            // The same windows again in dark mode (Windows' app mode set to dark).
+            ThemeManager.Forced = true;
+            ThemeManager.Apply();
+            foreach (var w in Application.Current.Windows.OfType<Window>().Where(w => w is not MainWindow && w.IsVisible && w.GetType().Name is "SettingsWindow" or "ImageEditorWindow" or "FrameWindow" or "BackgroundWindow").ToList()) w.Close();
+            await Step("main window dark", async () => { main.ConvertTab.IsChecked = true; App.Current.ShowMain(); await Wait(1); return main; });
+            await Step("main window tools dark", async () => { main.ToolsTab.IsChecked = true; await Wait(1); return main; });
+            await Step("main window capture dark", async () => { main.CaptureTab.IsChecked = true; await Wait(1); return main; });
+            main.ConvertTab.IsChecked = true;
+            await Step("settings dark", async () =>
+            {
+                SettingsWindow.Open(main);
+                await Wait(1);
+                return Application.Current.Windows.OfType<SettingsWindow>().Single();
+            });
+            foreach (var w in Application.Current.Windows.OfType<SettingsWindow>().ToList()) w.Close();
+            await Step("drag wheel formats dark", async () =>
+            {
+                WheelWindow.Shared.Preview(WheelKind.Convert, [photo]);
+                await Wait(0.8);
+                return WheelWindow.Shared;
+            });
+            WheelWindow.Shared.Hide();
+            await Step("photo editor dark", async () =>
+            {
+                Editors.Open(jobs[0], main);
+                await Wait(4);
+                return Application.Current.Windows.OfType<ImageEditorWindow>().Single();
+            });
+            foreach (var w in Application.Current.Windows.OfType<ImageEditorWindow>().ToList()) w.Close();
+            await Step("frame tool dark", async () =>
+            {
+                var window = FrameWindow.Open(photo) ?? throw new Exception("the frame window didn't open");
+                await Wait(2.5);
+                return window;
+            });
+            foreach (var w in Application.Current.Windows.OfType<FrameWindow>().ToList()) w.Close();
+            await Step("change background window dark", async () =>
+            {
+                var window = BackgroundWindow.Open([productJob, jobs[0]], main);
+                for (var i = 0; i < 120 && !window.Rendered; i++) await Wait(0.25);
+                await Wait(0.5);
+                if (!window.Rendered) throw new Exception("the preview didn't appear within 30 s");
+                return window;
+            });
+            Application.Current.Windows.OfType<BackgroundWindow>().SingleOrDefault()?.Close();
+            ThemeManager.Forced = false;
+            ThemeManager.Apply();
+
             DragProbe();
         }
         catch (Exception e)
@@ -272,7 +320,7 @@ static partial class SmokeTest
         var frame = new DrawingVisual();
         using (var dc = frame.RenderOpen())
         {
-            dc.DrawRectangle(window.Background is SolidColorBrush { Color.A: > 0 } b ? b : Brushes.White, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
+            dc.DrawRectangle(window.Background is SolidColorBrush { Color.A: > 0 } b ? b : ThemeManager.SurfaceBrush, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
             // Pin the brush to the layout size; otherwise it stretches whatever is drawn to fill.
             var brush = new VisualBrush(content) { Viewbox = new Rect(0, 0, content.ActualWidth, content.ActualHeight), ViewboxUnits = BrushMappingMode.Absolute, Stretch = Stretch.None, AlignmentX = AlignmentX.Left, AlignmentY = AlignmentY.Top };
             dc.DrawRectangle(brush, null, new Rect(0, 0, content.ActualWidth, content.ActualHeight));
