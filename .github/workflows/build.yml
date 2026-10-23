@@ -126,7 +126,12 @@ jobs:
           mkdir -p build/dmg
           cp -R build/Spinform.app build/dmg/
           ln -s /Applications build/dmg/Applications
-          hdiutil create -volname Spinform -srcfolder build/dmg -ov -format UDZO build/Spinform.dmg
+          # hdiutil sometimes fails with "Resource busy" on hosted runners; try a few times.
+          for attempt in 1 2 3 4; do
+            if hdiutil create -volname Spinform -srcfolder build/dmg -ov -format UDZO build/Spinform.dmg; then break; fi
+            [ "$attempt" = 4 ] && exit 1
+            sleep $((attempt * 10))
+          done
           ls -la build
 
       - uses: actions/upload-artifact@v4
