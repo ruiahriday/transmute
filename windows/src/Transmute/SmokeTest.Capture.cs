@@ -78,6 +78,56 @@ static partial class SmokeTest
             return QuickAccess.Open.LastOrDefault() ?? throw new Exception("no thumbnail");
         });
 
+        await step("sharp capture", async () =>
+        {
+            // A one-pixel checkerboard drawn 1:1 in physical pixels, at the left edge (clear of
+            // windows that some test machines keep on top). Any scaling on the way greys it.
+            const int pw = 40, ph = 300;
+            var dpi = 96 * monitor.Scale;
+            var pixels = new byte[pw * ph * 4];
+            for (var y = 0; y < ph; y++)
+                for (var x = 0; x < pw; x++)
+                {
+                    var i = (y * pw + x) * 4;
+                    var v = (byte)((x + y) % 2 == 0 ? 0 : 255);
+                    pixels[i] = pixels[i + 1] = pixels[i + 2] = v;
+                    pixels[i + 3] = 255;
+                }
+            var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(pw, ph, dpi, dpi, PixelFormats.Bgra32, null, pixels, pw * 4);
+            var image = new Image { Source = bitmap, Stretch = Stretch.None, SnapsToDevicePixels = true };
+            RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
+            var pattern = new Window { Content = image, SizeToContent = SizeToContent.WidthAndHeight, WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false, UseLayoutRounding = true, Title = "Pattern" };
+            pattern.Show();
+            CaptureKit.MoveTo(pattern, monitor.Bounds.X + 4, monitor.Bounds.Y + 100);
+            await Wait(0.6);
+            var origin = image.PointToScreen(new Point(0, 0));
+            var rect = new PixelRect((int)Math.Round(origin.X), (int)Math.Round(origin.Y), pw, ph);
+            int Wrong(BgraImage got)
+            {
+                if (got.Width != pw || got.Height != ph) return -1;
+                var wrong = 0;
+                for (var i = 0; i < got.Pixels.Length; i += 4) if (got.Pixels[i] != pixels[i] || got.Pixels[i + 1] != pixels[i + 1] || got.Pixels[i + 2] != pixels[i + 2]) wrong++;
+                return wrong;
+            }
+            var direct = await Task.Run(() => ScreenGrab.Area(rect));
+            var virt = Screens.VirtualScreen;
+            var frozen = await Task.Run(() => ScreenGrab.Area(virt));
+            var cropped = frozen.Crop(rect.X - virt.X, rect.Y - virt.Y, rect.Width, rect.Height);
+            var item = await Capture.Deliver(direct, rect);
+            using var saved = new ImageMagick.MagickImage(item.Path);
+            var file = BgraImage.FromMagick(saved);
+            var savedDpi = saved.Density.ChangeUnits(ImageMagick.DensityUnit.PixelsPerInch).X;
+            var (a, b, c) = (Wrong(direct), Wrong(cropped), Wrong(file));
+            Log($"      {pw} × {ph} checkerboard at {rect.X},{rect.Y}: grab {a}, frozen-screen crop {b}, saved file {c} pixels off; file {file.Width} × {file.Height} at {savedDpi:0} DPI");
+            if (item.Width != pw || item.Height != ph) throw new Exception($"saved {item.Width} × {item.Height} for a {pw} × {ph} selection");
+            if (Math.Abs(savedDpi - dpi) > 1) throw new Exception($"saved at {savedDpi:0} DPI, the display is {dpi:0}");
+            if (a > pw * ph / 3) Log("NOTE  sharp capture: something else covers the pattern on this machine, so only the size and DPI are checked");
+            else if (a != 0 || b != 0 || c != 0) throw new Exception("the checkerboard didn't survive pixel for pixel");
+            await Wait(0.3);
+            return pattern;
+        });
+        foreach (var w in Application.Current.Windows.OfType<Window>().Where(w => w.Title == "Pattern").ToList()) w.Close();
+
         await step("frame tool", async () =>
         {
             var window = FrameWindow.Open(shot?.Path ?? photo) ?? throw new Exception("the frame window didn't open");

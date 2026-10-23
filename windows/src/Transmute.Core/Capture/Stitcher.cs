@@ -57,9 +57,12 @@ public sealed class BgraImage
     }
 
     /// Writes a PNG (or JPEG for .jpg) of the pixels.
-    public void Save(string path, double jpegQuality = 0.9)
+    /// dpi (when above 0) is stored in the file, so apps show the picture at the size it had on
+    /// screen: 144 for a capture from a display at 150%, for example.
+    public void Save(string path, double jpegQuality = 0.9, double dpi = 0)
     {
         using var image = ToMagick();
+        if (dpi > 0) image.Density = new Density(dpi, dpi, DensityUnit.PixelsPerInch);
         var jpeg = path.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
         if (jpeg)
         {

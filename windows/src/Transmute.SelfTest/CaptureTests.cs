@@ -70,6 +70,40 @@ static partial class Tests
     static async Task CaptureChecks(ConversionOptions options)
     {
         var folder = options.OutputFolder!;
+        await Check("Screenshot files: exact pixels, the display's DPI, JPEG kept sharp", () =>
+        {
+            // A one-pixel checkerboard is the hardest thing to keep sharp: any resampling greys it.
+            var shot = new BgraImage(201, 99);
+            for (var y = 0; y < shot.Height; y++)
+                for (var x = 0; x < shot.Width; x++)
+                {
+                    var i = (y * shot.Width + x) * 4;
+                    var v = (byte)((x + y) % 2 == 0 ? 0 : 255);
+                    shot.Pixels[i] = shot.Pixels[i + 1] = shot.Pixels[i + 2] = v;
+                    shot.Pixels[i + 3] = 255;
+                }
+            var png = Path.Combine(folder, "checker.png");
+            shot.Save(png, 0.92, 144);
+            using (var back = new MagickImage(png))
+            {
+                Expect(back.Width == 201 && back.Height == 99, $"size {back.Width}×{back.Height}");
+                Expect(Math.Abs(back.Density.ChangeUnits(DensityUnit.PixelsPerInch).X - 144) < 1, $"DPI {back.Density}");
+                var again = BgraImage.FromMagick(back);
+                var wrong = 0;
+                for (var i = 0; i < again.Pixels.Length; i += 4) if (again.Pixels[i] != shot.Pixels[i]) wrong++;
+                Expect(wrong == 0, $"{wrong} pixels changed in the PNG");
+            }
+            var jpg = Path.Combine(folder, "checker.jpg");
+            shot.Save(jpg, 0.92, 96);
+            using (var back = new MagickImage(jpg))
+            {
+                Expect(back.Quality >= 92, $"JPEG quality {back.Quality}");
+                Expect(back.Width == 201 && back.Height == 99, $"JPEG size {back.Width}×{back.Height}");
+            }
+            using var framed = Frames.Render(new MagickImage(png), new FrameStyle { Background = FrameBackground.Solid, From = "FFFFFF", Padding = 0.1 });
+            Expect(Math.Abs(framed.Density.ChangeUnits(DensityUnit.PixelsPerInch).X - 144) < 1, $"framed DPI {framed.Density}");
+            return None();
+        });
         await Check("Shortcuts: parse, write back and check", () =>
         {
             Expect(Hotkey.Parse("Ctrl+Shift+4") == new Hotkey(HotkeyModifiers.Ctrl | HotkeyModifiers.Shift, '4'), "Ctrl+Shift+4");

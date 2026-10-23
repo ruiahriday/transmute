@@ -246,7 +246,9 @@ static class Capture
     {
         var ext = Prefs.CaptureFormat == "jpg" ? "jpg" : "png";
         var temp = OutputPaths.TempFile(ext);
-        await Task.Run(() => image.Save(temp, Prefs.ImageQuality));
+        // Screenshots stay sharp: at least 92% for JPEG, and the display's DPI in the file.
+        var dpi = 96 * (where is { } at ? Screens.MonitorAt(at.X + at.Width / 2, at.Y + at.Height / 2).Scale : Screens.MonitorUnderCursor().Scale);
+        await Task.Run(() => image.Save(temp, Math.Max(0.92, Prefs.ImageQuality), dpi));
         string? saved = null;
         if (Prefs.CaptureAutoSave)
         {

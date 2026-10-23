@@ -210,6 +210,7 @@ public static class Frames
         var canvas = Background(cw, ch, style);
         try
         {
+            if (source.Density.X > 0) canvas.Density = source.Density; // same size on screen as the original
             canvas.Alpha(AlphaOption.Set);
             var radius = CornerRadius(w, h, style);
             picture.Alpha(AlphaOption.Set);
