@@ -1,0 +1,343 @@
+name: Build Spinform for Windows
+
+on:
+  push:
+    branches: [windows]
+    paths: ["windows/**", ".github/workflows/build-windows.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  VERSION: "1.0.${{ github.run_number }}"
+
+jobs:
+  build:
+    name: Build, test and package
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      # The background-removal model is too big for the source branch; it lives on its own branch.
+      - uses: actions/checkout@v4
+        with:
+          ref: windows-models
+          path: windows-models
+          sparse-checkout: isnet-general-use.onnx
+          sparse-checkout-cone-mode: false
+
+      - name: Put the background model in place
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force models | Out-Null
+          Move-Item ..\windows-models\isnet-general-use.onnx models\isnet-general-use.onnx -Force
+          $hash = (Get-FileHash models\isnet-general-use.onnx -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "isnet-general-use.onnx $hash $((Get-Item models\isnet-general-use.onnx).Length) bytes"
+          if ($hash -ne "d419b6ff60c9bd10fbc6f98da9faeb7d1d73361f97a35dfe6d278a9db66ba987") { throw "the background model's checksum doesn't match" }
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Download ffmpeg (Intel/AMD and ARM)
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force ffmpeg-dl | Out-Null
+          foreach ($arch in "win64", "winarm64") {
+            $urls = @(
+              "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n7.1-latest-$arch-gpl-7.1.zip",
+              "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-$arch-gpl.zip"
+            )
+            $zip = "ffmpeg-dl\$arch.zip"
+            $ok = $false
+            foreach ($url in $urls) {
+              try { Invoke-WebRequest -Uri $url -OutFile $zip -MaximumRetryCount 3 -RetryIntervalSec 5; $ok = $true; Write-Host "Downloaded $url"; break } catch { Write-Host "Not available: $url" }
+            }
+            if (-not $ok) { throw "No ffmpeg build found for $arch" }
+            Expand-Archive $zip -DestinationPath "ffmpeg-dl\$arch" -Force
+            $exe = Get-ChildItem "ffmpeg-dl\$arch" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+            Copy-Item $exe.FullName "ffmpeg-dl\ffmpeg-$arch.exe"
+            $license = Get-ChildItem "ffmpeg-dl\$arch" -Recurse -Filter LICENSE.txt | Select-Object -First 1
+            if ($license) { Copy-Item $license.FullName "ffmpeg-dl\LICENSE-$arch.txt" }
+          }
+          & .\ffmpeg-dl\ffmpeg-win64.exe -hide_banner -version | Select-Object -First 1
+          $encoders = & .\ffmpeg-dl\ffmpeg-win64.exe -hide_banner -encoders 2>$null
+          foreach ($enc in "libx264", "libvpx-vp9", "libopus", "libvorbis", "libmp3lame", "libwebp", "aac", "flac", "wmv2", "wmav2", "mpeg4", "gif", "pcm_s16le") {
+            if ($encoders -match " $enc ") { Write-Host "ok      $enc" } else { Write-Host "::warning::bundled ffmpeg has no $enc encoder" }
+          }
+
+      - name: Build
+        run: dotnet build src/Transmute/Transmute.csproj -c Release
+
+      - name: Publish (x64 and ARM64)
+        run: |
+          $ErrorActionPreference = "Stop"
+          foreach ($pair in @(@("x64", "win64"), @("arm64", "winarm64"))) {
+            $arch = $pair[0]; $ff = $pair[1]
+            $out = "out\publish\$arch"
+            dotnet publish src/Transmute/Transmute.csproj -c Release -r "win-$arch" --self-contained true -p:Version=$env:VERSION -o $out
+            if ($LASTEXITCODE -ne 0) { throw "publish $arch failed" }
+            if (-not (Test-Path "$out\models\isnet-general-use.onnx")) { throw "the background model is missing from the $arch build" }
+            New-Item -ItemType Directory -Force "$out\ffmpeg" | Out-Null
+            Copy-Item "ffmpeg-dl\ffmpeg-$ff.exe" "$out\ffmpeg\ffmpeg.exe"
+            if (Test-Path "ffmpeg-dl\LICENSE-$ff.txt") { Copy-Item "ffmpeg-dl\LICENSE-$ff.txt" "$out\ffmpeg\LICENSE.txt" }
+            dotnet publish src/Transmute.SelfTest/Transmute.SelfTest.csproj -c Release -r "win-$arch" --self-contained true -o "out\selftest\$arch"
+            if ($LASTEXITCODE -ne 0) { throw "publish self-test $arch failed" }
+            $size = (Get-ChildItem $out -Recurse | Measure-Object Length -Sum).Sum / 1MB
+            Write-Host ("{0}: {1:N0} MB" -f $arch, $size)
+          }
+
+      - name: Self-test every conversion (x64)
+        id: selftest
+        run: |
+          $env:TRANSMUTE_FFMPEG = "$PWD\out\publish\x64\ffmpeg\ffmpeg.exe"
+          New-Item -ItemType Directory -Force out\logs | Out-Null
+          & .\out\selftest\x64\Transmute.SelfTest.exe --make-fixtures out\fixtures 2>&1 | Tee-Object out\logs\fixtures.log
+          Copy-Item -Recurse out\fixtures out\selftest-run
+          & .\out\selftest\x64\Transmute.SelfTest.exe out\selftest-run 2>&1 | Tee-Object out\logs\selftest-x64.log
+          $code = $LASTEXITCODE
+          Get-Content out\logs\selftest-x64.log | Where-Object { $_ -match "^FAIL" } | ForEach-Object { Write-Host "::error title=Self-test (x64)::$_" }
+          $summary = Get-Content out\logs\selftest-x64.log | Select-Object -Last 1
+          Write-Host "::notice title=Self-test (x64)::$summary"
+          exit $code
+
+      - name: Smoke test the app (x64)
+        if: always() && steps.selftest.outcome != 'skipped'
+        run: |
+          $p = Start-Process -FilePath ".\out\publish\x64\Spinform.exe" -ArgumentList "--smoke-test", "`"$PWD\out\fixtures`"", "`"$PWD\out\smoke-x64`"" -PassThru
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "::error title=Smoke test (x64)::the app didn't finish within 5 minutes" }
+          $log = Get-Content out\smoke-x64\smoke-test.log -ErrorAction SilentlyContinue
+          $log | ForEach-Object { Write-Host $_ }
+          $log | Where-Object { $_ -match "^(FAIL|WARN|NOTE)" } | ForEach-Object { Write-Host "::warning title=Smoke test (x64)::$_" }
+          if (-not ($log -match "SMOKE TEST PASSED")) { Write-Host "::error title=Smoke test (x64)::$($log | Select-Object -Last 1)"; exit 1 }
+          Write-Host "::notice title=Smoke test (x64)::passed"
+
+      - name: Install Inno Setup if missing
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+
+      - name: Build installers
+        run: |
+          $ErrorActionPreference = "Stop"
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          foreach ($arch in "universal", "x64", "arm64") {
+            $name = if ($arch -eq "universal") { "Spinform-Setup" } else { "Spinform-Setup-$arch" }
+            & $iscc /Q "/DArch=$arch" "/DVersion=$env:VERSION" "/DSourceRoot=$PWD\out\publish" "/DOutputName=$name" installer\Spinform.iss
+            if ($LASTEXITCODE -ne 0) { throw "installer $arch failed" }
+          }
+          Get-ChildItem out\installers | ForEach-Object { Write-Host ("{0}  {1:N1} MB" -f $_.Name, ($_.Length / 1MB)); Write-Host ("::notice title=Installer::{0} {1:N1} MB" -f $_.Name, ($_.Length / 1MB)) }
+
+      - name: Update the last beta with the installer, launch, uninstall (x64)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Spinform used to be called Transmute. Install whatever the current beta is (Transmute or Spinform),
+          # then this build over it, and check the update moved everything to the new name.
+          $failed = $false
+          $report = New-Object System.Collections.Generic.List[string]
+          function Check($ok, $what) { if ($ok) { $report.Add("PASS $what") } else { $report.Add("FAIL $what"); Write-Host "::error title=Update (x64)::$what"; $script:failed = $true } }
+          New-Item -ItemType Directory -Force out\previous, out\logs | Out-Null
+          $old = $null
+          foreach ($name in "Transmute-Setup-x64.exe", "Spinform-Setup-x64.exe") {
+            gh release download windows-beta -R "${{ github.repository }}" -p $name -D out\previous --clobber 2>$null
+            if (Test-Path "out\previous\$name") { $old = $name; break }
+          }
+          $fromTransmute = $old -like "Transmute*"
+          $programs = "$env:LOCALAPPDATA\Programs"
+          $menu = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs"
+          $sendto = "$env:APPDATA\Microsoft\Windows\SendTo"
+          $run = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+          if ($old) {
+            $report.Add("Updating $old")
+            Start-Process -FilePath "out\previous\$old" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/TASKS=contextmenu", "/LOG=`"$PWD\out\logs\install-previous-x64.log`"" -Wait
+            if ($fromTransmute) {
+              Check (Test-Path "$programs\Transmute\Transmute.exe") "the old Transmute beta installed"
+              # A tester's settings and "start when I sign in" from Transmute's Settings window.
+              New-Item -ItemType Directory -Force "$env:APPDATA\Transmute" | Out-Null
+              '{ "ImageQuality": 0.42, "WheelLayouts": { "convert.image": [ "convert:png", "convert:jpg" ] } }' | Set-Content "$env:APPDATA\Transmute\settings.json"
+              New-ItemProperty -Path $run -Name "Transmute" -Value "`"$programs\Transmute\Transmute.exe`" --background" -Force | Out-Null
+            }
+          } else { $report.Add("No earlier beta to update; installing fresh") }
+          $setupArgs = @("/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\out\logs\install-x64.log`"")
+          if (-not $old) { $setupArgs += "/TASKS=contextmenu" }
+          Start-Process -FilePath ".\out\installers\Spinform-Setup.exe" -ArgumentList $setupArgs -Wait
+          $dir = "$programs\Spinform"
+          $exe = "$dir\Spinform.exe"
+          Check (Test-Path $exe) "Spinform.exe installed in $dir"
+          Check (Test-Path "$dir\ffmpeg\ffmpeg.exe") "ffmpeg installed"
+          Check (Test-Path "$dir\models\isnet-general-use.onnx") "background model installed"
+          Check (Test-Path "$dir\THIRD-PARTY-NOTICES.txt") "third-party notices installed"
+          Check (Test-Path "$menu\Spinform.lnk") "Start menu shortcut Spinform"
+          Check (Test-Path "$sendto\Spinform.lnk") "Send to › Spinform"
+          Check (Test-Path -LiteralPath 'HKCU:\Software\Classes\*\shell\Spinform\command') "right-click Convert with Spinform"
+          $entries = @(Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall, HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall -ErrorAction SilentlyContinue | Get-ItemProperty | Where-Object { $_.DisplayName -match "Transmute|Spinform" })
+          Check ($entries.Count -eq 1 -and $entries[0].DisplayName -eq "Spinform") ("one entry in Installed apps, named Spinform (found: " + (($entries | ForEach-Object { $_.DisplayName }) -join ", ") + ")")
+          if ($fromTransmute) {
+            Check (-not (Test-Path "$programs\Transmute")) "the old Transmute folder is gone"
+            Check (-not (Test-Path "$menu\Transmute.lnk")) "the old Start menu shortcut is gone"
+            Check (-not (Test-Path "$sendto\Transmute.lnk")) "the old Send to shortcut is gone"
+            Check (-not (Test-Path -LiteralPath 'HKCU:\Software\Classes\*\shell\Transmute')) "the old right-click entry is gone"
+            $values = Get-ItemProperty -Path $run
+            Check ($null -eq $values.Transmute -and $values.Spinform -like "*Spinform\Spinform.exe*") "start when I sign in moved to Spinform ($($values.Spinform))"
+          }
+          $app = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 8
+          Check (-not $app.HasExited) "Spinform keeps running after launch"
+          if (-not $app.HasExited) { Stop-Process -Id $app.Id -Force }
+          if ($fromTransmute) {
+            $settings = Get-Content "$env:APPDATA\Spinform\settings.json" -Raw -ErrorAction SilentlyContinue
+            Check ($settings -match "0\.42" -and $settings -match "convert\.image") "settings and wheel layouts carried over from Transmute"
+          }
+          Start-Sleep -Seconds 2
+          # The uninstaller hands over to a copy of itself and returns at once, so wait for the files to go.
+          Start-Process -FilePath "$dir\unins000.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+          for ($i = 0; $i -lt 60 -and (Test-Path $exe); $i++) { Start-Sleep -Seconds 1 }
+          Start-Sleep -Seconds 2
+          Check (-not (Test-Path $exe)) "uninstalling removes Spinform"
+          Check (-not (Test-Path "$menu\Spinform.lnk")) "uninstalling removes the Start menu shortcut"
+          Check ($null -eq (Get-ItemProperty -Path $run).Spinform) "uninstalling removes start when I sign in"
+          $report | ForEach-Object { Write-Host $_ }
+          $report | Set-Content out\logs\update-x64.log
+          if ($failed) { exit 1 }
+          Write-Host "::notice title=Update (x64)::$($report[0]); all checks passed"
+          exit 0
+
+      - name: Keep pictures and logs on the windows-ci branch
+        if: always()
+        run: |
+          $dest = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force "$dest\x64" | Out-Null
+          Copy-Item out\smoke-x64\*.png, out\smoke-x64\*.log "$dest\x64" -ErrorAction SilentlyContinue
+          Copy-Item out\logs\* "$dest\x64" -ErrorAction SilentlyContinue
+          Set-Location $dest
+          git init -q -b windows-ci
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Windows build ${{ github.run_number }} (x64)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" windows-ci:windows-ci-x64
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installers
+          path: windows/out/installers/*.exe
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arm64-test-kit
+          path: |
+            windows/out/selftest/arm64
+            windows/out/fixtures
+          if-no-files-found: ignore
+
+  test-arm:
+    name: Test on Windows on ARM
+    needs: build
+    runs-on: windows-11-arm
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installers
+          path: installers
+      - uses: actions/download-artifact@v4
+        with:
+          name: arm64-test-kit
+          path: kit
+
+      - name: Install (the universal installer should pick ARM64)
+        run: |
+          New-Item -ItemType Directory -Force logs | Out-Null
+          Start-Process -FilePath ".\installers\Spinform-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/LOG=`"$PWD\logs\install-arm64.log`"" -Wait
+          $exe = "$env:LOCALAPPDATA\Programs\Spinform\Spinform.exe"
+          if (-not (Test-Path $exe)) { Write-Host "::error title=Install (ARM64)::Spinform.exe not found after installing"; exit 1 }
+          [byte[]]$bytes = [System.IO.File]::ReadAllBytes($exe)
+          $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+          $type = [BitConverter]::ToUInt16($bytes, $pe + 4)
+          Write-Host ("Installed Spinform.exe machine type: 0x{0:X4} (0xAA64 is ARM64)" -f $type)
+          if ($type -ne 0xAA64) { Write-Host ("::error title=Install (ARM64)::installed the wrong build (machine 0x{0:X4})" -f $type); exit 1 }
+
+      - name: Self-test every conversion (ARM64)
+        id: selftest
+        run: |
+          $env:TRANSMUTE_FFMPEG = "$env:LOCALAPPDATA\Programs\Spinform\ffmpeg\ffmpeg.exe"
+          Copy-Item -Recurse kit\fixtures run
+          & .\kit\selftest\arm64\Transmute.SelfTest.exe run 2>&1 | Tee-Object logs\selftest-arm64.log
+          $code = $LASTEXITCODE
+          Get-Content logs\selftest-arm64.log | Where-Object { $_ -match "^FAIL" } | ForEach-Object { Write-Host "::error title=Self-test (ARM64)::$_" }
+          $summary = Get-Content logs\selftest-arm64.log | Select-Object -Last 1
+          Write-Host "::notice title=Self-test (ARM64)::$summary"
+          exit $code
+
+      - name: Smoke test the installed app (ARM64)
+        if: always() && steps.selftest.outcome != 'skipped'
+        run: |
+          $exe = "$env:LOCALAPPDATA\Programs\Spinform\Spinform.exe"
+          $p = Start-Process -FilePath $exe -ArgumentList "--smoke-test", "`"$PWD\kit\fixtures`"", "`"$PWD\smoke-arm64`"" -PassThru
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "::error title=Smoke test (ARM64)::the app didn't finish within 5 minutes" }
+          $log = Get-Content smoke-arm64\smoke-test.log -ErrorAction SilentlyContinue
+          $log | ForEach-Object { Write-Host $_ }
+          $log | Where-Object { $_ -match "^(FAIL|WARN|NOTE)" } | ForEach-Object { Write-Host "::warning title=Smoke test (ARM64)::$_" }
+          if (-not ($log -match "SMOKE TEST PASSED")) { Write-Host "::error title=Smoke test (ARM64)::$($log | Select-Object -Last 1)"; exit 1 }
+          Write-Host "::notice title=Smoke test (ARM64)::passed"
+
+      - name: Keep pictures and logs on the windows-ci branch
+        if: always()
+        run: |
+          $dest = "$env:RUNNER_TEMP\ci"
+          New-Item -ItemType Directory -Force "$dest\arm64" | Out-Null
+          Copy-Item smoke-arm64\*.png, smoke-arm64\*.log, logs\* "$dest\arm64" -ErrorAction SilentlyContinue
+          Set-Location $dest
+          git init -q -b windows-ci
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Windows build ${{ github.run_number }} (ARM64)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" windows-ci:windows-ci-arm64
+
+  release:
+    name: Publish the download
+    needs: [build, test-arm]
+    if: github.ref == 'refs/heads/windows'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: installers
+          path: installers
+      - name: Update the Windows beta release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cat > notes.md <<'EOF'
+          **Spinform for Windows (beta)** for Windows 10 and Windows 11, on Intel/AMD and ARM PCs. Spinform is the new name for Transmute.
+
+          New: **screenshots and screen recordings**, all on your PC. Capture an area, a window, the full screen or a whole scrolling page; mark it up (arrows, text, steps, highlighter, blur, crop); frame it on a background; pin it on top; copy the text in it; and find it again in History. Record the screen as MP4 or GIF with your microphone, the PC's sound, clicks, keystrokes and camera, then polish it in Video Studio with zooms on clicks, a smoother pointer and landscape, square or vertical shapes. Open the Capture tab, or press Ctrl+Shift+4 (all shortcuts are in Settings). Also: remove or change the background of any picture, offline.
+
+          **Download [Spinform-Setup.exe](https://github.com/${{ github.repository }}/releases/download/windows-beta/Spinform-Setup.exe)**, open it and follow the steps. It picks the right version for your PC.
+
+          Already have Transmute? Spinform replaces it: your settings and wheel layouts come along, and Transmute's shortcuts and folder are tidied away. If you pinned Transmute to the taskbar, pin Spinform instead.
+
+          Windows may say "Windows protected your PC" because this beta isn't signed yet: click **More info**, then **Run anyway**.
+
+          The smaller `-x64` and `-arm64` installers are the same app for one kind of PC each.
+          EOF
+          # Same tag and file names every time, so the download link never changes.
+          gh release delete windows-beta --cleanup-tag --yes >/dev/null 2>&1 || true
+          gh release create windows-beta --title "Spinform for Windows (beta)" --notes-file notes.md --prerelease --target "${{ github.sha }}"
+          gh release upload windows-beta installers/*.exe --clobber
+          echo "::notice title=Download::https://github.com/${GH_REPO}/releases/download/windows-beta/Spinform-Setup.exe"

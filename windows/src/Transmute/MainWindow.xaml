@@ -1,0 +1,340 @@
+<Window x:Class="Transmute.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Transmute.App"
+        Title="Spinform" Width="820" Height="660" MinWidth="700" MinHeight="540"
+        Style="{StaticResource BaseWindow}" AllowDrop="True" WindowStartupLocation="CenterScreen"
+        Icon="pack://application:,,,/Assets/app.ico">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="Visible" />
+        <DataTemplate x:Key="JobRow" DataType="{x:Type local:Job}">
+            <Border x:Name="Card" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="1"
+                    CornerRadius="8" Padding="10,8" Margin="0,0,0,6" SnapsToDevicePixels="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="7" Background="{Binding KindBrush}" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding KindBadge}" Foreground="White" FontWeight="Bold" FontSize="10"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" FontSize="13" FontWeight="SemiBold" ToolTip="{Binding Path}" />
+                        <TextBlock Text="{Binding Details}" Style="{StaticResource Caption}" Margin="0,1,0,0" />
+                        <TextBox Text="{Binding Message, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent"
+                                 TextWrapping="Wrap" FontSize="12" Padding="0" MinHeight="0" MaxHeight="54" Margin="0,2,0,0">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                    <Setter Property="Foreground" Value="{DynamicResource Success}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Message}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Failed">
+                                            <Setter Property="Foreground" Value="{DynamicResource Danger}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                        <ProgressBar Width="110" Maximum="1" Value="{Binding Fraction, Mode=OneWay}" Margin="0,0,10,0"
+                                     Visibility="{Binding IsRunning, Converter={StaticResource Visible}}" />
+                        <Button Style="{StaticResource Flat}" Click="OnShow" Foreground="{DynamicResource Accent}"
+                                Visibility="{Binding HasOutputs, Converter={StaticResource Visible}}">
+                            <local:Icon Glyph="folder" Size="15" Text="Show in folder" />
+                        </Button>
+                        <!-- Status: "Ready", or a check or warning mark that pops in. -->
+                        <Grid VerticalAlignment="Center" Margin="4,0,8,0" RenderTransformOrigin="0.5,0.5">
+                            <Grid.RenderTransform><ScaleTransform /></Grid.RenderTransform>
+                            <TextBlock x:Name="ReadyText" Text="Ready" FontSize="12" Foreground="{DynamicResource Tertiary}" Visibility="Collapsed" VerticalAlignment="Center" />
+                            <local:Icon x:Name="DoneMark" Glyph="check" Size="18" Foreground="{DynamicResource Success}" Visibility="Collapsed" />
+                            <local:Icon x:Name="FailedMark" Glyph="warning" Size="18" Foreground="{DynamicResource Warning}" Visibility="Collapsed" />
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Status}" Value="Done">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" From="0.3" To="1" Duration="0:0:0.35">
+                                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.5" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" From="0.3" To="1" Duration="0:0:0.35">
+                                                            <DoubleAnimation.EasingFunction><BackEase Amplitude="0.5" EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                        </Grid>
+                        <Button Click="OnEdit" Margin="0,0,4,0" Padding="10,4" ToolTip="Open in the editor; the result is saved as a copy"
+                                Visibility="{Binding CanEdit, Converter={StaticResource Visible}}">
+                            <local:Icon Glyph="edit" Size="14" Text="Edit" />
+                        </Button>
+                        <Button Style="{StaticResource Flat}" Click="OnInfo" ToolTip="View and edit metadata" Foreground="{DynamicResource Secondary}"
+                                Visibility="{Binding HasInfo, Converter={StaticResource Visible}}">
+                            <local:Icon Glyph="info" Size="16" />
+                        </Button>
+                        <Button Style="{StaticResource Flat}" Foreground="{DynamicResource Secondary}" Click="OnRemove" ToolTip="Remove from list">
+                            <local:Icon Glyph="close" Size="14" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="Queued">
+                    <Setter TargetName="ReadyText" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Done">
+                    <Setter TargetName="DoneMark" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="Failed">
+                    <Setter TargetName="FailedMark" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource LineStrong}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource RowHover}" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Rows fade in as they're added; no default blue selection box. -->
+        <Style x:Key="RowContainer" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <TranslateTransform />
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.25" />
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" Duration="0:0:0.25">
+                                <DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ToolButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Margin" Value="0,0,6,6" />
+            <Setter Property="Padding" Value="10,5" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Header: the mark, the name and what's going on; buttons on the right. A hairline under it. -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,0,1">
+            <Grid>
+                <DockPanel Margin="16,13,14,11">
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                        <Button Click="OnAddFiles" Margin="0,0,6,0" ToolTip="Add files (or drop them anywhere in this window)">
+                            <local:Icon Glyph="add" Size="14" Text="Add Files" />
+                        </Button>
+                        <Button Click="OnAddFolder" Margin="0,0,6,0">
+                            <local:Icon Glyph="folder" Size="15" Text="Add Folder" />
+                        </Button>
+                        <Button x:Name="ClearButton" Content="Clear" Click="OnClear" Margin="0,0,10,0" />
+                        <Rectangle Width="1" Fill="{DynamicResource Line}" Margin="0,4,10,4" />
+                        <Button Style="{StaticResource Flat}" Click="OnFeedback" ToolTip="Send feedback" Foreground="{DynamicResource Secondary}" Margin="0,0,2,0">
+                            <local:Icon Glyph="feedback" Size="17" />
+                        </Button>
+                        <Button Style="{StaticResource Flat}" Click="OnSettings" ToolTip="Settings" Foreground="{DynamicResource Secondary}">
+                            <local:Icon Glyph="settings" Size="17" />
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- The Spinform mark (the icon's symbol without its tile), spinning into place when the window opens. -->
+                        <Image x:Name="HeaderMark" Source="pack://application:,,,/Assets/mark.png" Width="32" Height="32" Margin="0,0,10,0"
+                               RenderOptions.BitmapScalingMode="HighQuality" RenderTransformOrigin="0.5,0.5">
+                            <Image.RenderTransform><RotateTransform /></Image.RenderTransform>
+                        </Image>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Spinform" Style="{StaticResource Title}" Foreground="{DynamicResource Ink}" Margin="0,-2,0,0" />
+                            <TextBlock x:Name="Summary" Text="Drop. Pick a format. Done." Style="{StaticResource Caption}" />
+                        </StackPanel>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Border>
+
+        <!-- Controls -->
+        <Border DockPanel.Dock="Bottom" Background="{DynamicResource Card}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="16,12,16,14">
+            <StackPanel>
+                <Border Style="{StaticResource SegmentTrack}" Margin="0,0,0,12">
+                    <Grid>
+                        <Border x:Name="SegmentHighlight" Background="{DynamicResource SelectedPill}" BorderBrush="{DynamicResource LineStrong}" BorderThickness="1" CornerRadius="4" HorizontalAlignment="Left" Margin="2">
+                            <Border.RenderTransform><TranslateTransform x:Name="SegmentShift" /></Border.RenderTransform>
+                        </Border>
+                        <StackPanel x:Name="Segments" Orientation="Horizontal">
+                            <RadioButton x:Name="ConvertTab" Style="{StaticResource Segment}" IsChecked="True" Checked="OnMode">
+                                <local:Icon Glyph="convert" Size="15" Text="Convert" />
+                            </RadioButton>
+                            <RadioButton x:Name="CompressTab" Style="{StaticResource Segment}" Checked="OnMode">
+                                <local:Icon Glyph="compress" Size="15" Text="Compress" />
+                            </RadioButton>
+                            <RadioButton x:Name="ToolsTab" Style="{StaticResource Segment}" Checked="OnMode">
+                                <local:Icon Glyph="tools" Size="15" Text="Tools" />
+                            </RadioButton>
+                            <RadioButton x:Name="CaptureTab" Style="{StaticResource Segment}" Checked="OnMode">
+                                <local:Icon Glyph="capture" Size="15" Text="Capture" />
+                            </RadioButton>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid x:Name="Panels">
+                    <Grid.RenderTransform><TranslateTransform /></Grid.RenderTransform>
+                    <!-- Convert -->
+                    <StackPanel x:Name="ConvertPanel">
+                        <TextBlock x:Name="NoFormats" Text="Add some files to choose output formats." Foreground="{DynamicResource Secondary}" Margin="0,0,0,6" />
+                        <StackPanel x:Name="FormatPickers" />
+                        <DockPanel Margin="0,6,0,0" LastChildFill="False">
+                            <StackPanel x:Name="QualityRow" Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
+                                <TextBlock Text="Quality" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                <Slider x:Name="QualitySlider" Width="140" Minimum="0.1" Maximum="1" VerticalAlignment="Center" ValueChanged="OnQuality" />
+                                <TextBlock x:Name="QualityLabel" Width="44" VerticalAlignment="Center" Margin="8,0,12,0" Foreground="{DynamicResource Secondary}" />
+                            </StackPanel>
+                            <CheckBox x:Name="StripBox" Content="Remove metadata" VerticalAlignment="Center" DockPanel.Dock="Left" Click="OnStripToggle" />
+                            <Button DockPanel.Dock="Right" x:Name="ConvertButton" Style="{StaticResource Primary}" Content="Convert" MinWidth="104" Click="OnConvert" IsDefault="True" />
+                            <Button DockPanel.Dock="Right" x:Name="CancelConvert" Content="Cancel" Margin="0,0,8,0" Click="OnCancel" />
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- Compress -->
+                    <StackPanel x:Name="CompressPanel" Visibility="Collapsed">
+                        <DockPanel LastChildFill="False">
+                            <RadioButton x:Name="ByPercent" Content="Percentage" IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" Checked="OnCompressBy" DockPanel.Dock="Left" />
+                            <RadioButton x:Name="BySize" Content="Target size" VerticalAlignment="Center" Margin="0,0,18,0" Checked="OnCompressBy" DockPanel.Dock="Left" />
+                            <StackPanel x:Name="PercentRow" Orientation="Horizontal" DockPanel.Dock="Left">
+                                <Slider x:Name="PercentSlider" Width="160" Minimum="10" Maximum="90" Value="50" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnPercent" />
+                                <TextBlock x:Name="PercentLabel" Text="to 50% of original" VerticalAlignment="Center" Margin="10,0,0,0" Foreground="{DynamicResource Secondary}" />
+                            </StackPanel>
+                            <StackPanel x:Name="SizeRow" Orientation="Horizontal" Visibility="Collapsed" DockPanel.Dock="Left">
+                                <TextBox x:Name="TargetMB" Text="5" Width="64" />
+                                <TextBlock Text="MB per file" VerticalAlignment="Center" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <Button DockPanel.Dock="Right" x:Name="CompressButton" Style="{StaticResource Primary}" Content="Compress" MinWidth="104" Click="OnCompress" />
+                            <Button DockPanel.Dock="Right" x:Name="CancelCompress" Content="Cancel" Margin="0,0,8,0" Click="OnCancel" />
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Caption}" Margin="0,8,0,0"
+                                   Text="Works on images, video, audio and PDFs; other files are skipped. Originals are never changed." />
+                    </StackPanel>
+
+                    <!-- Tools -->
+                    <StackPanel x:Name="ToolsPanel" Visibility="Collapsed">
+                        <TextBlock Text="PICTURES" Style="{StaticResource Overline}" />
+                        <WrapPanel>
+                            <Button x:Name="RemoveBackgroundButton" Style="{StaticResource ToolButton}" Click="OnRemoveBackground"
+                                    ToolTip="Cuts out the subject of every picture and saves a PNG with a see-through background. Works offline.">
+                                <local:Icon Glyph="cutout" Size="15" Text="Remove Background" />
+                            </Button>
+                            <Button x:Name="ChangeBackgroundButton" Style="{StaticResource ToolButton}" Click="OnChangeBackground"
+                                    ToolTip="Put a colour, a gradient, a blur or another picture behind the subject of every picture">
+                                <local:Icon Glyph="layers" Size="15" Text="Change Background…" />
+                            </Button>
+                            <Button x:Name="ImagesPdfButton" Style="{StaticResource ToolButton}" Click="OnImagesToPdf">
+                                <local:Icon Glyph="document" Size="15" Text="Images → PDF" />
+                            </Button>
+                            <Button x:Name="QrButton" Style="{StaticResource ToolButton}" Click="OnQr">
+                                <local:Icon Glyph="qr" Size="15" Text="Read QR Codes" />
+                            </Button>
+                        </WrapPanel>
+                        <TextBlock Text="FILES" Style="{StaticResource Overline}" Margin="0,4,0,6" />
+                        <WrapPanel>
+                            <Button x:Name="MergeButton" Style="{StaticResource ToolButton}" Click="OnMerge">
+                                <local:Icon Glyph="merge" Size="15" Text="Merge PDFs" />
+                            </Button>
+                            <Button x:Name="SplitButton" Style="{StaticResource ToolButton}" Click="OnSplit">
+                                <local:Icon Glyph="split" Size="15" Text="Split PDF Pages" />
+                            </Button>
+                            <Button x:Name="JoinButton" Style="{StaticResource ToolButton}" Click="OnJoin" ToolTip="Joins the videos in list order into one MP4">
+                                <local:Icon Glyph="video" Size="15" Text="Join Videos" />
+                            </Button>
+                            <Button x:Name="ZipButton" Style="{StaticResource ToolButton}" Click="OnZip">
+                                <local:Icon Glyph="zip" Size="15" Text="Zip All" />
+                            </Button>
+                            <Button x:Name="CleanButton" Style="{StaticResource ToolButton}" Click="OnClean">
+                                <local:Icon Glyph="eraser" Size="15" Text="Remove Metadata" />
+                            </Button>
+                            <Button x:Name="FloatButton" Style="{StaticResource ToolButton}" Click="OnFloat" ToolTip="Keeps the files on a small always-on-top shelf you can drag them out of">
+                                <local:Icon Glyph="pin" Size="15" Text="Float Files" />
+                            </Button>
+                            <Button x:Name="CancelTools" Style="{StaticResource ToolButton}" Content="Cancel" Click="OnCancel" />
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <!-- Capture: screenshots, recordings and text from the screen. Filled in code. -->
+                    <StackPanel x:Name="CapturePanel" Visibility="Collapsed" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Files -->
+        <Grid Margin="16,14,16,12">
+            <Border x:Name="EmptyState" Style="{StaticResource GlassCard}">
+                <Grid>
+                    <Rectangle x:Name="DashedBorder" Margin="10" RadiusX="8" RadiusY="8" StrokeThickness="1.5" StrokeDashArray="4 3" Stroke="{DynamicResource DashLine}" IsHitTestVisible="False" />
+                    <Viewbox StretchDirection="DownOnly" Margin="24,18">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <Grid Width="230" Height="168" HorizontalAlignment="Center">
+                            <Canvas x:Name="Orbit" Width="230" Height="168" />
+                            <Ellipse x:Name="RingA" Width="80" Height="80" Stroke="{DynamicResource LineStrong}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform><ScaleTransform /></Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Ellipse x:Name="RingB" Width="80" Height="80" Stroke="{DynamicResource Line}" StrokeThickness="1.5" RenderTransformOrigin="0.5,0.5">
+                                <Ellipse.RenderTransform><ScaleTransform /></Ellipse.RenderTransform>
+                            </Ellipse>
+                            <Grid x:Name="Core" Width="80" Height="80" RenderTransformOrigin="0.5,0.5">
+                                <Grid.RenderTransform><ScaleTransform /></Grid.RenderTransform>
+                                <Ellipse Fill="{DynamicResource Subtle}" Stroke="{DynamicResource Line}" StrokeThickness="1" />
+                                <local:Icon x:Name="CoreGlyph" Glyph="convert" Size="34" Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            RenderTransformOrigin="0.5,0.5">
+                                    <local:Icon.RenderTransform><RotateTransform /></local:Icon.RenderTransform>
+                                </local:Icon>
+                            </Grid>
+                        </Grid>
+                        <TextBlock x:Name="DropTitle" Text="Drop anything here" FontFamily="Segoe UI Variable Display, Segoe UI" FontSize="24" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,4,0,0" />
+                        <TextBlock Text="Images, video, audio, PDFs, documents, e-books, spreadsheets, presentations, subtitles and archives"
+                                   Foreground="{DynamicResource Secondary}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420" Margin="0,6,0,14" />
+                        <Button Style="{StaticResource Primary}" HorizontalAlignment="Center" Padding="18,7" Click="OnAddFiles">
+                            <local:Icon Glyph="add" Size="14" Text="Choose Files" />
+                        </Button>
+                        <Border Background="{DynamicResource Subtle}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,14,0,0" HorizontalAlignment="Center">
+                            <TextBlock x:Name="WheelTip" Style="{StaticResource Caption}" TextAlignment="Center" MaxWidth="460" />
+                        </Border>
+                    </StackPanel>
+                    </Viewbox>
+                </Grid>
+            </Border>
+            <ListBox x:Name="FileList" ItemTemplate="{StaticResource JobRow}" ItemContainerStyle="{StaticResource RowContainer}" Visibility="Collapsed"
+                     BorderThickness="0" Background="Transparent" HorizontalContentAlignment="Stretch"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionMode="Extended" KeyDown="OnListKey" />
+            <Border x:Name="DropHighlight" BorderBrush="{DynamicResource Accent}" BorderThickness="2" CornerRadius="8" Background="{DynamicResource DropTint}"
+                    Visibility="Collapsed" IsHitTestVisible="False" />
+        </Grid>
+    </DockPanel>
+</Window>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Headless check of every conversion, run by the build server on each Windows build:
+         Transmute.SelfTest (make-fixtures flag) <folder> makes one sample file of each kind
+         Transmute.SelfTest <folder>                   converts them all and prints PASS/FAIL -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- Windows 10 SDK target so it can drive the capture library (screen grabs, OCR, recording);
+         it still builds and runs its other checks on Linux. -->
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Transmute.SelfTest</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Transmute.Core\Transmute.Core.csproj" />
+    <ProjectReference Include="..\Transmute.Desktop\Transmute.Desktop.csproj" />
+  </ItemGroup>
+</Project>
