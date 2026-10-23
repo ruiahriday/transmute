@@ -890,14 +890,27 @@ struct WindowDragArea: NSViewRepresentable {
 enum Toast {
     private static var panel: NSPanel?
     private static var generation = 0
+    /// What the last toast's Copy Details button copies (for the self-test).
+    static private(set) var lastDetails: String?
 
-    static func show(_ title: String, detail: String? = nil, symbol: String = "checkmark.circle.fill") {
+    /// With `copyDetails`, the toast stays longer and has a Copy Details button (for reporting an error).
+    static func show(_ title: String, detail: String? = nil, symbol: String = "checkmark.circle.fill", copyDetails: String? = nil) {
         generation += 1
         let current = generation
         let panel = self.panel ?? KeyPanel.floating(.zero, level: .statusBar, clickThrough: true)
         self.panel = panel
-        let size = CGSize(width: 360, height: detail == nil ? 52 : 70)
-        panel.contentView = NSHostingView(rootView: ToastView(title: title, detail: detail, symbol: symbol))
+        panel.ignoresMouseEvents = copyDetails == nil
+        let size = CGSize(width: copyDetails == nil ? 360 : 420, height: copyDetails != nil ? 104 : detail == nil ? 52 : 70)
+        let copy: (() -> Void)? = copyDetails.map { details in
+            {
+                let board = NSPasteboard.general
+                board.clearContents()
+                board.setString(details, forType: .string)
+                Toast.show("Details copied", detail: "Paste them into a message to us.")
+            }
+        }
+        lastDetails = copyDetails
+        panel.contentView = NSHostingView(rootView: ToastView(title: title, detail: detail, symbol: symbol, copy: copy))
         if let screen = ScreenGrabber.screenUnderMouse {
             let visible = screen.visibleFrame
             panel.setFrame(NSRect(x: visible.midX - size.width / 2, y: visible.maxY - size.height - 12,
@@ -905,7 +918,7 @@ enum Toast {
         }
         panel.orderFrontRegardless()
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 2_600_000_000)
+            try? await Task.sleep(nanoseconds: copyDetails == nil ? 2_600_000_000 : 9_000_000_000)
             if generation == current { panel.orderOut(nil) }
         }
     }
@@ -915,6 +928,7 @@ struct ToastView: View {
     let title: String
     let detail: String?
     let symbol: String
+    var copy: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 10) {
@@ -924,10 +938,13 @@ struct ToastView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(Theme.Fonts.bodyStrong).foregroundStyle(Theme.textPrimary).lineLimit(1)
                 if let detail {
-                    Text(detail).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary).lineLimit(2)
+                    Text(detail).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary).lineLimit(copy == nil ? 2 : 3)
                 }
             }
             Spacer(minLength: 0)
+            if let copy {
+                Button("Copy Details", action: copy).controlSize(.small)
+            }
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

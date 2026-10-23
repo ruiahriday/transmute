@@ -596,7 +596,7 @@ struct VideoEditorView: View {
                 TextRecognizer.deliver(result)
                 if !result.isEmpty { CaptureCoordinator.shared.keepText(result.clipboardText) }
             } catch {
-                Toast.show("Couldn't read text", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+                TextRecognizer.showFailure(error)
             }
         }
     }

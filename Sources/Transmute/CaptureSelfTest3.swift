@@ -1,5 +1,8 @@
 import AppKit
 import SwiftUI
+import CoreImage
+import CoreVideo
+import IOSurface
 
 // MARK: - Robustness: nothing may lock the user out
 
@@ -266,6 +269,7 @@ extension SelfTest {
         }
 
         await retinaChecks(dir: dir)
+        await ocrChecks(dir: dir)
     }
 
     /// Every pixel as RGBA bytes, drawn the same way for any image so two can be compared.
@@ -345,6 +349,129 @@ extension SelfTest {
             }
         } else {
             skipped += 1
+        }
+    }
+
+    /// Draws `image` into a new bitmap of the given kind, to feed the text reader odd formats.
+    static func redrawn(_ image: CGImage, bits: Int, space: CFString, scale: Double = 1) -> CGImage? {
+        let w = Int(Double(image.width) * scale), h = Int(Double(image.height) * scale)
+        guard let colorSpace = CGColorSpace(name: space),
+              let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: bits, bytesPerRow: 0, space: colorSpace,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
+    }
+
+    /// A picture that lives in an IOSurface, like a frame from the screen.
+    static func surfaceBacked(_ image: CGImage) -> CGImage? {
+        let w = image.width, h = image.height
+        let props: [IOSurfacePropertyKey: Any] = [.width: w, .height: h, .bytesPerElement: 4, .bytesPerRow: w * 4,
+                                                  .pixelFormat: kCVPixelFormatType_32BGRA]
+        guard let surface = IOSurface(properties: props), let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        let context = CIContext()
+        context.render(CIImage(cgImage: image), to: surface, bounds: CGRect(x: 0, y: 0, width: w, height: h), colorSpace: space)
+        let fromSurface = CIImage(ioSurface: surface)
+        return context.createCGImage(fromSurface, from: fromSurface.extent)
+    }
+
+    static func ocrChecks(dir: URL) async {
+        await check("Copy text: 16-bit, P3, IOSurface, tiny and huge pictures all read") {
+            guard let base = SampleArt.textImage("Spinform reads this text") else { throw ConversionError("art") }
+            let cases: [(String, CGImage?)] = [
+                ("16-bit", redrawn(base, bits: 16, space: CGColorSpace.sRGB)),
+                ("Display P3", redrawn(base, bits: 8, space: CGColorSpace.displayP3)),
+                ("IOSurface", surfaceBacked(base)),
+                ("tiny crop", SampleArt.textImage("Spinform", width: 170, height: 28, size: 18)),
+                ("huge", SampleArt.textImage("Spinform reads this text", width: 9000, height: 1600, size: 420)),
+            ]
+            for (name, image) in cases {
+                guard let image else { throw ConversionError("couldn't make the \(name) picture") }
+                let ready = TextRecognizer.prepared(image)
+                guard ready.bitsPerComponent == 8, ready.colorSpace?.name == CGColorSpace.sRGB,
+                      max(ready.width, ready.height) <= 4096 else {
+                    throw ConversionError("\(name): prepared as \(ready.width)×\(ready.height), \(ready.bitsPerComponent)-bit")
+                }
+                if name == "tiny crop", ready.height < 28 * 2 { throw ConversionError("tiny crop wasn't enlarged") }
+                let text = try TextRecognizer.text(in: image).lowercased()
+                print("      \(name): \(text.debugDescription)")
+                guard text.contains("spinform") else { throw ConversionError("\(name) read \(text.debugDescription)") }
+            }
+            // A QR code drawn 16-bit in P3 still reads.
+            guard let qr = SampleArt.qrImage("https://example.com/p3"),
+                  let odd = redrawn(qr, bits: 16, space: CGColorSpace.displayP3) else { throw ConversionError("qr art") }
+            guard TextRecognizer.qrCodes(in: odd) == ["https://example.com/p3"] else { throw ConversionError("P3 QR not read") }
+            return []
+        }
+
+        await check("Copy text: unknown languages are ignored and every reader in the chain works") {
+            guard let base = SampleArt.textImage("Spinform reads this text") else { throw ConversionError("art") }
+            let odd = TextRecognizer.Options(language: "xx-XX", keepLineBreaks: true)
+            guard try TextRecognizer.text(in: base, options: odd).lowercased().contains("spinform") else {
+                throw ConversionError("an unsupported language broke reading")
+            }
+            let ready = TextRecognizer.prepared(base)
+            let box = ImageEditEngine.PreviewImage(image: ready, originalSize: .zero)
+            // Each fallback on its own, off the main thread as in the app.
+            let report = try await Task.detached(priority: .userInitiated) { () throws -> [String] in
+                var lines: [String] = []
+                for attempt in TextRecognizer.Attempt.allCases {
+                    do {
+                        guard let pieces = try TextRecognizer.read(box.image, attempt: attempt, options: odd) else {
+                            lines.append("\(attempt.rawValue): not on this Mac"); continue
+                        }
+                        let text = TextRecognizer.assemble(pieces).lowercased()
+                        guard text.contains("spinform") else { throw ConversionError("read \(text.debugDescription)") }
+                        lines.append("\(attempt.rawValue): ok")
+                    } catch {
+                        throw ConversionError("\(attempt.rawValue) failed: \(error.localizedDescription)")
+                    }
+                }
+                return lines
+            }.value
+            for line in report { print("      \(line)") }
+            // What the owner would see if all of them failed.
+            let failure = RecognitionFailure(attempts: [
+                .init(name: "Vision accurate", error: NSError(domain: "TextRecognition.CRImageReaderError", code: 3)),
+            ])
+            guard failure.errorDescription?.contains("CRImageReaderError error 3") == true,
+                  failure.details.contains("TextRecognition.CRImageReaderError 3"), failure.details.contains("macOS") else {
+                throw ConversionError("failure text: \(failure.errorDescription ?? "")")
+            }
+            TextRecognizer.showFailure(failure)
+            guard Toast.lastDetails == failure.details else { throw ConversionError("Copy Details not offered") }
+            return []
+        }
+
+        await check("Copy text: the clipboard holds only the text, and the result window opens") {
+            guard let image = SampleArt.textImage("Spinform clipboard check") else { throw ConversionError("art") }
+            let board = NSPasteboard.general
+            board.clearContents()
+            board.writeObjects([NSImage(cgImage: image, size: .zero)])
+            let result = try TextRecognizer.recognize(image)
+            TextRecognizer.deliver(result)
+            let types = board.types ?? []
+            let imageTypes: [NSPasteboard.PasteboardType] = [.tiff, .png, NSPasteboard.PasteboardType("public.jpeg")]
+            guard types.contains(.string), !types.contains(where: imageTypes.contains),
+                  NSImage(pasteboard: board) == nil else {
+                throw ConversionError("clipboard types \(types.map(\.rawValue))")
+            }
+            guard board.string(forType: .string)?.lowercased().contains("spinform") == true else {
+                throw ConversionError("clipboard text \(board.string(forType: .string) ?? "")")
+            }
+            guard let window = TextResultPanel.current, window.panel.isVisible,
+                  window.textView.string.lowercased().contains("spinform"), window.textView.isEditable else {
+                throw ConversionError("no result window")
+            }
+            window.lineBreaks.state = .off
+            window.textView.string = "Edited text"
+            window.copyText()
+            guard board.string(forType: .string) == "Edited text", !(board.types ?? []).contains(.tiff) else {
+                throw ConversionError("window Copy didn't replace the clipboard")
+            }
+            window.close()
+            guard TextResultPanel.current == nil, !window.panel.isVisible else { throw ConversionError("window didn't close") }
+            return []
         }
     }
 }

@@ -234,9 +234,14 @@ final class CaptureCoordinator: ObservableObject {
         }
         guard let image else { return }
         let box = ImageEditEngine.PreviewImage(image: image, originalSize: .zero)
-        let result = try await Task.detached(priority: .userInitiated) { try TextRecognizer.recognize(box.image) }.value
-        TextRecognizer.deliver(result)
-        if !result.isEmpty { keepText(result.clipboardText) }
+        Toast.show("Reading text…", symbol: "text.viewfinder")
+        do {
+            let result = try await Task.detached(priority: .userInitiated) { try TextRecognizer.recognize(box.image) }.value
+            TextRecognizer.deliver(result)
+            if !result.isEmpty { keepText(result.clipboardText) }
+        } catch {
+            TextRecognizer.showFailure(error)
+        }
     }
 
     /// Copy Text from an image or PDF file instead of the screen.
@@ -258,7 +263,7 @@ final class CaptureCoordinator: ObservableObject {
                 TextRecognizer.deliver(result)
                 if !result.isEmpty { keepText(result.clipboardText) }
             } catch {
-                Toast.show("Couldn't read text", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+                TextRecognizer.showFailure(error)
             }
         }
     }
