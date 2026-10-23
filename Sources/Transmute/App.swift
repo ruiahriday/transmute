@@ -218,16 +218,14 @@ struct HUDView: View {
                 } else if allDone, let message = qrMessage(jobs) {
                     Text(message).font(Theme.Fonts.caption).foregroundStyle(Theme.textPrimary).textSelection(.enabled).lineLimit(2)
                 } else {
-                    GlowProgressBar(value: progress, tint: Theme.violet)
+                    GlowProgressBar(value: progress, tint: Theme.accent)
                 }
             }
         }
         .padding(.horizontal, 14)
         .frame(width: 312, height: 72, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.hairline))
+        .floatingPanel()
         .padding(6)
-        .shadow(color: .black.opacity(0.14), radius: 4, y: 2)
         .tint(Theme.accent)
     }
 

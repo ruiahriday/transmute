@@ -453,7 +453,7 @@ struct FrameToolView: View {
     var body: some View {
         HStack(spacing: 0) {
             ZStack {
-                Color.adaptive(light: 0xE6E6EC, dark: 0x0B0B0E)
+                Theme.stage
                 if let image = rendered ?? preview {
                     Image(decorative: image, scale: 1)
                         .resizable()

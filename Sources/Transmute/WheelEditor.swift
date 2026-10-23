@@ -175,7 +175,7 @@ struct WheelEditorView: View {
         return ZStack {
             Circle()
                 .fill(Theme.canvas)
-                .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 1.5))
+                .overlay(Circle().strokeBorder(Theme.accent, lineWidth: 1.5))
                 .frame(width: ring, height: ring)
             Text(wheel.title).font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
             ForEach(Array(slots.enumerated()), id: \.offset) { index, id in

@@ -778,9 +778,8 @@ struct ToastView: View {
         }
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous).strokeBorder(Theme.hairline))
+        .floatingPanel()
         .padding(4)
-        .shadow(color: .black.opacity(0.14), radius: 4, y: 2)
+        .appearIn()
     }
 }

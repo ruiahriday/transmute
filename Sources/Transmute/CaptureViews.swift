@@ -181,8 +181,7 @@ struct CaptureTile: View {
 
     var body: some View {
         ToolTile(title: action.shortTitle, symbol: action.symbol, detail: HotkeyStore.hotkey(for: action)?.display,
-                 tint: recording ? AnyShapeStyle(LinearGradient(colors: [Theme.pink, Theme.rose], startPoint: .topLeading,
-                                                                endPoint: .bottomTrailing)) : nil) {
+                 tint: recording ? AnyShapeStyle(Theme.rose) : nil) {
             CaptureCoordinator.shared.perform(action)
         }
         .help(action.title)
@@ -208,18 +207,17 @@ struct ToolTile: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(tint ?? AnyShapeStyle(Theme.brand))
-                    .frame(width: 34, height: 34)
-                    .overlay(Image(systemName: symbol).font(.system(size: 15, weight: .semibold)).foregroundStyle(.white))
-                    .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(Color.black.opacity(0.08)))
+                Image(systemName: symbol)
+                    .font(.system(size: 19, weight: .regular))
+                    .foregroundStyle(tint ?? AnyShapeStyle(hovering ? Theme.accent : Theme.textPrimary))
+                    .frame(width: 34, height: 30)
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 Text(detail ?? " ")
-                    .font(.system(size: 10.5, weight: .medium, design: .rounded))
+                    .font(.system(size: 10.5, weight: .regular))
                     .foregroundStyle(Theme.textTertiary)
                     .lineLimit(1)
             }
@@ -229,7 +227,8 @@ struct ToolTile: View {
             .background(RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
                 .fill(hovering ? Theme.surfaceHover : Theme.surfaceRaised))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.row, style: .continuous)
-                .strokeBorder(hovering ? Theme.accent.opacity(0.6) : Theme.hairline, lineWidth: 1))
+                .strokeBorder(Theme.hairline, lineWidth: 0.5))
+            .scaleEffect(hovering ? 1.015 : 1)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

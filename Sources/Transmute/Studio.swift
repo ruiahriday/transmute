@@ -653,7 +653,7 @@ struct StudioView: View {
         HStack(spacing: 0) {
             VStack(spacing: 0) {
                 ZStack {
-                    Color.adaptive(light: 0xE6E6EC, dark: 0x0B0B0E)
+                    Theme.stage
                     if let preview {
                         Image(decorative: preview, scale: 1)
                             .resizable()
@@ -708,8 +708,7 @@ struct StudioView: View {
                         let x = duration > 0 ? CGFloat(zoom.start / duration) * width : 0
                         let w = duration > 0 ? CGFloat((zoom.end - zoom.start) / duration) * width : 0
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
-                            .fill(zoom.manual ? AnyShapeStyle(LinearGradient(colors: [Theme.pink, Theme.rose], startPoint: .leading, endPoint: .trailing))
-                                  : AnyShapeStyle(Theme.brand))
+                            .fill(zoom.manual ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.accent.opacity(0.55)))
                             .frame(width: max(4, w), height: 16)
                             .overlay(Image(systemName: "plus.magnifyingglass").font(.system(size: 9, weight: .bold)).foregroundStyle(.white))
                             .offset(x: x)
@@ -797,7 +796,7 @@ struct StudioView: View {
             if !settings.zooms.isEmpty {
                 ForEach(settings.zooms) { zoom in
                     HStack {
-                        Image(systemName: "plus.magnifyingglass").foregroundStyle(Theme.pink)
+                        Image(systemName: "plus.magnifyingglass").foregroundStyle(Theme.accent)
                         Text("\(HistoryCard.time(zoom.start))–\(HistoryCard.time(zoom.end))").monospacedDigit()
                         Spacer()
                         Button { settings.zooms.removeAll { $0.id == zoom.id } } label: { Image(systemName: "trash") }

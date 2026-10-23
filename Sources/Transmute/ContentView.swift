@@ -99,8 +99,11 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            SpinformMark()
-                .frame(width: 32, height: 32)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 34, height: 34)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Spinform")
                     .font(Theme.Fonts.wordmark)
@@ -173,12 +176,12 @@ struct ContentView: View {
         .overlay {
             if dropTargeted {
                 RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-                    .strokeBorder(Theme.brand, lineWidth: 2)
-                    .background(Theme.violet.opacity(0.06), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+                    .strokeBorder(Theme.accent, lineWidth: 1.5)
+                    .background(Theme.accent.opacity(0.05), in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
                     .transition(.opacity)
             }
         }
-        .animation(.easeOut(duration: 0.2), value: dropTargeted)
+        .animation(Theme.spring, value: dropTargeted)
     }
 
     private func load(_ providers: [NSItemProvider]) {

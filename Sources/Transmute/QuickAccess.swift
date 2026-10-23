@@ -324,12 +324,13 @@ struct QuickAccessCard: View {
             .padding(.horizontal, 4)
             .padding(.vertical, 5)
         }
-        .background(Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
-            .strokeBorder(hovering ? Theme.accent.opacity(0.7) : Theme.hairline, lineWidth: 1))
-        .shadow(color: .black.opacity(0.18), radius: 5, y: 2)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card + 2, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: Theme.Radius.card + 2, style: .continuous)
+            .strokeBorder(Theme.hairline, lineWidth: 0.5))
+        .shadow(color: .black.opacity(hovering ? 0.22 : 0.16), radius: hovering ? 10 : 7, y: 3)
         .padding(6)
+        .appearIn()
         .onHover { inside in
             hovering = inside
             actions.hover(inside)

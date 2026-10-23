@@ -439,7 +439,7 @@ struct WheelView: View {
         return Circle()
             .fill(Theme.canvas.opacity(0.97))
             .overlay(Circle().strokeBorder(Theme.hairline, lineWidth: 1).padding(radius * 0.62))
-            .overlay(Circle().strokeBorder(Theme.brand, lineWidth: 1.5))
+            .overlay(Circle().strokeBorder(Theme.accent, lineWidth: 1.5))
             .shadow(color: .black.opacity(0.18), radius: 6, y: 3)
             .frame(width: diameter, height: diameter)
             .scaleEffect(appeared ? 1 : 0.6)
@@ -463,7 +463,7 @@ struct WheelView: View {
         .foregroundStyle(isTargeted ? Color.white : Theme.textPrimary)
         .frame(width: bubble, height: bubble)
         .background(
-            Circle().fill(isTargeted ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.surface))
+            Circle().fill(isTargeted ? AnyShapeStyle(Theme.accent) : AnyShapeStyle(Theme.surface))
         )
         .overlay(Circle().strokeBorder(isTargeted ? Color.black.opacity(0.1) : Theme.hairline, lineWidth: 1))
         .shadow(color: .black.opacity(isTargeted ? 0.22 : 0.08), radius: isTargeted ? 4 : 1.5, y: 1)

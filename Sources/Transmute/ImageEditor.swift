@@ -1248,7 +1248,7 @@ struct ImageEditorView: View {
     private var canvasArea: some View {
         GeometryReader { proxy in
             ZStack {
-                Color.adaptive(light: 0xE6E6EC, dark: 0x0B0B0E)
+                Theme.stage
                 if let image = rendered ?? preview {
                     let size = canvasSize(imageWidth: image.width, imageHeight: image.height, in: proxy.size)
                     // Turns and flips are only shown here; drawing still happens in the

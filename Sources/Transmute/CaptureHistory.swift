@@ -325,7 +325,7 @@ struct HistoryView: View {
         HStack(spacing: 10) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Theme.brand)
+                .foregroundStyle(Theme.textSecondary)
             VStack(alignment: .leading, spacing: 0) {
                 Text("Capture History").font(Theme.Fonts.wordmark).foregroundStyle(Theme.textPrimary)
                 Text(retentionText).font(Theme.Fonts.caption).foregroundStyle(Theme.textSecondary)
@@ -354,7 +354,7 @@ struct HistoryView: View {
         VStack(spacing: 10) {
             Image(systemName: "camera.viewfinder")
                 .font(.system(size: 34, weight: .semibold))
-                .foregroundStyle(Theme.brand)
+                .foregroundStyle(Theme.textSecondary)
             Text("No captures yet").font(.system(size: 20, weight: .bold, design: .rounded)).foregroundStyle(Theme.textPrimary)
             Text("Screenshots and recordings show up here, so you can find, edit or share them later.")
                 .font(Theme.Fonts.body)

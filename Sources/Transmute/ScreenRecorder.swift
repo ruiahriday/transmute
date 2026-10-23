@@ -632,9 +632,7 @@ struct RecordingControlsBar: View {
         }
         .padding(.horizontal, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.surface, in: Capsule())
-        .overlay(Capsule().strokeBorder(Theme.hairline))
-        .shadow(color: .black.opacity(0.16), radius: 4, y: 2)
+        .floatingCapsule()
         .padding(3)
     }
 }

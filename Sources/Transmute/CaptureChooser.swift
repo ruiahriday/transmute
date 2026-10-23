@@ -97,7 +97,7 @@ struct CaptureChooserView: View {
             HStack(spacing: 8) {
                 Image(systemName: CaptureAction.allInOne.symbol)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.brand)
+                    .foregroundStyle(Theme.textSecondary)
                 Text("Capture").font(Theme.Fonts.title).foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Text("Return repeats \(last.title.lowercased()) · Esc closes")
@@ -144,10 +144,9 @@ struct CaptureChooserView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Theme.hairline))
-        .shadow(color: .black.opacity(0.22), radius: 12, y: 4)
+        .floatingPanel(radius: 14)
         .padding(10)
+        .appearIn()
         .tint(Theme.accent)
     }
 
@@ -173,11 +172,10 @@ struct CaptureChooserView: View {
         let recording = [CaptureAction.recordArea, .recordWindow, .recordScreen].contains(action)
         return Button { choose(.action(action)) } label: {
             VStack(spacing: 5) {
-                RoundedRectangle(cornerRadius: 7, style: .continuous)
-                    .fill(recording ? AnyShapeStyle(LinearGradient(colors: [Theme.pink, Theme.rose], startPoint: .topLeading,
-                                                                   endPoint: .bottomTrailing)) : AnyShapeStyle(Theme.brand))
+                Image(systemName: action.symbol)
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(recording ? Theme.rose : (selected ? Theme.accent : Theme.textPrimary))
                     .frame(width: 30, height: 30)
-                    .overlay(Image(systemName: action.symbol).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white))
                 Text(recording ? "Record \(action.shortTitle)" : action.shortTitle)
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
@@ -190,9 +188,9 @@ struct CaptureChooserView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 7)
             .background(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                .fill(selected ? Theme.accent.opacity(0.12) : Theme.surfaceRaised))
+                .fill(selected ? Theme.accent.opacity(0.10) : Theme.surfaceRaised))
             .overlay(RoundedRectangle(cornerRadius: Theme.Radius.control, style: .continuous)
-                .strokeBorder(selected ? Theme.accent : Theme.hairline, lineWidth: selected ? 1.5 : 1))
+                .strokeBorder(selected ? Theme.accent.opacity(0.8) : Theme.hairline, lineWidth: selected ? 1 : 0.5))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

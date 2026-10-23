@@ -292,11 +292,11 @@ final class SelectionView: NSView {
         } else if mode == .window, let hovered {
             let r = localRect(hovered.frame).intersection(bounds)
             fill(dim, outside: r)
-            NSColor(Theme.violet).withAlphaComponent(0.16).setFill()
+            NSColor.controlAccentColor.withAlphaComponent(0.12).setFill()
             r.fill()
             let border = NSBezierPath(rect: r.insetBy(dx: 1.5, dy: 1.5))
             border.lineWidth = 3
-            NSColor(Theme.violet).setStroke()
+            NSColor.controlAccentColor.setStroke()
             border.stroke()
             let name = hovered.owner.isEmpty ? "" : "\(hovered.owner)  ·  "
             drawLabel(name + sizeText(r), near: r)
@@ -332,7 +332,7 @@ final class SelectionView: NSView {
             NSColor.white.setFill()
             handle.fill()
             handle.lineWidth = 1.5
-            NSColor(Theme.violet).setStroke()
+            NSColor.controlAccentColor.setStroke()
             handle.stroke()
         }
     }
@@ -502,7 +502,7 @@ struct AreaFrameView: View {
 
     var body: some View {
         Rectangle()
-            .strokeBorder(Theme.brand, style: StrokeStyle(lineWidth: 2, dash: dashed ? [6, 4] : []))
+            .strokeBorder(Theme.accent, style: StrokeStyle(lineWidth: 2, dash: dashed ? [6, 4] : []))
     }
 }
 
@@ -536,7 +536,7 @@ struct CountdownView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color.black.opacity(0.72))
-            RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.brand, lineWidth: 3)
+            RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Theme.accent, lineWidth: 2)
             Text("\(number)")
                 .font(.system(size: 64, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
