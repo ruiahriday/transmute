@@ -1,0 +1,61 @@
+Spinform 1.0 beta smoke test on Microsoft Windows 10.0.26200 (Arm64)
+ffmpeg: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ffmpeg\ffmpeg.exe
+PASS  main window empty
+PASS  main window
+      made photo.png
+PASS  convert through the queue
+PASS  settings
+PASS  floating files
+PASS  drag wheel (formats)
+PASS  drag wheel (tools)
+PASS  drag wheel (actions)
+PASS  drag wheel (customized)
+PASS  wheel editor
+PASS  wheel editor (tools)
+PASS  progress card
+PASS  photo editor
+PASS  video editor
+PASS  audio editor
+      made product (no background).png
+PASS  remove background through the queue
+PASS  photo editor background removed
+PASS  photo editor background gradient
+PASS  change background window
+PASS  main window tools
+PASS  info
+PASS  wheel edit opens the photo editor
+      display: Display 1 (main) · 1024 × 768 at 100%, Windows.Graphics.Capture available
+PASS  main window capture
+PASS  capture overlay
+PASS  capture all-in-one
+      screenshot 512 × 384: Screenshot 2026-10-23 at 00.22.21.png
+PASS  quick access
+      window capture by Windows.Graphics.Capture: 806 × 653
+PASS  window capture
+      pattern window at 4,100 136 × 300; asked for 4,100; display bounds 0,0
+      40 × 300 checkerboard at 4,100: grab 12000, frozen-screen crop 12000, saved file 12000 pixels off; file 40 × 300 at 96 DPI
+NOTE  sharp capture: something else covers the pattern on this machine, so only the size and DPI are checked
+PASS  sharp capture
+PASS  frame tool
+PASS  annotate tools
+PASS  pin window
+NOTE  scrolling capture: another window covers the test page on this machine, so only the capture's start and finish are checked
+      page scrolled to 540 of 2360; finished
+      stitched 452 × 352 from a 452 × 352 area
+PASS  scrolling capture
+PASS  history
+PASS  recording bar
+      recorded 800 × 500, 2.5 s: Recording 2026-10-23 at 00.22.38.mp4
+PASS  recording thumbnail
+PASS  video studio
+PASS  capture settings
+PASS  main window dark
+PASS  main window tools dark
+PASS  main window capture dark
+PASS  settings dark
+PASS  drag wheel formats dark
+PASS  photo editor dark
+PASS  frame tool dark
+PASS  change background window dark
+WARN  drag detection: the test drag didn't finish (no mouse input on this machine)
+SMOKE TEST PASSED
