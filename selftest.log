@@ -1,0 +1,400 @@
+IOServiceMatchingfailed for: AppleM2ScalerParavirtDriver
+ffmpeg: /Users/runner/work/transmute/transmute/build/Spinform.app/Contents/MacOS/ffmpeg
+HEIC encoder: available
+output: /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/transmute-selftest-7B2369A2-2E86-4571-BBF4-0072F7A643F8
+
+PASS  Drag wheel: documents default to PDF first
+PASS  Drag wheel: default document wheel starts with PDF
+PASS  Drag wheel: one PDF has no Merge
+PASS  Drag wheel: two PDFs get Merge
+PASS  Drag wheel: mixed files share formats
+PASS  Drag wheel: images get Edit, then Remove background, on the tools wheel
+PASS  Drag wheel: Remove background has a bubble
+PASS  Drag wheel: Remove background is offered for images only
+PASS  Drag wheel: videos get Edit first on the actions wheel
+PASS  Drag wheel: a photo and a PDF have no Edit
+PASS  Drag wheel: Edit has a bubble
+PASS  Drag wheel: customized order, spaces and mixed-in items
+PASS  Drag wheel: other kinds keep the default
+PASS  Drag wheel: items that don't suit every file leave a space
+PASS  Drag wheel: nothing usable means no wheel
+PASS  Drag wheel: saved layouts are cleaned up
+PASS  Drag wheel: unknown ids have no bubble
+PASS  Bundle: display name is Spinform
+PASS  Bundle: identifier unchanged
+PASS  Brand mark: swoosh fits its box
+PASS  anim.gif → JPEG → anim.jpg (16 KB)
+PASS  anim.gif → PNG → anim.png (9 KB)
+PASS  anim.gif → HEIC → anim.heic (8 KB)
+PASS  anim.gif → WEBP → anim.webp (49 KB)
+PASS  anim.gif → TIFF → anim.tiff (234 KB)
+PASS  anim.gif → BMP → anim.bmp (230 KB)
+PASS  anim.gif → GIF → anim.gif (51 KB)
+PASS  anim.gif → PDF → anim.pdf (14 KB)
+PASS  anim.gif → SVG → anim.svg (12 KB)
+PASS  anim.gif compress 50% → anim (compressed).gif (21 KB)
+PASS  anim.gif remove metadata → anim (clean).gif (51 KB)
+PASS  backup.tar.gz → Extract → backup (96 bytes)
+PASS  backup.tar.gz → ZIP → backup.zip (4 KB)
+PASS  backup.tar.gz → TAR.GZ → backup.tar.gz (3 KB)
+PASS  book.epub → PDF → book.pdf (31 KB)
+PASS  book.epub → TXT → book.txt (71 bytes)
+PASS  book.epub → HTML → book.html (5 KB)
+PASS  book.epub → DOCX → book.docx (4 KB)
+PASS  book.epub → RTF → book.rtf (919 bytes)
+PASS  budget.xlsx → CSV → budget.csv (45 bytes)
+PASS  budget.xlsx → XLSX → budget.xlsx (2 KB)
+SKIP  budget.xlsx → NUMBERS: needs Numbers, which isn't installed
+PASS  budget.xlsx → PDF → budget.pdf (18 KB)
+PASS  budget.xlsx → HTML → budget.html (856 bytes)
+PASS  bundle.zip → Extract → bundle (96 bytes)
+PASS  bundle.zip → ZIP → bundle.zip (4 KB)
+PASS  bundle.zip → TAR.GZ → bundle.tar.gz (3 KB)
+PASS  captions.vtt → SRT → captions.srt (90 bytes)
+PASS  captions.vtt → VTT → captions.vtt (134 bytes)
+PASS  clip.mp4 → MP4 → clip.mp4 (61 KB)
+PASS  clip.mp4 → MOV → clip.mov (61 KB)
+PASS  clip.mp4 → MKV → clip.mkv (60 KB)
+PASS  clip.mp4 → WEBM → clip.webm (75 KB)
+PASS  clip.mp4 → AVI → clip.avi (118 KB)
+PASS  clip.mp4 → WMV → clip.wmv (225 KB)
+PASS  clip.mp4 → GIF → clip.gif (595 KB)
+PASS  clip.mp4 → MP3 → clip.mp3 (16 KB)
+PASS  clip.mp4 → M4A → clip.m4a (44 KB)
+PASS  clip.mp4 → WAV → clip.wav (265 KB)
+PASS  clip.mp4 compress 50% → clip (compressed).mp4 (55 KB)
+PASS  clip.mp4 remove metadata → clip (clean).mp4 (46 KB)
+PASS  letter.rtf → PDF → letter.pdf (9 KB)
+PASS  letter.rtf → DOCX → letter.docx (4 KB)
+PASS  letter.rtf → RTF → letter.rtf (411 bytes)
+PASS  letter.rtf → TXT → letter.txt (90 bytes)
+PASS  letter.rtf → HTML → letter.html (735 bytes)
+PASS  letter.rtf → ODT → letter.odt (2 KB)
+PASS  letter.rtf → EPUB → letter.epub (2 KB)
+SKIP  letter.rtf → PAGES: needs Pages, which isn't installed
+PASS  logo.svg → JPEG → logo.jpg (10 KB)
+PASS  logo.svg → PNG → logo.png (13 KB)
+PASS  logo.svg → HEIC → logo.heic (8 KB)
+PASS  logo.svg → WEBP → logo.webp (4 KB)
+PASS  logo.svg → TIFF → logo.tiff (388 KB)
+PASS  logo.svg → BMP → logo.bmp (288 KB)
+PASS  logo.svg → GIF → logo.gif (3 KB)
+PASS  logo.svg → PDF → logo.pdf (12 KB)
+PASS  logo.svg → SVG → logo.svg (18 KB)
+PASS  logo.svg compress 50% → logo (compressed).jpg (1 KB)
+PASS  logo.svg remove metadata → logo (clean).svg (291 bytes)
+PASS  movie.mkv → MP4 → movie.mp4 (61 KB)
+PASS  movie.mkv → MOV → movie.mov (61 KB)
+PASS  movie.mkv → MKV → movie.mkv (60 KB)
+PASS  movie.mkv → WEBM → movie.webm (75 KB)
+PASS  movie.mkv → AVI → movie.avi (118 KB)
+PASS  movie.mkv → WMV → movie.wmv (225 KB)
+PASS  movie.mkv → GIF → movie.gif (595 KB)
+PASS  movie.mkv → MP3 → movie.mp3 (16 KB)
+PASS  movie.mkv → M4A → movie.m4a (44 KB)
+PASS  movie.mkv → WAV → movie.wav (265 KB)
+PASS  movie.mkv compress 50% → movie (compressed).mkv (53 KB)
+PASS  movie.mkv remove metadata → movie (clean).mkv (44 KB)
+PASS  note.txt → PDF → note.pdf (8 KB)
+PASS  note.txt → DOCX → note.docx (4 KB)
+PASS  note.txt → RTF → note.rtf (407 bytes)
+PASS  note.txt → TXT → note.txt (90 bytes)
+PASS  note.txt → HTML → note.html (733 bytes)
+PASS  note.txt → ODT → note.odt (2 KB)
+PASS  note.txt → EPUB → note.epub (2 KB)
+SKIP  note.txt → PAGES: needs Pages, which isn't installed
+PASS  page.html → PDF → page.pdf (9 KB)
+PASS  page.html → DOCX → page.docx (4 KB)
+PASS  page.html → RTF → page.rtf (430 bytes)
+PASS  page.html → TXT → page.txt (90 bytes)
+PASS  page.html → HTML → page.html (920 bytes)
+PASS  page.html → ODT → page.odt (2 KB)
+PASS  page.html → EPUB → page.epub (2 KB)
+SKIP  page.html → PAGES: needs Pages, which isn't installed
+PASS  phone.heic → JPEG → phone.jpg (27 KB)
+PASS  phone.heic → PNG → phone.png (37 KB)
+PASS  phone.heic → HEIC → phone.heic (6 KB)
+PASS  phone.heic → WEBP → phone.webp (7 KB)
+PASS  phone.heic → TIFF → phone.tiff (925 KB)
+PASS  phone.heic → BMP → phone.bmp (922 KB)
+PASS  phone.heic → GIF → phone.gif (25 KB)
+PASS  phone.heic → PDF → phone.pdf (55 KB)
+PASS  phone.heic → SVG → phone.svg (57 KB)
+PASS  phone.heic compress 50% → phone (compressed).heic (3 KB)
+PASS  phone.heic remove metadata → phone (clean).heic (11 KB)
+PASS  photo.jpg → JPEG → photo.jpg (21 KB)
+PASS  photo.jpg → PNG → photo.png (55 KB)
+PASS  photo.jpg → HEIC → photo.heic (8 KB)
+PASS  photo.jpg → WEBP → photo.webp (6 KB)
+PASS  photo.jpg → TIFF → photo.tiff (925 KB)
+PASS  photo.jpg → BMP → photo.bmp (922 KB)
+PASS  photo.jpg → GIF → photo.gif (25 KB)
+PASS  photo.jpg → PDF → photo.pdf (69 KB)
+PASS  photo.jpg → SVG → photo.svg (73 KB)
+PASS  photo.jpg compress 50% → photo (compressed).jpg (10 KB)
+PASS  photo.jpg remove metadata → photo (clean).jpg (26 KB)
+PASS  readme.md → PDF → readme.pdf (8 KB)
+PASS  readme.md → DOCX → readme.docx (4 KB)
+PASS  readme.md → RTF → readme.rtf (407 bytes)
+PASS  readme.md → TXT → readme.txt (90 bytes)
+PASS  readme.md → HTML → readme.html (733 bytes)
+PASS  readme.md → ODT → readme.odt (2 KB)
+PASS  readme.md → EPUB → readme.epub (2 KB)
+SKIP  readme.md → PAGES: needs Pages, which isn't installed
+PASS  report.docx → PDF → report.pdf (9 KB)
+PASS  report.docx → DOCX → report.docx (4 KB)
+PASS  report.docx → RTF → report.rtf (352 bytes)
+PASS  report.docx → TXT → report.txt (90 bytes)
+PASS  report.docx → HTML → report.html (735 bytes)
+PASS  report.docx → ODT → report.odt (2 KB)
+PASS  report.docx → EPUB → report.epub (2 KB)
+SKIP  report.docx → PAGES: needs Pages, which isn't installed
+PASS  sample.png → JPEG → sample.jpg (21 KB)
+PASS  sample.png → PNG → sample.png (8 KB)
+PASS  sample.png → HEIC → sample.heic (6 KB)
+PASS  sample.png → WEBP → sample.webp (6 KB)
+PASS  sample.png → TIFF → sample.tiff (925 KB)
+PASS  sample.png → BMP → sample.bmp (922 KB)
+PASS  sample.png → GIF → sample.gif (24 KB)
+PASS  sample.png → PDF → sample.pdf (23 KB)
+PASS  sample.png → SVG → sample.svg (11 KB)
+PASS  sample.png compress 50% → sample (compressed).png (3 KB)
+PASS  sample.png remove metadata → sample (clean).png (8 KB)
+PASS  scan.tiff → JPEG → scan.jpg (21 KB)
+PASS  scan.tiff → PNG → scan.png (9 KB)
+PASS  scan.tiff → HEIC → scan.heic (6 KB)
+PASS  scan.tiff → WEBP → scan.webp (6 KB)
+PASS  scan.tiff → TIFF → scan.tiff (925 KB)
+PASS  scan.tiff → BMP → scan.bmp (922 KB)
+PASS  scan.tiff → GIF → scan.gif (24 KB)
+PASS  scan.tiff → PDF → scan.pdf (23 KB)
+PASS  scan.tiff → SVG → scan.svg (11 KB)
+PASS  scan.tiff compress 50% → scan (compressed).tiff (380 KB)
+PASS  scan.tiff remove metadata → scan (clean).tiff (925 KB)
+PASS  song.mp3 → MP3 → song.mp3 (14 KB)
+PASS  song.mp3 → M4A → song.m4a (54 KB)
+PASS  song.mp3 → WAV → song.wav (265 KB)
+PASS  song.mp3 → FLAC → song.flac (403 KB)
+PASS  song.mp3 → OGG → song.ogg (10 KB)
+PASS  song.mp3 → OPUS → song.opus (56 KB)
+PASS  song.mp3 → AIFF → song.aiff (265 KB)
+PASS  song.mp3 compress 50% → song (compressed).mp3 (12 KB)
+PASS  song.mp3 remove metadata → song (clean).mp3 (24 KB)
+PASS  spatial.mov → MP4 → spatial.mp4 (56 KB)
+PASS  spatial.mov → MOV → spatial.mov (56 KB)
+PASS  spatial.mov → MKV → spatial.mkv (54 KB)
+PASS  spatial.mov → WEBM → spatial.webm (54 KB)
+PASS  spatial.mov → AVI → spatial.avi (86 KB)
+PASS  spatial.mov → WMV → spatial.wmv (158 KB)
+PASS  spatial.mov → GIF → spatial.gif (411 KB)
+PASS  spatial.mov → MP3 → spatial.mp3 (12 KB)
+PASS  spatial.mov → M4A → spatial.m4a (47 KB)
+PASS  spatial.mov → WAV → spatial.wav (353 KB)
+PASS  spatial.mov compress 50% → spatial (compressed).mov (40 KB)
+PASS  spatial.mov remove metadata → spatial (clean).mov (47 KB)
+PASS  subs.srt → SRT → subs.srt (97 bytes)
+PASS  subs.srt → VTT → subs.vtt (105 bytes)
+PASS  surround.mts → MP4 → surround.mp4 (55 KB)
+PASS  surround.mts → MOV → surround.mov (55 KB)
+PASS  surround.mts → MKV → surround.mkv (54 KB)
+PASS  surround.mts → WEBM → surround.webm (54 KB)
+PASS  surround.mts → AVI → surround.avi (86 KB)
+PASS  surround.mts → WMV → surround.wmv (155 KB)
+PASS  surround.mts → GIF → surround.gif (410 KB)
+PASS  surround.mts → MP3 → surround.mp3 (20 KB)
+PASS  surround.mts → M4A → surround.m4a (50 KB)
+PASS  surround.mts → WAV → surround.wav (1.1 MB)
+PASS  surround.mts compress 50% → surround (compressed).mp4 (44 KB)
+PASS  surround.mts remove metadata → surround (clean).mts (146 KB)
+PASS  table.csv → CSV → table.csv (54 bytes)
+PASS  table.csv → XLSX → table.xlsx (2 KB)
+SKIP  table.csv → NUMBERS: needs Numbers, which isn't installed
+PASS  table.csv → PDF → table.pdf (18 KB)
+PASS  table.csv → HTML → table.html (859 bytes)
+PASS  tone.wav → MP3 → tone.mp3 (15 KB)
+PASS  tone.wav → M4A → tone.m4a (50 KB)
+PASS  tone.wav → WAV → tone.wav (265 KB)
+PASS  tone.wav → FLAC → tone.flac (45 KB)
+PASS  tone.wav → OGG → tone.ogg (10 KB)
+PASS  tone.wav → OPUS → tone.opus (56 KB)
+PASS  tone.wav → AIFF → tone.aiff (265 KB)
+PASS  tone.wav compress 50% → tone (compressed).m4a (51 KB)
+PASS  tone.wav remove metadata → tone (clean).wav (265 KB)
+PASS  web.webp → JPEG → web.jpg (28 KB)
+PASS  web.webp → PNG → web.png (59 KB)
+PASS  web.webp → HEIC → web.heic (8 KB)
+PASS  web.webp → WEBP → web.webp (6 KB)
+PASS  web.webp → TIFF → web.tiff (925 KB)
+PASS  web.webp → BMP → web.bmp (922 KB)
+PASS  web.webp → GIF → web.gif (25 KB)
+PASS  web.webp → PDF → web.pdf (82 KB)
+PASS  web.webp → SVG → web.svg (79 KB)
+PASS  web.webp compress 50% → web (compressed).jpg (3 KB)
+PASS  web.webp remove metadata → web (clean).webp (10 KB)
+PASS  letter.pdf → PNG → letter.png (58 KB)
+PASS  letter.pdf → JPEG → letter.jpg (46 KB)
+PASS  letter.pdf → TXT → letter.txt (88 bytes)
+PASS  letter.pdf → RTF → letter.rtf (437 bytes)
+PASS  letter.pdf → DOCX → letter.docx (4 KB)
+PASS  letter.pdf → HTML → letter.html (637 bytes)
+PASS  letter.pdf compress 50% → letter (compressed).pdf (9 KB)
+PASS  letter.pdf remove metadata → letter (clean).pdf (9 KB)
+PASS  letter.pdf split pages → letter (pages) (96 bytes)
+PASS  letter.epub → PDF → letter.pdf (15 KB)
+PASS  letter.epub → TXT → letter.txt (89 bytes)
+PASS  letter.epub → HTML → letter.html (517 bytes)
+PASS  letter.epub → DOCX → letter.docx (4 KB)
+PASS  letter.epub → RTF → letter.rtf (424 bytes)
+      50.9 MB → 5.6 MB
+PASS  Photo PDF compress 50% is at most 60% of the original → photo scan (compressed).pdf (5.6 MB)
+PASS  office: budget.xlsx → csv content → budget.csv (45 bytes)
+PASS  office: table.csv → xlsx → csv keeps quoted comma → table.xlsx (2 KB), table.csv (54 bytes)
+PASS  office: note.txt → epub → txt → note.epub (2 KB), note.txt (89 bytes)
+PASS  office: html → epub markup → styled.epub (2 KB)
+PASS  office: book.epub → txt/html → book.txt (71 bytes), book.html (5 KB)
+PASS  office: tsv → csv/xlsx → tabs.csv (15 bytes), tabs.xlsx (2 KB)
+PASS  office: .pages preview → txt (no Pages needed) → preview.txt (88 bytes)
+PASS  office: missing iWork app gives a clear error
+PASS  Merge PDFs → Merged.pdf (42 KB)
+PASS  Images → PDF → Images.pdf (176 KB)
+PASS  Zip several files → Archive.zip (60 KB)
+PASS  anim.gif photo edit → anim (edited).gif (6 KB)
+PASS  logo.svg photo edit → logo (edited).png (13 KB)
+PASS  phone.heic photo edit → phone (edited).heic (6 KB)
+PASS  photo.jpg photo edit → photo (edited).jpg (15 KB)
+PASS  sample.png photo edit → sample (edited).png (14 KB)
+PASS  scan.tiff photo edit → scan (edited).tiff (519 KB)
+PASS  web.webp photo edit → web (edited).webp (5 KB)
+PASS  Photo editor: turn, flip, black box, box outline, brightness → editor-canvas (edited).png (2 KB), editor-canvas (edited) 2.png (3 KB), editor-canvas (edited) 3.png (3 KB), editor-canvas (edited).jpg (1 KB)
+Background removal: any subject (Vision foreground instance mask) on macOS Version 15.7.9 (Build 24G830)
+PASS  Background: cut-out of a JPEG is a transparent PNG → circle (no-bg).png (22 KB)
+PASS  Background: solid colour keeps the JPEG and paints the corners → circle (new-bg).jpg (6 KB)
+PASS  Background: gradient runs from the top colour to the bottom colour → circle (new-bg).png (13 KB)
+PASS  Background: blur keeps the original's colours behind the subject → circle (new-bg) 2.png (31 KB)
+PASS  Background: a picture behind the subject fills the frame → circle (new-bg) 3.png (40 KB)
+PASS  Background: anim.gif → transparent PNG → anim (no-bg).png (9 KB)
+PASS  Background: logo.svg → transparent PNG → logo (no-bg).png (15 KB)
+PASS  Background: phone.heic → transparent HEIC → phone (no-bg).heic (7 KB)
+PASS  Background: photo.jpg → transparent PNG → photo (no-bg).png (22 KB)
+PASS  Background: sample.png → transparent PNG → sample (no-bg).png (17 KB)
+PASS  Background: scan.tiff → transparent TIFF → scan (no-bg).tiff (1.2 MB)
+PASS  Background: web.webp → transparent PNG → web (no-bg).png (24 KB)
+PASS  Background: Vision finds the subject in the red circle on blue → circle (no-bg) 2.png (13 KB)
+PASS  Background: Vision finds the subject in the product-style photo → orange (no-bg).png (77 KB)
+PASS  Background: macOS 13 mode says no person was found
+PASS  clip.mp4 edit: trim, 2× speed, 9:16 crop, rotate, flip, louder → clip (edited).mp4 (25 KB)
+PASS  movie.mkv edit: split at 1 s, half speed, muted, WebM → movie (part 1).webm (10 KB), movie (part 2).webm (14 KB)
+PASS  clip.mp4 edit: 4× speed keeps the sound → clip (edited) 2.mp4 (27 KB)
+PASS  Video edit rejects a split point outside the trim
+PASS  clip.mp4 snapshot at 1.25 s (AVFoundation) → clip (frame 1.25s).png (21 KB)
+PASS  movie.mkv snapshot at 2 s (ffmpeg fallback) → movie (frame 2s).png (15 KB)
+PASS  Join three videos of different sizes, one silent → Joined.mp4 (211 KB)
+PASS  tone.wav waveform
+PASS  tone.wav audio edit: trim, fade in and out, −6 dB → tone (edited).wav (176 KB)
+PASS  song.mp3 audio edit: two bleeps, stereo, FLAC → song (edited).flac (201 KB)
+PASS  clip.mp4 audio edit: trim, bleep, stereo WAV → clip (edited).wav (353 KB)
+PASS  clip.mp4 audio edit: normalize to −16 LUFS (M4A) → clip (edited).m4a (45 KB)
+PASS  tone.wav audio edit → MP3 → tone (edited).mp3 (8 KB)
+PASS  tone.wav audio edit → M4A → tone (edited).m4a (26 KB)
+PASS  tone.wav audio edit → WAV → tone (edited) 2.wav (132 KB)
+PASS  tone.wav audio edit → FLAC → tone (edited).flac (27 KB)
+PASS  tone.wav audio edit → OGG → tone (edited).ogg (7 KB)
+PASS  tone.wav audio edit → OPUS → tone (edited).opus (29 KB)
+PASS  tone.wav audio edit → AIFF → tone (edited).aiff (132 KB)
+PASS  Audio edit: swap left and right, then mono → right only (edited).wav (353 KB), right only (edited) 2.wav (176 KB)
+PASS  song.mp3 and clip.mp4 waveforms
+PASS  Audio edit rejects a start past the end
+PASS  Audio edit rejects a video without sound
+PASS  Metadata: date taken parsing
+PASS  photo.jpg metadata: write, read back, clear a field → photo (tagged).jpg (24 KB), photo (tagged) (tagged).jpg (24 KB)
+PASS  Photo metadata: GPS is shown and can be removed → gps-photo (tagged).jpg (23 KB)
+PASS  sample.png metadata: description and artist → sample (tagged).png (4 KB)
+PASS  PDF metadata: title, author, subject, keywords → metadata-test (tagged).pdf (23 KB)
+PASS  web.webp metadata: readable, writing refused with a clear error
+PASS  note.txt info: file facts only
+PASS  clip.mp4 info: codec, frame size, frame rate, sound
+PASS  song.mp3 tags: write, read back, clear one → song (tagged).mp3 (25 KB), song (tagged) (tagged).mp3 (25 KB)
+PASS  clip.mp4 tags: title, comment and year keep the video intact → clip (tagged).mp4 (46 KB)
+PASS  Ogg tags (kept on the audio track): replace, remove, add → tag-me (tagged).ogg (9 KB)
+PASS  Shake detection
+PASS  QR code read
+PASS  Scrolling capture: frames stitch back into the page → page stitched.png (30 KB)
+PASS  Scrolling capture: still, backwards and unrelated frames are ignored
+PASS  Background frame: layout with padding and aspect presets
+PASS  Background frame: renders background, rounded picture and shadow → framed.png (9 KB), framed gradient.png (38 KB)
+PASS  Background frame: 20 presets, custom presets saved and removed
+PASS  Annotate: arrow, line and oval are drawn where placed → white (edited).png (9 KB)
+PASS  Annotate: numbered steps → white (edited) 2.png (11 KB)
+PASS  Annotate: spotlight dims everything else → white (edited) 3.png (4 KB)
+PASS  Annotate: resize to half → white (edited) 4.png (2 KB)
+PASS  Annotate: pixelate turns fine detail into flat blocks → checker (edited).png (5 KB)
+      read: "Spinform reads this text"
+PASS  Copy text: reads a line of text on this Mac
+PASS  Copy text: reads a scanned PDF page and QR codes → Images.pdf (29 KB)
+PASS  Copy text: lines in reading order
+PASS  History: keeps, prunes, reloads, restores and deletes → Spinform 2026-10-23 at 07.31.00.png (233 bytes)
+PASS  Shortcuts: parse, show and store
+PASS  Shortcuts: 9 default shortcuts registered with macOS
+PASS  Recording: keystrokes are shown as symbols
+PASS  Capture: screen area to pixels
+      permissions: screen granted, microphone granted, camera notDetermined, accessibility granted
+PASS  Capture: permission check answers without asking
+      windows on screen: 0
+PASS  Capture: window list
+      captured 1 screen(s), first 1024×768
+PASS  Capture: a real screenshot of this Mac's screen → real screen.png (76 KB)
+      recorded 2.2 s
+PASS  Recording: a real 2-second screen recording → transmute-AA7E97F5-A31C-487A-9346-685D0704D115.mp4 (41 KB)
+PASS  Recording: GIF export → transmute-41840167-741B-457E-B00C-E187CF502A89.gif (299 KB)
+PASS  Recording: microphone and Mac sound mixed into one track → transmute-39CB7B7A-215B-4C50-9414-04A6EE94EA48.mp4 (63 KB)
+PASS  Annotate: four arrow styles, including a curved one → arrow-solid.png (4 KB), arrow-double.png (5 KB), arrow-open.png (5 KB), arrow-curved.png (8 KB)
+PASS  Annotate: pencil smoothing, filled box and placed picture → white-2 (edited) 5.png (5 KB)
+PASS  Annotate: seven text styles, the label style on a coloured box → grey-2 (edited) 3.png (6 KB)
+PASS  Annotate: pixelate is scrambled; secure blur leaves no detail → checker-2 (edited).png (35 KB)
+PASS  Annotate: highlighter fits the text line
+PASS  Annotate: finds text lines for the highlighter
+PASS  Annotate: crop snaps to edges and the middle
+PASS  Annotate: my colours are kept
+PASS  Annotate: dropped pictures land where dropped
+PASS  Annotate: .spinform project saves and reopens with everything editable → Shot.spinform (6 KB)
+PASS  Background frame: alignment, auto balance, picture and desktop backgrounds → framed-picture.png (1 KB)
+PASS  Window capture: backdrop choices become frame looks
+PASS  Scrolling capture: sideways frames stitch into a wide picture → stitched-sideways.png (12 KB)
+PASS  All-in-one: sizes, shape lock and memory
+PASS  Quick access: corners, sizes and file info
+PASS  Pin: arrow keys nudge
+PASS  Recording: options for keys, clicks, camera and resolution
+PASS  Copy text: languages and line breaks
+PASS  Copy text: a chosen language, and a frame of a video → text-video.mp4 (23 KB)
+PASS  History: recognised text is kept and filtered by type
+PASS  Automation: spinform:// links
+PASS  Studio: automatic zooms, smoothing and framing
+PASS  Studio: exports a trimmed, zoomed, square video with background and pointer → studio-export.mp4 (23 KB), studio-frame.png (11 KB)
+PASS  Deadlines: a system call that never answers gives up on time
+PASS  Crosshair: Esc closes it and leaves nothing on screen
+PASS  Crosshair: an error while it's open takes it down
+PASS  Crosshair: closes itself when left alone (watchdog)
+PASS  All-in-one chooser: closes on cleanup
+PASS  Actions: every capture action has a name and an icon
+PASS  Actions: every spinform:// link in Settings resolves
+PASS  Capture card: Text copies the words, Copy, Pin, Frame, Markup and close all work
+PASS  Recording: Stop during the countdown and during recording always ends it
+PASS  Scrolling capture: big uneven steps with a sticky header and footer → sticky-page stitched.png (26 KB)
+PASS  Scrolling capture: a jump past the overlap keeps the frame, using the scroll distance
+PASS  Sharpness: a 2x screen keeps every Retina pixel, untouched, saved at 144 DPI → retina.png (2 KB), retina.jpg (9 KB)
+PASS  Sharpness: a live area capture is point size × the screen's scale
+      16-bit: "spinform reads this text"
+      Display P3: "spinform reads this text"
+      IOSurface: "spinform reads this text"
+      tiny crop: "spinform"
+      huge: "spinform reads this text"
+PASS  Copy text: 16-bit, P3, IOSurface, tiny and huge pictures all read
+      Vision accurate (latest revision): ok
+      Vision fast: ok
+      Vision on the CPU only: ok
+      Vision RecognizeTextRequest (macOS 15): ok
+      Vision older revision: ok
+PASS  Copy text: unknown languages are ignored and every reader in the chain works
+PASS  Copy text: the clipboard holds only the text, and the result window opens
+
+369 passed, 0 failed, 7 skipped

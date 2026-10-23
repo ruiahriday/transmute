@@ -1,0 +1,231 @@
+==> Compiling (release)…
+0%: Compute target dependency graph
+Building targets in dependency order
+Target dependency graph (2 targets)
+0%: Gather provisioning inputs
+0%: Create build description
+0%: Discovering version info for clang
+0%: Discovering version info for swiftc
+0%: Discovering version info for ld
+Build description signature: add07ebd1cc38369667baa5005d17179
+
+Build description path: /Users/runner/work/transmute/transmute/.build/apple/Intermediates.noindex/XCBuildData/add07ebd1cc38369667baa5005d17179.xcbuilddata
+
+0%: Create build directory $(TARGET_BUILD_DIR)
+0%: Create build directory $(OBJROOT)
+0%: Build stat cache for /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk
+0%: Create build directory $(TARGET_BUILD_DIR)/Release
+0%: Create build directory $(OBJROOT)/EagerLinkingTBDs/Release
+0%: Create build directory $(TARGET_BUILD_DIR)/Release/PackageFrameworks
+0%: Write Transmute.DependencyMetadataFileList
+0%: Write Transmute.DependencyStaticMetadataFileList
+0%: Write Transmute_const_extract_protocols.json (x86_64)
+0%: Write Transmute.SwiftFileList (x86_64)
+0%: Write Transmute.LinkFileList (x86_64)
+0%: Write Transmute-OutputFileMap.json (x86_64)
+0%: Write Transmute_const_extract_protocols.json (arm64)
+0%: Write Transmute.SwiftFileList (arm64)
+0%: Write Transmute.LinkFileList (arm64)
+0%: Write Transmute-OutputFileMap.json (arm64)
+48%: Planning Swift module Transmute (arm64)
+48%: Planning Swift module Transmute (x86_64)
+50%: Compile Transmute (x86_64)
+50%: Compile Transmute (arm64)
+50%: Compiling AnnotateExtras.swift, App.swift, AudioEditor.swift, Automation.swift, BackgroundTool.swift, CaptureChooser.swift, CaptureCoordinator.swift, CaptureHistory.swift, CaptureOverlay.swift, CaptureSelfTest.swift, CaptureSelfTest2.swift, CaptureSelfTest3.swift, CaptureSupport.swift, CaptureViews.swift, ContentView.swift, DocumentTools.swift, DragWheel.swift, Engine.swift, Feedback.swift, FloatingShelf.swift, Formats.swift, FrameTool.swift, Hotkeys.swift, ImageConverter.swift, ImageEditor.swift, JobQueue.swift, MediaConverter.swift, MetadataEditor.swift, OfficeConverter.swift, PinWindow.swift, QuickAccess.swift, ScreenRecorder.swift, ScrollCapture.swift, SelfTest.swift, Shell.swift, Snapshots.swift, Studio.swift, TextRecognition.swift, Theme.swift, VideoEditor.swift, WheelEditor.swift, WheelLayout.swift
+50%: Compiling AnnotateExtras.swift, App.swift, AudioEditor.swift, Automation.swift, BackgroundTool.swift, CaptureChooser.swift, CaptureCoordinator.swift, CaptureHistory.swift, CaptureOverlay.swift, CaptureSelfTest.swift, CaptureSelfTest2.swift, CaptureSelfTest3.swift, CaptureSupport.swift, CaptureViews.swift, ContentView.swift, DocumentTools.swift, DragWheel.swift, Engine.swift, Feedback.swift, FloatingShelf.swift, Formats.swift, FrameTool.swift, Hotkeys.swift, ImageConverter.swift, ImageEditor.swift, JobQueue.swift, MediaConverter.swift, MetadataEditor.swift, OfficeConverter.swift, PinWindow.swift, QuickAccess.swift, ScreenRecorder.swift, ScrollCapture.swift, SelfTest.swift, Shell.swift, Snapshots.swift, Studio.swift, TextRecognition.swift, Theme.swift, VideoEditor.swift, WheelEditor.swift, WheelLayout.swift
+50%: Compile 42 Swift source files (arm64)
+50%: Compile 42 Swift source files (x86_64)
+non-sendable result type 'NSImage?' cannot be sent from nonisolated context in call to static method 'make(_:maxPixel:)'; this is an error in the Swift 6 language mode
+non-sendable result type 'NSImage?' cannot be sent from nonisolated context in call to static method 'make(_:maxPixel:)'; this is an error in the Swift 6 language mode
+conformance of 'NSEvent' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode
+result of 'try?' is unused
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+capture of 'session' with non-sendable type 'AVAssetExportSession' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+'masterClock' was deprecated in macOS 12.3
+capture of 'audioInput' with non-sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+capture of 'audioOutput' with non-sendable type 'AVAssetReaderTrackOutput' in a '@Sendable' closure
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureHistory.swift:184:51: warning: non-sendable result type 'NSImage?' cannot be sent from nonisolated context in call to static method 'make(_:maxPixel:)'; this is an error in the Swift 6 language mode
+        .task(id: url) { image = await Thumbnails.make(url) }
+                                                  ^
+Swift.Optional:1:21: note: generic enum 'Optional' does not conform to the 'Sendable' protocol
+@frozen public enum Optional<Wrapped> : ~Copyable where Wrapped : ~Copyable {
+                    ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureOverlay.swift:107:23: warning: conformance of 'NSEvent' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode
+            MainActor.assumeIsolated {
+                      ^
+note: conformance of 'NSEvent' to 'Sendable' has been explicitly marked unavailable here
+@_nonSendable(_assumed)
+^
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureSelfTest.swift:609:13: warning: result of 'try?' is unused
+            try? history.add(file: url, kind: kind, width: Int(size.width), height: Int(size.height), duration: duration,
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/transmute/transmute/Sources/Transmute/DragWheel.swift:177:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/DragWheel.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/FrameTool.swift:415:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/FrameTool.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/MediaConverter.swift:432:13: warning: capture of 'session' with non-sendable type 'AVAssetExportSession' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+            session.cancelExport()
+            ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetExportSession.h:156:12: note: class 'AVAssetExportSession' does not conform to the 'Sendable' protocol
+@interface AVAssetExportSession : NSObject
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/ScreenRecorder.swift:395:35: warning: 'masterClock' was deprecated in macOS 12.3
+        writer.micClock = session.masterClock
+                                  ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:526:23: warning: capture of 'audioInput' with non-sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+                while audioInput.isReadyForMoreMediaData {
+                      ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:43:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:2:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+import AVFoundation
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:527:40: warning: capture of 'audioOutput' with non-sendable type 'AVAssetReaderTrackOutput' in a '@Sendable' closure
+                    guard let sample = audioOutput.copyNextSampleBuffer() else {
+                                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetReaderOutput.h:167:12: note: class 'AVAssetReaderTrackOutput' does not conform to the 'Sendable' protocol
+@interface AVAssetReaderTrackOutput : AVAssetReaderOutput
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:604:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+
+conformance of 'NSEvent' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode
+result of 'try?' is unused
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+capture of 'session' with non-sendable type 'AVAssetExportSession' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+'masterClock' was deprecated in macOS 12.3
+capture of 'audioInput' with non-sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+capture of 'audioOutput' with non-sendable type 'AVAssetReaderTrackOutput' in a '@Sendable' closure
+capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureHistory.swift:184:51: warning: non-sendable result type 'NSImage?' cannot be sent from nonisolated context in call to static method 'make(_:maxPixel:)'; this is an error in the Swift 6 language mode
+        .task(id: url) { image = await Thumbnails.make(url) }
+                                                  ^
+Swift.Optional:1:21: note: generic enum 'Optional' does not conform to the 'Sendable' protocol
+@frozen public enum Optional<Wrapped> : ~Copyable where Wrapped : ~Copyable {
+                    ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureOverlay.swift:107:23: warning: conformance of 'NSEvent' to 'Sendable' is unavailable; this is an error in the Swift 6 language mode
+            MainActor.assumeIsolated {
+                      ^
+note: conformance of 'NSEvent' to 'Sendable' has been explicitly marked unavailable here
+@_nonSendable(_assumed)
+^
+/Users/runner/work/transmute/transmute/Sources/Transmute/CaptureSelfTest.swift:609:13: warning: result of 'try?' is unused
+            try? history.add(file: url, kind: kind, width: Int(size.width), height: Int(size.height), duration: duration,
+            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/runner/work/transmute/transmute/Sources/Transmute/DragWheel.swift:177:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/DragWheel.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/FrameTool.swift:415:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/FrameTool.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/MediaConverter.swift:432:13: warning: capture of 'session' with non-sendable type 'AVAssetExportSession' in a '@Sendable' closure; this is an error in the Swift 6 language mode
+            session.cancelExport()
+            ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetExportSession.h:156:12: note: class 'AVAssetExportSession' does not conform to the 'Sendable' protocol
+@interface AVAssetExportSession : NSObject
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/ScreenRecorder.swift:395:35: warning: 'masterClock' was deprecated in macOS 12.3
+        writer.micClock = session.masterClock
+                                  ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:526:23: warning: capture of 'audioInput' with non-sendable type 'AVAssetWriterInput' in a '@Sendable' closure
+                while audioInput.isReadyForMoreMediaData {
+                      ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetWriterInput.h:43:12: note: class 'AVAssetWriterInput' does not conform to the 'Sendable' protocol
+@interface AVAssetWriterInput : NSObject
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:2:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'AVFoundation'
+import AVFoundation
+^
+@preconcurrency 
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:527:40: warning: capture of 'audioOutput' with non-sendable type 'AVAssetReaderTrackOutput' in a '@Sendable' closure
+                    guard let sample = audioOutput.copyNextSampleBuffer() else {
+                                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/AVFoundation.framework/Headers/AVAssetReaderOutput.h:167:12: note: class 'AVAssetReaderTrackOutput' does not conform to the 'Sendable' protocol
+@interface AVAssetReaderTrackOutput : AVAssetReaderOutput
+           ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:604:24: warning: capture of 'token' with non-sendable type '(any NSObjectProtocol)?' in a '@Sendable' closure
+                if let token { NotificationCenter.default.removeObserver(token) }
+                       ^
+/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/include/objc/NSObject.h:15:11: note: protocol 'NSObjectProtocol' does not conform to the 'Sendable' protocol
+@protocol NSObject
+          ^
+/Users/runner/work/transmute/transmute/Sources/Transmute/Studio.swift:1:1: warning: add '@preconcurrency' to suppress 'Sendable'-related warnings from module 'ObjectiveC'
+import AppKit
+^
+@preconcurrency 
+
+58%: Discovering Swift tasks after 'Compiling AnnotateExtras.swift, App.swift, AudioEditor.swift, Automation.swift, BackgroundTool.swift, CaptureChooser.swift, CaptureCoordinator.swift, CaptureHistory.swift, CaptureOverlay.swift, CaptureSelfTest.swift, CaptureSelfTest2.swift, CaptureSelfTest3.swift, CaptureSupport.swift, CaptureViews.swift, ContentView.swift, DocumentTools.swift, DragWheel.swift, Engine.swift, Feedback.swift, FloatingShelf.swift, Formats.swift, FrameTool.swift, Hotkeys.swift, ImageConverter.swift, ImageEditor.swift, JobQueue.swift, MediaConverter.swift, MetadataEditor.swift, OfficeConverter.swift, PinWindow.swift, QuickAccess.swift, ScreenRecorder.swift, ScrollCapture.swift, SelfTest.swift, Shell.swift, Snapshots.swift, Studio.swift, TextRecognition.swift, Theme.swift, VideoEditor.swift, WheelEditor.swift, WheelLayout.swift'
+58%: Unblock downstream dependents of Transmute (arm64)
+58%: Discovering Swift tasks after 'Compiling AnnotateExtras.swift, App.swift, AudioEditor.swift, Automation.swift, BackgroundTool.swift, CaptureChooser.swift, CaptureCoordinator.swift, CaptureHistory.swift, CaptureOverlay.swift, CaptureSelfTest.swift, CaptureSelfTest2.swift, CaptureSelfTest3.swift, CaptureSupport.swift, CaptureViews.swift, ContentView.swift, DocumentTools.swift, DragWheel.swift, Engine.swift, Feedback.swift, FloatingShelf.swift, Formats.swift, FrameTool.swift, Hotkeys.swift, ImageConverter.swift, ImageEditor.swift, JobQueue.swift, MediaConverter.swift, MetadataEditor.swift, OfficeConverter.swift, PinWindow.swift, QuickAccess.swift, ScreenRecorder.swift, ScrollCapture.swift, SelfTest.swift, Shell.swift, Snapshots.swift, Studio.swift, TextRecognition.swift, Theme.swift, VideoEditor.swift, WheelEditor.swift, WheelLayout.swift'
+58%: Copy Transmute.swiftmodule (arm64)
+58%: Link Transmute (arm64)
+58%: Unblock downstream dependents of Transmute (x86_64)
+58%: Copy Transmute.swiftdoc (arm64)
+58%: Copy Transmute.abi.json (arm64)
+73%: Copy Transmute.swiftsourceinfo (arm64)
+73%: Link Transmute (x86_64)
+73%: Copy Transmute.swiftmodule (x86_64)
+73%: Copy Transmute.swiftdoc (x86_64)
+73%: Copy Transmute.abi.json (x86_64)
+73%: Copy Transmute.swiftsourceinfo (x86_64)
+91%: Create universal binary Transmute
+91%: Generate Transmute.dSYM for Transmute
+97%: Register execution policy exception for Transmute
+100%: Build succeeded
+Build complete!
+build/Spinform.app/Contents/MacOS/ffmpeg: replacing existing signature
+==> Bundled ffmpeg
+build/Spinform.app: replacing existing signature
+==> Built build/Spinform.app
+Run it with:  open build/Spinform.app
