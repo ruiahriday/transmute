@@ -94,7 +94,7 @@ static partial class SmokeTest
                     pixels[i + 3] = 255;
                 }
             var bitmap = System.Windows.Media.Imaging.BitmapSource.Create(pw, ph, dpi, dpi, PixelFormats.Bgra32, null, pixels, pw * 4);
-            var image = new Image { Source = bitmap, Stretch = Stretch.None, SnapsToDevicePixels = true };
+            var image = new Image { Source = bitmap, Stretch = Stretch.None, SnapsToDevicePixels = true, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
             RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
             var pattern = new Window { Content = image, SizeToContent = SizeToContent.WidthAndHeight, WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false, UseLayoutRounding = true, Title = "Pattern" };
             pattern.WindowStartupLocation = WindowStartupLocation.Manual;
