@@ -1,0 +1,2736 @@
+﻿2026-10-23 07:17:10.095   Log opened. (Time zone: UTC+00:00)
+2026-10-23 07:17:10.095   Setup version: Inno Setup version 6.7.1
+2026-10-23 07:17:10.095   Original Setup EXE: D:\a\transmute\transmute\windows\out\previous\Spinform-Setup-x64.exe
+2026-10-23 07:17:10.095   Setup command line: /SL5="$3016E,219437701,889856,D:\a\transmute\transmute\windows\out\previous\Spinform-Setup-x64.exe" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /TASKS=contextmenu /LOG="D:\a\transmute\transmute\windows\out\logs\install-previous-x64.log"
+2026-10-23 07:17:10.095   Windows version: 10.0.26100
+2026-10-23 07:17:10.095   Windows architecture: x64 (64-bit)
+2026-10-23 07:17:10.095   Machine types supported by system: x86 x64
+2026-10-23 07:17:10.095   User privileges: Administrative
+2026-10-23 07:17:10.101   Administrative install mode: No
+2026-10-23 07:17:10.101   Install mode root key: HKEY_CURRENT_USER
+2026-10-23 07:17:10.101   64-bit install mode: Yes
+2026-10-23 07:17:10.101   RedirectionGuard status for current process: Enabled in enforcing mode
+2026-10-23 07:17:10.103   Created protected temporary directory: C:\Users\RUNNER~1\AppData\Local\Temp\is-5BC5VJFYCH.tmp
+2026-10-23 07:17:10.734   Found 507 files to register with RestartManager.
+2026-10-23 07:17:10.734   Calling RestartManager's RmGetList.
+2026-10-23 07:17:10.750   RmGetList finished successfully.
+2026-10-23 07:17:10.750   RestartManager found no applications using one of our files.
+2026-10-23 07:17:10.752   Starting the installation process.
+2026-10-23 07:17:10.755   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform
+2026-10-23 07:17:10.755   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\models
+2026-10-23 07:17:10.755   Directory for uninstall files: C:\Users\runneradmin\AppData\Local\Programs\Spinform
+2026-10-23 07:17:10.755   Creating new uninstall log: C:\Users\runneradmin\AppData\Local\Programs\Spinform\unins000.dat
+2026-10-23 07:17:10.840   -- File entry --
+2026-10-23 07:17:10.840   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\unins000.exe
+2026-10-23 07:17:10.840   Non-default bitness: 32-bit
+2026-10-23 07:17:10.972   Time stamp of our file: 2026-10-23 07:17:09.618
+2026-10-23 07:17:10.972   Installing the file.
+2026-10-23 07:17:10.985   Successfully installed the file.
+2026-10-23 07:17:10.985   -- File entry --
+2026-10-23 07:17:10.985   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Accessibility.dll
+2026-10-23 07:17:10.985   Time stamp of our file: 2026-08-21 21:55:46.000
+2026-10-23 07:17:10.985   Installing the file.
+2026-10-23 07:17:10.987   Successfully installed the file.
+2026-10-23 07:17:10.987   -- File entry --
+2026-10-23 07:17:10.987   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\clretwrc.dll
+2026-10-23 07:17:10.987   Time stamp of our file: 2026-08-20 21:03:28.000
+2026-10-23 07:17:10.987   Installing the file.
+2026-10-23 07:17:10.995   Successfully installed the file.
+2026-10-23 07:17:10.995   -- File entry --
+2026-10-23 07:17:10.995   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\clrgc.dll
+2026-10-23 07:17:10.995   Time stamp of our file: 2026-08-20 21:01:24.000
+2026-10-23 07:17:10.995   Installing the file.
+2026-10-23 07:17:11.010   Successfully installed the file.
+2026-10-23 07:17:11.010   -- File entry --
+2026-10-23 07:17:11.010   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\clrjit.dll
+2026-10-23 07:17:11.012   Time stamp of our file: 2026-08-20 21:00:36.000
+2026-10-23 07:17:11.012   Installing the file.
+2026-10-23 07:17:11.056   Successfully installed the file.
+2026-10-23 07:17:11.056   -- File entry --
+2026-10-23 07:17:11.056   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\coreclr.dll
+2026-10-23 07:17:11.057   Time stamp of our file: 2026-08-20 20:57:48.000
+2026-10-23 07:17:11.057   Installing the file.
+2026-10-23 07:17:11.167   Successfully installed the file.
+2026-10-23 07:17:11.167   -- File entry --
+2026-10-23 07:17:11.167   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\createdump.exe
+2026-10-23 07:17:11.167   Time stamp of our file: 2026-08-20 21:03:28.000
+2026-10-23 07:17:11.167   Installing the file.
+2026-10-23 07:17:11.169   Successfully installed the file.
+2026-10-23 07:17:11.169   -- File entry --
+2026-10-23 07:17:11.169   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\D3DCompiler_47_cor3.dll
+2026-10-23 07:17:11.169   Time stamp of our file: 2026-01-27 06:18:40.000
+2026-10-23 07:17:11.169   Installing the file.
+2026-10-23 07:17:11.279   Successfully installed the file.
+2026-10-23 07:17:11.279   -- File entry --
+2026-10-23 07:17:11.279   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\DirectWriteForwarder.dll
+2026-10-23 07:17:11.279   Time stamp of our file: 2026-08-22 00:39:22.000
+2026-10-23 07:17:11.279   Installing the file.
+2026-10-23 07:17:11.292   Successfully installed the file.
+2026-10-23 07:17:11.293   -- File entry --
+2026-10-23 07:17:11.293   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\DocumentFormat.OpenXml.dll
+2026-10-23 07:17:11.293   Time stamp of our file: 2026-01-06 19:41:52.000
+2026-10-23 07:17:11.293   Installing the file.
+2026-10-23 07:17:11.396   Successfully installed the file.
+2026-10-23 07:17:11.396   -- File entry --
+2026-10-23 07:17:11.396   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\DocumentFormat.OpenXml.Framework.dll
+2026-10-23 07:17:11.396   Time stamp of our file: 2026-01-06 19:41:52.000
+2026-10-23 07:17:11.396   Installing the file.
+2026-10-23 07:17:11.406   Successfully installed the file.
+2026-10-23 07:17:11.406   -- File entry --
+2026-10-23 07:17:11.406   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ExcelDataReader.dll
+2026-10-23 07:17:11.406   Time stamp of our file: 2025-09-21 18:52:10.000
+2026-10-23 07:17:11.406   Installing the file.
+2026-10-23 07:17:11.411   Successfully installed the file.
+2026-10-23 07:17:11.411   -- File entry --
+2026-10-23 07:17:11.411   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\hostfxr.dll
+2026-10-23 07:17:11.411   Time stamp of our file: 2026-08-20 21:13:26.000
+2026-10-23 07:17:11.411   Installing the file.
+2026-10-23 07:17:11.424   Successfully installed the file.
+2026-10-23 07:17:11.424   -- File entry --
+2026-10-23 07:17:11.424   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\hostpolicy.dll
+2026-10-23 07:17:11.425   Time stamp of our file: 2026-08-20 21:13:28.000
+2026-10-23 07:17:11.425   Installing the file.
+2026-10-23 07:17:11.435   Successfully installed the file.
+2026-10-23 07:17:11.435   -- File entry --
+2026-10-23 07:17:11.435   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\HtmlAgilityPack.dll
+2026-10-23 07:17:11.435   Time stamp of our file: 2025-10-03 14:39:14.000
+2026-10-23 07:17:11.435   Installing the file.
+2026-10-23 07:17:11.438   Successfully installed the file.
+2026-10-23 07:17:11.438   -- File entry --
+2026-10-23 07:17:11.440   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\libSkiaSharp.dll
+2026-10-23 07:17:11.440   Time stamp of our file: 2026-07-14 05:38:58.000
+2026-10-23 07:17:11.440   Installing the file.
+2026-10-23 07:17:11.685   Successfully installed the file.
+2026-10-23 07:17:11.685   -- File entry --
+2026-10-23 07:17:11.685   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\libSkiaSharp.pdb
+2026-10-23 07:17:11.685   Time stamp of our file: 2026-07-14 03:39:16.000
+2026-10-23 07:17:11.685   Installing the file.
+2026-10-23 07:17:12.824   Successfully installed the file.
+2026-10-23 07:17:12.824   -- File entry --
+2026-10-23 07:17:12.824   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Magick.Native-Q8-x64.dll
+2026-10-23 07:17:12.825   Time stamp of our file: 2026-09-27 14:51:52.000
+2026-10-23 07:17:12.825   Installing the file.
+2026-10-23 07:17:13.307   Successfully installed the file.
+2026-10-23 07:17:13.307   -- File entry --
+2026-10-23 07:17:13.307   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Magick.NET-Q8-AnyCPU.dll
+2026-10-23 07:17:13.307   Time stamp of our file: 2026-09-27 14:51:52.000
+2026-10-23 07:17:13.307   Installing the file.
+2026-10-23 07:17:13.327   Successfully installed the file.
+2026-10-23 07:17:13.327   -- File entry --
+2026-10-23 07:17:13.327   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Magick.NET.Core.dll
+2026-10-23 07:17:13.327   Time stamp of our file: 2026-09-27 14:52:06.000
+2026-10-23 07:17:13.327   Installing the file.
+2026-10-23 07:17:13.592   Successfully installed the file.
+2026-10-23 07:17:13.592   -- File entry --
+2026-10-23 07:17:13.592   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Markdig.dll
+2026-10-23 07:17:13.592   Time stamp of our file: 2026-09-20 07:59:42.000
+2026-10-23 07:17:13.592   Installing the file.
+2026-10-23 07:17:13.604   Successfully installed the file.
+2026-10-23 07:17:13.604   -- File entry --
+2026-10-23 07:17:13.604   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.CSharp.dll
+2026-10-23 07:17:13.604   Time stamp of our file: 2026-08-20 21:23:32.000
+2026-10-23 07:17:13.604   Installing the file.
+2026-10-23 07:17:13.631   Successfully installed the file.
+2026-10-23 07:17:13.631   -- File entry --
+2026-10-23 07:17:13.631   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.DiaSymReader.Native.amd64.dll
+2026-10-23 07:17:13.631   Time stamp of our file: 2026-08-05 14:09:02.000
+2026-10-23 07:17:13.631   Installing the file.
+2026-10-23 07:17:13.682   Successfully installed the file.
+2026-10-23 07:17:13.682   -- File entry --
+2026-10-23 07:17:13.682   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+2026-10-23 07:17:13.682   Time stamp of our file: 2024-09-16 23:09:34.000
+2026-10-23 07:17:13.682   Installing the file.
+2026-10-23 07:17:13.684   Successfully installed the file.
+2026-10-23 07:17:13.684   -- File entry --
+2026-10-23 07:17:13.684   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Extensions.Logging.Abstractions.dll
+2026-10-23 07:17:13.684   Time stamp of our file: 2025-01-16 18:55:40.000
+2026-10-23 07:17:13.684   Installing the file.
+2026-10-23 07:17:13.687   Successfully installed the file.
+2026-10-23 07:17:13.687   -- File entry --
+2026-10-23 07:17:13.687   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.ML.OnnxRuntime.dll
+2026-10-23 07:17:13.687   Time stamp of our file: 2026-09-10 08:08:08.000
+2026-10-23 07:17:13.687   Installing the file.
+2026-10-23 07:17:13.692   Successfully installed the file.
+2026-10-23 07:17:13.692   -- File entry --
+2026-10-23 07:17:13.692   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.VisualBasic.Core.dll
+2026-10-23 07:17:13.692   Time stamp of our file: 2026-08-20 21:23:36.000
+2026-10-23 07:17:13.692   Installing the file.
+2026-10-23 07:17:13.723   Successfully installed the file.
+2026-10-23 07:17:13.723   -- File entry --
+2026-10-23 07:17:13.723   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.VisualBasic.dll
+2026-10-23 07:17:13.723   Time stamp of our file: 2026-08-21 21:57:00.000
+2026-10-23 07:17:13.723   Installing the file.
+2026-10-23 07:17:13.727   Successfully installed the file.
+2026-10-23 07:17:13.727   -- File entry --
+2026-10-23 07:17:13.727   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.VisualBasic.Forms.dll
+2026-10-23 07:17:13.727   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:13.727   Installing the file.
+2026-10-23 07:17:13.733   Successfully installed the file.
+2026-10-23 07:17:13.733   -- File entry --
+2026-10-23 07:17:13.733   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Win32.Primitives.dll
+2026-10-23 07:17:13.733   Time stamp of our file: 2026-08-20 21:16:28.000
+2026-10-23 07:17:13.733   Installing the file.
+2026-10-23 07:17:13.735   Successfully installed the file.
+2026-10-23 07:17:13.735   -- File entry --
+2026-10-23 07:17:13.735   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Win32.Registry.AccessControl.dll
+2026-10-23 07:17:13.735   Time stamp of our file: 2026-08-22 00:39:12.000
+2026-10-23 07:17:13.735   Installing the file.
+2026-10-23 07:17:13.735   Successfully installed the file.
+2026-10-23 07:17:13.736   -- File entry --
+2026-10-23 07:17:13.736   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Win32.Registry.dll
+2026-10-23 07:17:13.736   Time stamp of our file: 2026-08-20 21:23:38.000
+2026-10-23 07:17:13.736   Installing the file.
+2026-10-23 07:17:13.739   Successfully installed the file.
+2026-10-23 07:17:13.739   -- File entry --
+2026-10-23 07:17:13.739   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Win32.SystemEvents.dll
+2026-10-23 07:17:13.740   Time stamp of our file: 2026-08-22 00:39:12.000
+2026-10-23 07:17:13.740   Installing the file.
+2026-10-23 07:17:13.742   Successfully installed the file.
+2026-10-23 07:17:13.743   -- File entry --
+2026-10-23 07:17:13.743   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Microsoft.Windows.SDK.NET.dll
+2026-10-23 07:17:13.743   Time stamp of our file: 2024-11-11 17:23:42.000
+2026-10-23 07:17:13.743   Installing the file.
+2026-10-23 07:17:14.091   Successfully installed the file.
+2026-10-23 07:17:14.091   -- File entry --
+2026-10-23 07:17:14.091   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\MigraDoc.DocumentObjectModel.dll
+2026-10-23 07:17:14.091   Time stamp of our file: 2026-01-06 10:10:34.000
+2026-10-23 07:17:14.091   Installing the file.
+2026-10-23 07:17:14.099   Successfully installed the file.
+2026-10-23 07:17:14.099   -- File entry --
+2026-10-23 07:17:14.099   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\MigraDoc.Rendering.dll
+2026-10-23 07:17:14.099   Time stamp of our file: 2026-01-06 10:11:14.000
+2026-10-23 07:17:14.099   Installing the file.
+2026-10-23 07:17:14.105   Successfully installed the file.
+2026-10-23 07:17:14.105   -- File entry --
+2026-10-23 07:17:14.105   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\MigraDoc.RtfRendering.dll
+2026-10-23 07:17:14.105   Time stamp of our file: 2026-01-06 10:11:16.000
+2026-10-23 07:17:14.105   Installing the file.
+2026-10-23 07:17:14.107   Successfully installed the file.
+2026-10-23 07:17:14.107   -- File entry --
+2026-10-23 07:17:14.107   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\mscordaccore.dll
+2026-10-23 07:17:14.107   Time stamp of our file: 2026-08-20 21:06:14.000
+2026-10-23 07:17:14.107   Installing the file.
+2026-10-23 07:17:14.141   Successfully installed the file.
+2026-10-23 07:17:14.141   -- File entry --
+2026-10-23 07:17:14.141   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\mscordaccore_amd64_amd64_8.0.3126.42015.dll
+2026-10-23 07:17:14.142   Time stamp of our file: 2026-08-20 21:06:14.000
+2026-10-23 07:17:14.142   Installing the file.
+2026-10-23 07:17:14.151   Successfully installed the file.
+2026-10-23 07:17:14.151   -- File entry --
+2026-10-23 07:17:14.151   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\mscordbi.dll
+2026-10-23 07:17:14.151   Time stamp of our file: 2026-08-20 21:06:04.000
+2026-10-23 07:17:14.151   Installing the file.
+2026-10-23 07:17:14.173   Successfully installed the file.
+2026-10-23 07:17:14.173   -- File entry --
+2026-10-23 07:17:14.173   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\mscorlib.dll
+2026-10-23 07:17:14.173   Time stamp of our file: 2026-08-20 21:18:30.000
+2026-10-23 07:17:14.173   Installing the file.
+2026-10-23 07:17:14.175   Successfully installed the file.
+2026-10-23 07:17:14.175   -- File entry --
+2026-10-23 07:17:14.176   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\mscorrc.dll
+2026-10-23 07:17:14.176   Time stamp of our file: 2026-08-20 21:03:32.000
+2026-10-23 07:17:14.176   Installing the file.
+2026-10-23 07:17:14.178   Successfully installed the file.
+2026-10-23 07:17:14.178   -- File entry --
+2026-10-23 07:17:14.178   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\msquic.dll
+2026-10-23 07:17:14.179   Time stamp of our file: 2026-08-11 21:41:52.000
+2026-10-23 07:17:14.179   Installing the file.
+2026-10-23 07:17:14.192   Successfully installed the file.
+2026-10-23 07:17:14.192   -- File entry --
+2026-10-23 07:17:14.192   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\NAudio.Core.dll
+2026-10-23 07:17:14.192   Time stamp of our file: 2023-09-04 19:49:42.000
+2026-10-23 07:17:14.192   Installing the file.
+2026-10-23 07:17:14.196   Successfully installed the file.
+2026-10-23 07:17:14.196   -- File entry --
+2026-10-23 07:17:14.196   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\NAudio.Wasapi.dll
+2026-10-23 07:17:14.196   Time stamp of our file: 2023-09-04 19:49:44.000
+2026-10-23 07:17:14.196   Installing the file.
+2026-10-23 07:17:14.201   Successfully installed the file.
+2026-10-23 07:17:14.201   -- File entry --
+2026-10-23 07:17:14.201   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\netstandard.dll
+2026-10-23 07:17:14.201   Time stamp of our file: 2026-08-20 21:18:30.000
+2026-10-23 07:17:14.201   Installing the file.
+2026-10-23 07:17:14.203   Successfully installed the file.
+2026-10-23 07:17:14.203   -- File entry --
+2026-10-23 07:17:14.203   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\onnxruntime.dll
+2026-10-23 07:17:14.203   Time stamp of our file: 2026-09-10 07:02:20.000
+2026-10-23 07:17:14.203   Installing the file.
+2026-10-23 07:17:14.468   Successfully installed the file.
+2026-10-23 07:17:14.468   -- File entry --
+2026-10-23 07:17:14.468   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\onnxruntime.lib
+2026-10-23 07:17:14.470   Time stamp of our file: 2026-09-10 06:47:04.000
+2026-10-23 07:17:14.470   Installing the file.
+2026-10-23 07:17:14.470   Successfully installed the file.
+2026-10-23 07:17:14.470   -- File entry --
+2026-10-23 07:17:14.470   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\onnxruntime_providers_shared.dll
+2026-10-23 07:17:14.470   Time stamp of our file: 2026-09-10 07:00:18.000
+2026-10-23 07:17:14.470   Installing the file.
+2026-10-23 07:17:14.472   Successfully installed the file.
+2026-10-23 07:17:14.472   -- File entry --
+2026-10-23 07:17:14.472   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\onnxruntime_providers_shared.lib
+2026-10-23 07:17:14.472   Time stamp of our file: 2026-09-10 06:45:18.000
+2026-10-23 07:17:14.472   Installing the file.
+2026-10-23 07:17:14.473   Successfully installed the file.
+2026-10-23 07:17:14.473   -- File entry --
+2026-10-23 07:17:14.473   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pdfium.dll
+2026-10-23 07:17:14.473   Time stamp of our file: 2026-07-20 08:25:22.000
+2026-10-23 07:17:14.473   Installing the file.
+2026-10-23 07:17:14.784   Successfully installed the file.
+2026-10-23 07:17:14.784   -- File entry --
+2026-10-23 07:17:14.784   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.BarCodes.dll
+2026-10-23 07:17:14.784   Time stamp of our file: 2026-01-06 10:11:10.000
+2026-10-23 07:17:14.784   Installing the file.
+2026-10-23 07:17:14.786   Successfully installed the file.
+2026-10-23 07:17:14.786   -- File entry --
+2026-10-23 07:17:14.786   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.Charting.dll
+2026-10-23 07:17:14.786   Time stamp of our file: 2026-01-06 10:10:54.000
+2026-10-23 07:17:14.786   Installing the file.
+2026-10-23 07:17:14.788   Successfully installed the file.
+2026-10-23 07:17:14.788   -- File entry --
+2026-10-23 07:17:14.789   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.Cryptography.dll
+2026-10-23 07:17:14.789   Time stamp of our file: 2026-01-06 10:10:34.000
+2026-10-23 07:17:14.789   Installing the file.
+2026-10-23 07:17:14.790   Successfully installed the file.
+2026-10-23 07:17:14.790   -- File entry --
+2026-10-23 07:17:14.790   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.dll
+2026-10-23 07:17:14.790   Time stamp of our file: 2026-01-06 10:10:36.000
+2026-10-23 07:17:14.790   Installing the file.
+2026-10-23 07:17:14.859   Successfully installed the file.
+2026-10-23 07:17:14.859   -- File entry --
+2026-10-23 07:17:14.859   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.Quality.dll
+2026-10-23 07:17:14.860   Time stamp of our file: 2026-01-06 10:11:10.000
+2026-10-23 07:17:14.860   Installing the file.
+2026-10-23 07:17:14.861   Successfully installed the file.
+2026-10-23 07:17:14.861   -- File entry --
+2026-10-23 07:17:14.861   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.Shared.dll
+2026-10-23 07:17:14.861   Time stamp of our file: 2026-01-06 10:09:32.000
+2026-10-23 07:17:14.861   Installing the file.
+2026-10-23 07:17:14.864   Successfully installed the file.
+2026-10-23 07:17:14.864   -- File entry --
+2026-10-23 07:17:14.864   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.Snippets.dll
+2026-10-23 07:17:14.864   Time stamp of our file: 2026-01-06 10:11:26.000
+2026-10-23 07:17:14.864   Installing the file.
+2026-10-23 07:17:14.868   Successfully installed the file.
+2026-10-23 07:17:14.868   -- File entry --
+2026-10-23 07:17:14.868   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.System.dll
+2026-10-23 07:17:14.868   Time stamp of our file: 2026-01-06 10:09:42.000
+2026-10-23 07:17:14.868   Installing the file.
+2026-10-23 07:17:14.868   Successfully installed the file.
+2026-10-23 07:17:14.868   -- File entry --
+2026-10-23 07:17:14.868   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PdfSharp.WPFonts.dll
+2026-10-23 07:17:14.869   Time stamp of our file: 2026-01-06 10:09:24.000
+2026-10-23 07:17:14.869   Installing the file.
+2026-10-23 07:17:14.880   Successfully installed the file.
+2026-10-23 07:17:14.880   -- File entry --
+2026-10-23 07:17:14.880   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PDFtoImage.dll
+2026-10-23 07:17:14.880   Time stamp of our file: 2026-07-28 12:58:46.000
+2026-10-23 07:17:14.880   Installing the file.
+2026-10-23 07:17:14.882   Successfully installed the file.
+2026-10-23 07:17:14.882   -- File entry --
+2026-10-23 07:17:14.882   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PenImc_cor3.dll
+2026-10-23 07:17:14.882   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:14.882   Installing the file.
+2026-10-23 07:17:14.886   Successfully installed the file.
+2026-10-23 07:17:14.886   -- File entry --
+2026-10-23 07:17:14.886   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationCore.dll
+2026-10-23 07:17:14.886   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:14.886   Installing the file.
+2026-10-23 07:17:15.066   Successfully installed the file.
+2026-10-23 07:17:15.066   -- File entry --
+2026-10-23 07:17:15.066   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework-SystemCore.dll
+2026-10-23 07:17:15.066   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.066   Installing the file.
+2026-10-23 07:17:15.068   Successfully installed the file.
+2026-10-23 07:17:15.068   -- File entry --
+2026-10-23 07:17:15.068   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework-SystemData.dll
+2026-10-23 07:17:15.068   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.068   Installing the file.
+2026-10-23 07:17:15.074   Successfully installed the file.
+2026-10-23 07:17:15.074   -- File entry --
+2026-10-23 07:17:15.074   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework-SystemDrawing.dll
+2026-10-23 07:17:15.074   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.074   Installing the file.
+2026-10-23 07:17:15.076   Successfully installed the file.
+2026-10-23 07:17:15.076   -- File entry --
+2026-10-23 07:17:15.076   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework-SystemXml.dll
+2026-10-23 07:17:15.076   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.076   Installing the file.
+2026-10-23 07:17:15.078   Successfully installed the file.
+2026-10-23 07:17:15.078   -- File entry --
+2026-10-23 07:17:15.078   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework-SystemXmlLinq.dll
+2026-10-23 07:17:15.078   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.078   Installing the file.
+2026-10-23 07:17:15.078   Successfully installed the file.
+2026-10-23 07:17:15.078   -- File entry --
+2026-10-23 07:17:15.078   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.Aero.dll
+2026-10-23 07:17:15.078   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.078   Installing the file.
+2026-10-23 07:17:15.088   Successfully installed the file.
+2026-10-23 07:17:15.088   -- File entry --
+2026-10-23 07:17:15.088   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.Aero2.dll
+2026-10-23 07:17:15.088   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.088   Installing the file.
+2026-10-23 07:17:15.095   Successfully installed the file.
+2026-10-23 07:17:15.095   -- File entry --
+2026-10-23 07:17:15.096   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.AeroLite.dll
+2026-10-23 07:17:15.096   Time stamp of our file: 2026-08-22 00:39:24.000
+2026-10-23 07:17:15.096   Installing the file.
+2026-10-23 07:17:15.100   Successfully installed the file.
+2026-10-23 07:17:15.100   -- File entry --
+2026-10-23 07:17:15.100   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.Classic.dll
+2026-10-23 07:17:15.100   Time stamp of our file: 2026-08-22 00:39:26.000
+2026-10-23 07:17:15.100   Installing the file.
+2026-10-23 07:17:15.104   Successfully installed the file.
+2026-10-23 07:17:15.104   -- File entry --
+2026-10-23 07:17:15.104   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.dll
+2026-10-23 07:17:15.104   Time stamp of our file: 2026-08-22 00:39:30.000
+2026-10-23 07:17:15.104   Installing the file.
+2026-10-23 07:17:15.444   Successfully installed the file.
+2026-10-23 07:17:15.446   -- File entry --
+2026-10-23 07:17:15.446   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.Luna.dll
+2026-10-23 07:17:15.446   Time stamp of our file: 2026-08-22 00:39:26.000
+2026-10-23 07:17:15.446   Installing the file.
+2026-10-23 07:17:15.461   Successfully installed the file.
+2026-10-23 07:17:15.461   -- File entry --
+2026-10-23 07:17:15.461   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationFramework.Royale.dll
+2026-10-23 07:17:15.461   Time stamp of our file: 2026-08-22 00:39:26.000
+2026-10-23 07:17:15.461   Installing the file.
+2026-10-23 07:17:15.466   Successfully installed the file.
+2026-10-23 07:17:15.466   -- File entry --
+2026-10-23 07:17:15.466   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationNative_cor3.dll
+2026-10-23 07:17:15.466   Time stamp of our file: 2026-06-10 06:13:08.000
+2026-10-23 07:17:15.466   Installing the file.
+2026-10-23 07:17:15.493   Successfully installed the file.
+2026-10-23 07:17:15.493   -- File entry --
+2026-10-23 07:17:15.493   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\PresentationUI.dll
+2026-10-23 07:17:15.493   Time stamp of our file: 2026-08-22 00:39:32.000
+2026-10-23 07:17:15.493   Installing the file.
+2026-10-23 07:17:15.520   Successfully installed the file.
+2026-10-23 07:17:15.520   -- File entry --
+2026-10-23 07:17:15.522   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ReachFramework.dll
+2026-10-23 07:17:15.522   Time stamp of our file: 2026-08-22 00:39:32.000
+2026-10-23 07:17:15.522   Installing the file.
+2026-10-23 07:17:15.557   Successfully installed the file.
+2026-10-23 07:17:15.557   -- File entry --
+2026-10-23 07:17:15.557   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\SharpCompress.dll
+2026-10-23 07:17:15.557   Time stamp of our file: 2026-10-19 10:11:32.000
+2026-10-23 07:17:15.557   Installing the file.
+2026-10-23 07:17:15.604   Successfully installed the file.
+2026-10-23 07:17:15.604   -- File entry --
+2026-10-23 07:17:15.606   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\SkiaSharp.dll
+2026-10-23 07:17:15.606   Time stamp of our file: 2026-07-14 05:35:42.000
+2026-10-23 07:17:15.606   Installing the file.
+2026-10-23 07:17:15.616   Successfully installed the file.
+2026-10-23 07:17:15.616   -- File entry --
+2026-10-23 07:17:15.616   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Spinform.deps.json
+2026-10-23 07:17:15.616   Time stamp of our file: 2026-10-23 02:06:48.000
+2026-10-23 07:17:15.616   Installing the file.
+2026-10-23 07:17:15.616   Successfully installed the file.
+2026-10-23 07:17:15.616   -- File entry --
+2026-10-23 07:17:15.616   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Spinform.dll
+2026-10-23 07:17:15.616   Time stamp of our file: 2026-10-23 02:06:48.000
+2026-10-23 07:17:15.616   Installing the file.
+2026-10-23 07:17:15.633   Successfully installed the file.
+2026-10-23 07:17:15.633   -- File entry --
+2026-10-23 07:17:15.634   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Spinform.exe
+2026-10-23 07:17:15.634   Time stamp of our file: 2026-10-23 02:06:48.000
+2026-10-23 07:17:15.634   Installing the file.
+2026-10-23 07:17:15.637   Successfully installed the file.
+2026-10-23 07:17:15.637   -- File entry --
+2026-10-23 07:17:15.638   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Spinform.pdb
+2026-10-23 07:17:15.638   Time stamp of our file: 2026-10-23 02:06:48.000
+2026-10-23 07:17:15.638   Installing the file.
+2026-10-23 07:17:15.642   Successfully installed the file.
+2026-10-23 07:17:15.642   -- File entry --
+2026-10-23 07:17:15.642   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Spinform.runtimeconfig.json
+2026-10-23 07:17:15.642   Time stamp of our file: 2026-10-23 02:06:48.000
+2026-10-23 07:17:15.642   Installing the file.
+2026-10-23 07:17:15.642   Successfully installed the file.
+2026-10-23 07:17:15.642   -- File entry --
+2026-10-23 07:17:15.642   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.AppContext.dll
+2026-10-23 07:17:15.642   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:15.642   Installing the file.
+2026-10-23 07:17:15.644   Successfully installed the file.
+2026-10-23 07:17:15.644   -- File entry --
+2026-10-23 07:17:15.644   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Buffers.dll
+2026-10-23 07:17:15.644   Time stamp of our file: 2026-08-20 21:17:08.000
+2026-10-23 07:17:15.644   Installing the file.
+2026-10-23 07:17:15.645   Successfully installed the file.
+2026-10-23 07:17:15.645   -- File entry --
+2026-10-23 07:17:15.645   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.CodeDom.dll
+2026-10-23 07:17:15.645   Time stamp of our file: 2026-08-22 00:39:12.000
+2026-10-23 07:17:15.645   Installing the file.
+2026-10-23 07:17:15.656   Successfully installed the file.
+2026-10-23 07:17:15.656   -- File entry --
+2026-10-23 07:17:15.656   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Collections.Concurrent.dll
+2026-10-23 07:17:15.656   Time stamp of our file: 2026-08-20 21:23:42.000
+2026-10-23 07:17:15.656   Installing the file.
+2026-10-23 07:17:15.664   Successfully installed the file.
+2026-10-23 07:17:15.664   -- File entry --
+2026-10-23 07:17:15.664   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Collections.dll
+2026-10-23 07:17:15.664   Time stamp of our file: 2026-08-20 21:23:44.000
+2026-10-23 07:17:15.664   Installing the file.
+2026-10-23 07:17:15.669   Successfully installed the file.
+2026-10-23 07:17:15.671   -- File entry --
+2026-10-23 07:17:15.671   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Collections.Immutable.dll
+2026-10-23 07:17:15.671   Time stamp of our file: 2026-08-20 21:23:48.000
+2026-10-23 07:17:15.671   Installing the file.
+2026-10-23 07:17:15.689   Successfully installed the file.
+2026-10-23 07:17:15.689   -- File entry --
+2026-10-23 07:17:15.689   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Collections.NonGeneric.dll
+2026-10-23 07:17:15.689   Time stamp of our file: 2026-08-20 21:23:50.000
+2026-10-23 07:17:15.689   Installing the file.
+2026-10-23 07:17:15.691   Successfully installed the file.
+2026-10-23 07:17:15.691   -- File entry --
+2026-10-23 07:17:15.691   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Collections.Specialized.dll
+2026-10-23 07:17:15.691   Time stamp of our file: 2026-08-20 21:23:54.000
+2026-10-23 07:17:15.691   Installing the file.
+2026-10-23 07:17:15.697   Successfully installed the file.
+2026-10-23 07:17:15.697   -- File entry --
+2026-10-23 07:17:15.697   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.Annotations.dll
+2026-10-23 07:17:15.697   Time stamp of our file: 2026-08-20 21:23:56.000
+2026-10-23 07:17:15.697   Installing the file.
+2026-10-23 07:17:15.701   Successfully installed the file.
+2026-10-23 07:17:15.701   -- File entry --
+2026-10-23 07:17:15.701   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.DataAnnotations.dll
+2026-10-23 07:17:15.701   Time stamp of our file: 2026-08-20 21:17:28.000
+2026-10-23 07:17:15.701   Installing the file.
+2026-10-23 07:17:15.703   Successfully installed the file.
+2026-10-23 07:17:15.703   -- File entry --
+2026-10-23 07:17:15.703   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.dll
+2026-10-23 07:17:15.703   Time stamp of our file: 2026-08-20 21:24:00.000
+2026-10-23 07:17:15.703   Installing the file.
+2026-10-23 07:17:15.703   Successfully installed the file.
+2026-10-23 07:17:15.703   -- File entry --
+2026-10-23 07:17:15.703   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.EventBasedAsync.dll
+2026-10-23 07:17:15.705   Time stamp of our file: 2026-08-20 21:24:02.000
+2026-10-23 07:17:15.705   Installing the file.
+2026-10-23 07:17:15.705   Successfully installed the file.
+2026-10-23 07:17:15.705   -- File entry --
+2026-10-23 07:17:15.705   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.Primitives.dll
+2026-10-23 07:17:15.705   Time stamp of our file: 2026-08-20 21:24:04.000
+2026-10-23 07:17:15.705   Installing the file.
+2026-10-23 07:17:15.707   Successfully installed the file.
+2026-10-23 07:17:15.707   -- File entry --
+2026-10-23 07:17:15.707   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ComponentModel.TypeConverter.dll
+2026-10-23 07:17:15.709   Time stamp of our file: 2026-08-20 21:24:08.000
+2026-10-23 07:17:15.709   Installing the file.
+2026-10-23 07:17:15.725   Successfully installed the file.
+2026-10-23 07:17:15.725   -- File entry --
+2026-10-23 07:17:15.725   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Configuration.ConfigurationManager.dll
+2026-10-23 07:17:15.725   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:15.725   Installing the file.
+2026-10-23 07:17:15.751   Successfully installed the file.
+2026-10-23 07:17:15.751   -- File entry --
+2026-10-23 07:17:15.751   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Configuration.dll
+2026-10-23 07:17:15.751   Time stamp of our file: 2026-08-20 21:17:26.000
+2026-10-23 07:17:15.751   Installing the file.
+2026-10-23 07:17:15.751   Successfully installed the file.
+2026-10-23 07:17:15.751   -- File entry --
+2026-10-23 07:17:15.751   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Console.dll
+2026-10-23 07:17:15.751   Time stamp of our file: 2026-08-20 21:24:10.000
+2026-10-23 07:17:15.751   Installing the file.
+2026-10-23 07:17:15.756   Successfully installed the file.
+2026-10-23 07:17:15.756   -- File entry --
+2026-10-23 07:17:15.756   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Core.dll
+2026-10-23 07:17:15.756   Time stamp of our file: 2026-08-20 21:18:28.000
+2026-10-23 07:17:15.756   Installing the file.
+2026-10-23 07:17:15.756   Successfully installed the file.
+2026-10-23 07:17:15.756   -- File entry --
+2026-10-23 07:17:15.756   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Data.Common.dll
+2026-10-23 07:17:15.756   Time stamp of our file: 2026-08-20 21:24:14.000
+2026-10-23 07:17:15.756   Installing the file.
+2026-10-23 07:17:15.828   Successfully installed the file.
+2026-10-23 07:17:15.828   -- File entry --
+2026-10-23 07:17:15.828   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Data.DataSetExtensions.dll
+2026-10-23 07:17:15.828   Time stamp of our file: 2026-08-20 21:18:16.000
+2026-10-23 07:17:15.828   Installing the file.
+2026-10-23 07:17:15.830   Successfully installed the file.
+2026-10-23 07:17:15.830   -- File entry --
+2026-10-23 07:17:15.830   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Data.dll
+2026-10-23 07:17:15.830   Time stamp of our file: 2026-08-20 21:18:22.000
+2026-10-23 07:17:15.830   Installing the file.
+2026-10-23 07:17:15.830   Successfully installed the file.
+2026-10-23 07:17:15.830   -- File entry --
+2026-10-23 07:17:15.832   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Design.dll
+2026-10-23 07:17:15.832   Time stamp of our file: 2026-08-21 21:57:08.000
+2026-10-23 07:17:15.832   Installing the file.
+2026-10-23 07:17:15.832   Successfully installed the file.
+2026-10-23 07:17:15.832   -- File entry --
+2026-10-23 07:17:15.832   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.Contracts.dll
+2026-10-23 07:17:15.832   Time stamp of our file: 2026-08-20 21:16:28.000
+2026-10-23 07:17:15.832   Installing the file.
+2026-10-23 07:17:15.832   Successfully installed the file.
+2026-10-23 07:17:15.832   -- File entry --
+2026-10-23 07:17:15.834   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.Debug.dll
+2026-10-23 07:17:15.834   Time stamp of our file: 2026-08-20 21:17:10.000
+2026-10-23 07:17:15.834   Installing the file.
+2026-10-23 07:17:15.834   Successfully installed the file.
+2026-10-23 07:17:15.834   -- File entry --
+2026-10-23 07:17:15.834   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.DiagnosticSource.dll
+2026-10-23 07:17:15.834   Time stamp of our file: 2026-08-20 21:24:18.000
+2026-10-23 07:17:15.834   Installing the file.
+2026-10-23 07:17:15.845   Successfully installed the file.
+2026-10-23 07:17:15.845   -- File entry --
+2026-10-23 07:17:15.845   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.EventLog.dll
+2026-10-23 07:17:15.845   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:15.845   Installing the file.
+2026-10-23 07:17:15.860   Successfully installed the file.
+2026-10-23 07:17:15.860   -- File entry --
+2026-10-23 07:17:15.860   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.EventLog.Messages.dll
+2026-10-23 07:17:15.860   Time stamp of our file: 2026-08-20 21:02:44.000
+2026-10-23 07:17:15.860   Installing the file.
+2026-10-23 07:17:15.871   Successfully installed the file.
+2026-10-23 07:17:15.871   -- File entry --
+2026-10-23 07:17:15.871   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.FileVersionInfo.dll
+2026-10-23 07:17:15.872   Time stamp of our file: 2026-08-20 21:24:20.000
+2026-10-23 07:17:15.872   Installing the file.
+2026-10-23 07:17:15.874   Successfully installed the file.
+2026-10-23 07:17:15.874   -- File entry --
+2026-10-23 07:17:15.874   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.PerformanceCounter.dll
+2026-10-23 07:17:15.875   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:15.875   Installing the file.
+2026-10-23 07:17:15.888   Successfully installed the file.
+2026-10-23 07:17:15.888   -- File entry --
+2026-10-23 07:17:15.888   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.Process.dll
+2026-10-23 07:17:15.889   Time stamp of our file: 2026-08-20 21:24:24.000
+2026-10-23 07:17:15.889   Installing the file.
+2026-10-23 07:17:15.899   Successfully installed the file.
+2026-10-23 07:17:15.899   -- File entry --
+2026-10-23 07:17:15.899   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.StackTrace.dll
+2026-10-23 07:17:15.901   Time stamp of our file: 2026-08-20 21:24:26.000
+2026-10-23 07:17:15.901   Installing the file.
+2026-10-23 07:17:15.903   Successfully installed the file.
+2026-10-23 07:17:15.903   -- File entry --
+2026-10-23 07:17:15.905   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.TextWriterTraceListener.dll
+2026-10-23 07:17:15.905   Time stamp of our file: 2026-08-20 21:24:30.000
+2026-10-23 07:17:15.905   Installing the file.
+2026-10-23 07:17:15.905   Successfully installed the file.
+2026-10-23 07:17:15.905   -- File entry --
+2026-10-23 07:17:15.907   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.Tools.dll
+2026-10-23 07:17:15.907   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:15.907   Installing the file.
+2026-10-23 07:17:15.907   Successfully installed the file.
+2026-10-23 07:17:15.907   -- File entry --
+2026-10-23 07:17:15.907   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.TraceSource.dll
+2026-10-23 07:17:15.907   Time stamp of our file: 2026-08-20 21:24:32.000
+2026-10-23 07:17:15.907   Installing the file.
+2026-10-23 07:17:15.911   Successfully installed the file.
+2026-10-23 07:17:15.911   -- File entry --
+2026-10-23 07:17:15.912   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Diagnostics.Tracing.dll
+2026-10-23 07:17:15.912   Time stamp of our file: 2026-08-20 21:17:24.000
+2026-10-23 07:17:15.912   Installing the file.
+2026-10-23 07:17:15.913   Successfully installed the file.
+2026-10-23 07:17:15.913   -- File entry --
+2026-10-23 07:17:15.913   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.DirectoryServices.dll
+2026-10-23 07:17:15.913   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:15.913   Installing the file.
+2026-10-23 07:17:15.942   Successfully installed the file.
+2026-10-23 07:17:15.942   -- File entry --
+2026-10-23 07:17:15.942   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.dll
+2026-10-23 07:17:15.942   Time stamp of our file: 2026-08-20 21:18:30.000
+2026-10-23 07:17:15.942   Installing the file.
+2026-10-23 07:17:15.946   Successfully installed the file.
+2026-10-23 07:17:15.946   -- File entry --
+2026-10-23 07:17:15.946   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Drawing.Common.dll
+2026-10-23 07:17:15.948   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:15.948   Installing the file.
+2026-10-23 07:17:15.996   Successfully installed the file.
+2026-10-23 07:17:15.996   -- File entry --
+2026-10-23 07:17:15.996   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Drawing.Design.dll
+2026-10-23 07:17:15.997   Time stamp of our file: 2026-08-21 21:57:08.000
+2026-10-23 07:17:15.997   Installing the file.
+2026-10-23 07:17:15.998   Successfully installed the file.
+2026-10-23 07:17:15.998   -- File entry --
+2026-10-23 07:17:15.998   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Drawing.dll
+2026-10-23 07:17:15.998   Time stamp of our file: 2026-08-21 21:57:08.000
+2026-10-23 07:17:15.998   Installing the file.
+2026-10-23 07:17:15.999   Successfully installed the file.
+2026-10-23 07:17:15.999   -- File entry --
+2026-10-23 07:17:15.999   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Drawing.Primitives.dll
+2026-10-23 07:17:15.999   Time stamp of our file: 2026-08-20 21:24:36.000
+2026-10-23 07:17:15.999   Installing the file.
+2026-10-23 07:17:16.212   Successfully installed the file.
+2026-10-23 07:17:16.212   -- File entry --
+2026-10-23 07:17:16.212   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Dynamic.Runtime.dll
+2026-10-23 07:17:16.212   Time stamp of our file: 2026-08-20 21:17:28.000
+2026-10-23 07:17:16.212   Installing the file.
+2026-10-23 07:17:16.212   Successfully installed the file.
+2026-10-23 07:17:16.212   -- File entry --
+2026-10-23 07:17:16.212   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Formats.Asn1.dll
+2026-10-23 07:17:16.212   Time stamp of our file: 2026-08-20 21:24:38.000
+2026-10-23 07:17:16.212   Installing the file.
+2026-10-23 07:17:16.220   Successfully installed the file.
+2026-10-23 07:17:16.220   -- File entry --
+2026-10-23 07:17:16.220   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Formats.Tar.dll
+2026-10-23 07:17:16.220   Time stamp of our file: 2026-08-20 21:24:42.000
+2026-10-23 07:17:16.220   Installing the file.
+2026-10-23 07:17:16.226   Successfully installed the file.
+2026-10-23 07:17:16.226   -- File entry --
+2026-10-23 07:17:16.226   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Globalization.Calendars.dll
+2026-10-23 07:17:16.226   Time stamp of our file: 2026-08-20 21:17:10.000
+2026-10-23 07:17:16.226   Installing the file.
+2026-10-23 07:17:16.228   Successfully installed the file.
+2026-10-23 07:17:16.228   -- File entry --
+2026-10-23 07:17:16.228   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Globalization.dll
+2026-10-23 07:17:16.228   Time stamp of our file: 2026-08-20 21:16:44.000
+2026-10-23 07:17:16.228   Installing the file.
+2026-10-23 07:17:16.228   Successfully installed the file.
+2026-10-23 07:17:16.229   -- File entry --
+2026-10-23 07:17:16.229   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Globalization.Extensions.dll
+2026-10-23 07:17:16.229   Time stamp of our file: 2026-08-20 21:17:12.000
+2026-10-23 07:17:16.229   Installing the file.
+2026-10-23 07:17:16.230   Successfully installed the file.
+2026-10-23 07:17:16.230   -- File entry --
+2026-10-23 07:17:16.230   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Compression.Brotli.dll
+2026-10-23 07:17:16.230   Time stamp of our file: 2026-08-20 21:24:44.000
+2026-10-23 07:17:16.230   Installing the file.
+2026-10-23 07:17:16.232   Successfully installed the file.
+2026-10-23 07:17:16.232   -- File entry --
+2026-10-23 07:17:16.232   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Compression.dll
+2026-10-23 07:17:16.232   Time stamp of our file: 2026-08-20 21:24:48.000
+2026-10-23 07:17:16.232   Installing the file.
+2026-10-23 07:17:16.240   Successfully installed the file.
+2026-10-23 07:17:16.240   -- File entry --
+2026-10-23 07:17:16.240   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Compression.FileSystem.dll
+2026-10-23 07:17:16.240   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:16.240   Installing the file.
+2026-10-23 07:17:16.240   Successfully installed the file.
+2026-10-23 07:17:16.240   -- File entry --
+2026-10-23 07:17:16.240   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Compression.Native.dll
+2026-10-23 07:17:16.240   Time stamp of our file: 2026-08-20 21:14:02.000
+2026-10-23 07:17:16.240   Installing the file.
+2026-10-23 07:17:16.259   Successfully installed the file.
+2026-10-23 07:17:16.259   -- File entry --
+2026-10-23 07:17:16.259   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Compression.ZipFile.dll
+2026-10-23 07:17:16.259   Time stamp of our file: 2026-08-20 21:24:50.000
+2026-10-23 07:17:16.259   Installing the file.
+2026-10-23 07:17:16.261   Successfully installed the file.
+2026-10-23 07:17:16.261   -- File entry --
+2026-10-23 07:17:16.261   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.dll
+2026-10-23 07:17:16.261   Time stamp of our file: 2026-08-20 21:17:08.000
+2026-10-23 07:17:16.261   Installing the file.
+2026-10-23 07:17:16.268   Successfully installed the file.
+2026-10-23 07:17:16.268   -- File entry --
+2026-10-23 07:17:16.268   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.FileSystem.AccessControl.dll
+2026-10-23 07:17:16.268   Time stamp of our file: 2026-08-20 21:24:54.000
+2026-10-23 07:17:16.268   Installing the file.
+2026-10-23 07:17:16.269   Successfully installed the file.
+2026-10-23 07:17:16.269   -- File entry --
+2026-10-23 07:17:16.271   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.FileSystem.dll
+2026-10-23 07:17:16.271   Time stamp of our file: 2026-08-20 21:17:12.000
+2026-10-23 07:17:16.271   Installing the file.
+2026-10-23 07:17:16.271   Successfully installed the file.
+2026-10-23 07:17:16.271   -- File entry --
+2026-10-23 07:17:16.271   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.FileSystem.DriveInfo.dll
+2026-10-23 07:17:16.271   Time stamp of our file: 2026-08-20 21:24:56.000
+2026-10-23 07:17:16.271   Installing the file.
+2026-10-23 07:17:16.273   Successfully installed the file.
+2026-10-23 07:17:16.273   -- File entry --
+2026-10-23 07:17:16.273   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.FileSystem.Primitives.dll
+2026-10-23 07:17:16.273   Time stamp of our file: 2026-08-20 21:17:10.000
+2026-10-23 07:17:16.273   Installing the file.
+2026-10-23 07:17:16.273   Successfully installed the file.
+2026-10-23 07:17:16.273   -- File entry --
+2026-10-23 07:17:16.273   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.FileSystem.Watcher.dll
+2026-10-23 07:17:16.273   Time stamp of our file: 2026-08-20 21:25:00.000
+2026-10-23 07:17:16.273   Installing the file.
+2026-10-23 07:17:16.275   Successfully installed the file.
+2026-10-23 07:17:16.275   -- File entry --
+2026-10-23 07:17:16.277   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.IsolatedStorage.dll
+2026-10-23 07:17:16.277   Time stamp of our file: 2026-08-20 21:25:02.000
+2026-10-23 07:17:16.277   Installing the file.
+2026-10-23 07:17:16.279   Successfully installed the file.
+2026-10-23 07:17:16.279   -- File entry --
+2026-10-23 07:17:16.279   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.MemoryMappedFiles.dll
+2026-10-23 07:17:16.279   Time stamp of our file: 2026-08-20 21:25:06.000
+2026-10-23 07:17:16.279   Installing the file.
+2026-10-23 07:17:16.281   Successfully installed the file.
+2026-10-23 07:17:16.281   -- File entry --
+2026-10-23 07:17:16.281   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Packaging.dll
+2026-10-23 07:17:16.281   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:16.281   Installing the file.
+2026-10-23 07:17:16.286   Successfully installed the file.
+2026-10-23 07:17:16.286   -- File entry --
+2026-10-23 07:17:16.286   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Pipes.AccessControl.dll
+2026-10-23 07:17:16.286   Time stamp of our file: 2026-08-20 21:15:32.000
+2026-10-23 07:17:16.286   Installing the file.
+2026-10-23 07:17:16.288   Successfully installed the file.
+2026-10-23 07:17:16.288   -- File entry --
+2026-10-23 07:17:16.288   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.Pipes.dll
+2026-10-23 07:17:16.288   Time stamp of our file: 2026-08-20 21:25:08.000
+2026-10-23 07:17:16.288   Installing the file.
+2026-10-23 07:17:16.292   Successfully installed the file.
+2026-10-23 07:17:16.292   -- File entry --
+2026-10-23 07:17:16.292   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.IO.UnmanagedMemoryStream.dll
+2026-10-23 07:17:16.292   Time stamp of our file: 2026-08-20 21:18:18.000
+2026-10-23 07:17:16.292   Installing the file.
+2026-10-23 07:17:16.292   Successfully installed the file.
+2026-10-23 07:17:16.292   -- File entry --
+2026-10-23 07:17:16.292   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Linq.dll
+2026-10-23 07:17:16.292   Time stamp of our file: 2026-08-20 21:25:12.000
+2026-10-23 07:17:16.292   Installing the file.
+2026-10-23 07:17:16.306   Successfully installed the file.
+2026-10-23 07:17:16.306   -- File entry --
+2026-10-23 07:17:16.306   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Linq.Expressions.dll
+2026-10-23 07:17:16.306   Time stamp of our file: 2026-08-20 21:25:16.000
+2026-10-23 07:17:16.306   Installing the file.
+2026-10-23 07:17:16.372   Successfully installed the file.
+2026-10-23 07:17:16.372   -- File entry --
+2026-10-23 07:17:16.372   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Linq.Parallel.dll
+2026-10-23 07:17:16.372   Time stamp of our file: 2026-08-20 21:25:20.000
+2026-10-23 07:17:16.372   Installing the file.
+2026-10-23 07:17:16.389   Successfully installed the file.
+2026-10-23 07:17:16.389   -- File entry --
+2026-10-23 07:17:16.389   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Linq.Queryable.dll
+2026-10-23 07:17:16.389   Time stamp of our file: 2026-08-20 21:25:24.000
+2026-10-23 07:17:16.389   Installing the file.
+2026-10-23 07:17:16.393   Successfully installed the file.
+2026-10-23 07:17:16.393   -- File entry --
+2026-10-23 07:17:16.393   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Memory.dll
+2026-10-23 07:17:16.393   Time stamp of our file: 2026-08-20 21:25:26.000
+2026-10-23 07:17:16.393   Installing the file.
+2026-10-23 07:17:16.398   Successfully installed the file.
+2026-10-23 07:17:16.398   -- File entry --
+2026-10-23 07:17:16.398   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.dll
+2026-10-23 07:17:16.399   Time stamp of our file: 2026-08-20 21:18:08.000
+2026-10-23 07:17:16.399   Installing the file.
+2026-10-23 07:17:16.399   Successfully installed the file.
+2026-10-23 07:17:16.399   -- File entry --
+2026-10-23 07:17:16.399   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Http.dll
+2026-10-23 07:17:16.399   Time stamp of our file: 2026-08-20 21:25:30.000
+2026-10-23 07:17:16.399   Installing the file.
+2026-10-23 07:17:16.439   Successfully installed the file.
+2026-10-23 07:17:16.439   -- File entry --
+2026-10-23 07:17:16.439   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Http.Json.dll
+2026-10-23 07:17:16.439   Time stamp of our file: 2026-08-20 21:25:34.000
+2026-10-23 07:17:16.439   Installing the file.
+2026-10-23 07:17:16.443   Successfully installed the file.
+2026-10-23 07:17:16.443   -- File entry --
+2026-10-23 07:17:16.443   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.HttpListener.dll
+2026-10-23 07:17:16.443   Time stamp of our file: 2026-08-20 21:25:36.000
+2026-10-23 07:17:16.443   Installing the file.
+2026-10-23 07:17:16.456   Successfully installed the file.
+2026-10-23 07:17:16.456   -- File entry --
+2026-10-23 07:17:16.457   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Mail.dll
+2026-10-23 07:17:16.457   Time stamp of our file: 2026-08-20 21:25:40.000
+2026-10-23 07:17:16.457   Installing the file.
+2026-10-23 07:17:16.467   Successfully installed the file.
+2026-10-23 07:17:16.467   -- File entry --
+2026-10-23 07:17:16.467   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.NameResolution.dll
+2026-10-23 07:17:16.467   Time stamp of our file: 2026-08-20 21:25:42.000
+2026-10-23 07:17:16.467   Installing the file.
+2026-10-23 07:17:16.469   Successfully installed the file.
+2026-10-23 07:17:16.469   -- File entry --
+2026-10-23 07:17:16.469   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.NetworkInformation.dll
+2026-10-23 07:17:16.469   Time stamp of our file: 2026-08-20 21:25:46.000
+2026-10-23 07:17:16.469   Installing the file.
+2026-10-23 07:17:16.473   Successfully installed the file.
+2026-10-23 07:17:16.473   -- File entry --
+2026-10-23 07:17:16.475   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Ping.dll
+2026-10-23 07:17:16.475   Time stamp of our file: 2026-08-20 21:25:48.000
+2026-10-23 07:17:16.475   Installing the file.
+2026-10-23 07:17:16.477   Successfully installed the file.
+2026-10-23 07:17:16.477   -- File entry --
+2026-10-23 07:17:16.477   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Primitives.dll
+2026-10-23 07:17:16.477   Time stamp of our file: 2026-08-20 21:25:52.000
+2026-10-23 07:17:16.477   Installing the file.
+2026-10-23 07:17:16.483   Successfully installed the file.
+2026-10-23 07:17:16.483   -- File entry --
+2026-10-23 07:17:16.483   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Quic.dll
+2026-10-23 07:17:16.483   Time stamp of our file: 2026-08-20 21:25:54.000
+2026-10-23 07:17:16.483   Installing the file.
+2026-10-23 07:17:16.490   Successfully installed the file.
+2026-10-23 07:17:16.490   -- File entry --
+2026-10-23 07:17:16.490   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Requests.dll
+2026-10-23 07:17:16.490   Time stamp of our file: 2026-08-20 21:25:58.000
+2026-10-23 07:17:16.490   Installing the file.
+2026-10-23 07:17:16.498   Successfully installed the file.
+2026-10-23 07:17:16.498   -- File entry --
+2026-10-23 07:17:16.499   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Security.dll
+2026-10-23 07:17:16.499   Time stamp of our file: 2026-08-20 21:26:00.000
+2026-10-23 07:17:16.499   Installing the file.
+2026-10-23 07:17:16.514   Successfully installed the file.
+2026-10-23 07:17:16.514   -- File entry --
+2026-10-23 07:17:16.514   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.ServicePoint.dll
+2026-10-23 07:17:16.514   Time stamp of our file: 2026-08-20 21:26:04.000
+2026-10-23 07:17:16.514   Installing the file.
+2026-10-23 07:17:16.515   Successfully installed the file.
+2026-10-23 07:17:16.515   -- File entry --
+2026-10-23 07:17:16.515   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.Sockets.dll
+2026-10-23 07:17:16.515   Time stamp of our file: 2026-08-20 21:26:06.000
+2026-10-23 07:17:16.515   Installing the file.
+2026-10-23 07:17:16.529   Successfully installed the file.
+2026-10-23 07:17:16.529   -- File entry --
+2026-10-23 07:17:16.529   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.WebClient.dll
+2026-10-23 07:17:16.529   Time stamp of our file: 2026-08-20 21:26:10.000
+2026-10-23 07:17:16.529   Installing the file.
+2026-10-23 07:17:16.533   Successfully installed the file.
+2026-10-23 07:17:16.533   -- File entry --
+2026-10-23 07:17:16.533   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.WebHeaderCollection.dll
+2026-10-23 07:17:16.533   Time stamp of our file: 2026-08-20 21:26:12.000
+2026-10-23 07:17:16.533   Installing the file.
+2026-10-23 07:17:16.535   Successfully installed the file.
+2026-10-23 07:17:16.535   -- File entry --
+2026-10-23 07:17:16.535   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.WebProxy.dll
+2026-10-23 07:17:16.535   Time stamp of our file: 2026-08-20 21:26:14.000
+2026-10-23 07:17:16.535   Installing the file.
+2026-10-23 07:17:16.537   Successfully installed the file.
+2026-10-23 07:17:16.537   -- File entry --
+2026-10-23 07:17:16.537   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.WebSockets.Client.dll
+2026-10-23 07:17:16.537   Time stamp of our file: 2026-08-20 21:26:18.000
+2026-10-23 07:17:16.537   Installing the file.
+2026-10-23 07:17:16.539   Successfully installed the file.
+2026-10-23 07:17:16.539   -- File entry --
+2026-10-23 07:17:16.539   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Net.WebSockets.dll
+2026-10-23 07:17:16.539   Time stamp of our file: 2026-08-20 21:26:20.000
+2026-10-23 07:17:16.539   Installing the file.
+2026-10-23 07:17:16.544   Successfully installed the file.
+2026-10-23 07:17:16.544   -- File entry --
+2026-10-23 07:17:16.544   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Numerics.dll
+2026-10-23 07:17:16.544   Time stamp of our file: 2026-08-20 21:17:42.000
+2026-10-23 07:17:16.544   Installing the file.
+2026-10-23 07:17:16.545   Successfully installed the file.
+2026-10-23 07:17:16.545   -- File entry --
+2026-10-23 07:17:16.545   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Numerics.Tensors.dll
+2026-10-23 07:17:16.545   Time stamp of our file: 2024-10-29 02:40:16.000
+2026-10-23 07:17:16.545   Installing the file.
+2026-10-23 07:17:16.553   Successfully installed the file.
+2026-10-23 07:17:16.553   -- File entry --
+2026-10-23 07:17:16.553   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Numerics.Vectors.dll
+2026-10-23 07:17:16.553   Time stamp of our file: 2026-08-20 21:17:40.000
+2026-10-23 07:17:16.553   Installing the file.
+2026-10-23 07:17:16.553   Successfully installed the file.
+2026-10-23 07:17:16.553   -- File entry --
+2026-10-23 07:17:16.553   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ObjectModel.dll
+2026-10-23 07:17:16.553   Time stamp of our file: 2026-08-20 21:26:24.000
+2026-10-23 07:17:16.553   Installing the file.
+2026-10-23 07:17:16.555   Successfully installed the file.
+2026-10-23 07:17:16.555   -- File entry --
+2026-10-23 07:17:16.555   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Printing.dll
+2026-10-23 07:17:16.555   Time stamp of our file: 2026-08-22 00:39:32.000
+2026-10-23 07:17:16.555   Installing the file.
+2026-10-23 07:17:16.576   Successfully installed the file.
+2026-10-23 07:17:16.576   -- File entry --
+2026-10-23 07:17:16.576   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Private.CoreLib.dll
+2026-10-23 07:17:16.578   Time stamp of our file: 2026-08-20 21:10:50.000
+2026-10-23 07:17:16.578   Installing the file.
+2026-10-23 07:17:16.846   Successfully installed the file.
+2026-10-23 07:17:16.846   -- File entry --
+2026-10-23 07:17:16.846   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Private.DataContractSerialization.dll
+2026-10-23 07:17:16.846   Time stamp of our file: 2026-08-20 21:26:28.000
+2026-10-23 07:17:16.846   Installing the file.
+2026-10-23 07:17:16.893   Successfully installed the file.
+2026-10-23 07:17:16.893   -- File entry --
+2026-10-23 07:17:16.893   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Private.Uri.dll
+2026-10-23 07:17:16.893   Time stamp of our file: 2026-08-20 21:26:30.000
+2026-10-23 07:17:16.893   Installing the file.
+2026-10-23 07:17:16.899   Successfully installed the file.
+2026-10-23 07:17:16.899   -- File entry --
+2026-10-23 07:17:16.901   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Private.Xml.dll
+2026-10-23 07:17:16.901   Time stamp of our file: 2026-08-20 21:26:36.000
+2026-10-23 07:17:16.901   Installing the file.
+2026-10-23 07:17:17.071   Successfully installed the file.
+2026-10-23 07:17:17.073   -- File entry --
+2026-10-23 07:17:17.073   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Private.Xml.Linq.dll
+2026-10-23 07:17:17.073   Time stamp of our file: 2026-08-20 21:26:38.000
+2026-10-23 07:17:17.073   Installing the file.
+2026-10-23 07:17:17.083   Successfully installed the file.
+2026-10-23 07:17:17.083   -- File entry --
+2026-10-23 07:17:17.083   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.DispatchProxy.dll
+2026-10-23 07:17:17.083   Time stamp of our file: 2026-08-20 21:26:42.000
+2026-10-23 07:17:17.083   Installing the file.
+2026-10-23 07:17:17.085   Successfully installed the file.
+2026-10-23 07:17:17.085   -- File entry --
+2026-10-23 07:17:17.085   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.dll
+2026-10-23 07:17:17.085   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.085   Installing the file.
+2026-10-23 07:17:17.087   Successfully installed the file.
+2026-10-23 07:17:17.087   -- File entry --
+2026-10-23 07:17:17.087   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Emit.dll
+2026-10-23 07:17:17.087   Time stamp of our file: 2026-08-20 21:26:44.000
+2026-10-23 07:17:17.087   Installing the file.
+2026-10-23 07:17:17.091   Successfully installed the file.
+2026-10-23 07:17:17.091   -- File entry --
+2026-10-23 07:17:17.091   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Emit.ILGeneration.dll
+2026-10-23 07:17:17.091   Time stamp of our file: 2026-08-20 21:17:30.000
+2026-10-23 07:17:17.091   Installing the file.
+2026-10-23 07:17:17.091   Successfully installed the file.
+2026-10-23 07:17:17.091   -- File entry --
+2026-10-23 07:17:17.091   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Emit.Lightweight.dll
+2026-10-23 07:17:17.091   Time stamp of our file: 2026-08-20 21:17:34.000
+2026-10-23 07:17:17.091   Installing the file.
+2026-10-23 07:17:17.093   Successfully installed the file.
+2026-10-23 07:17:17.093   -- File entry --
+2026-10-23 07:17:17.093   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Extensions.dll
+2026-10-23 07:17:17.093   Time stamp of our file: 2026-08-20 21:17:12.000
+2026-10-23 07:17:17.093   Installing the file.
+2026-10-23 07:17:17.093   Successfully installed the file.
+2026-10-23 07:17:17.093   -- File entry --
+2026-10-23 07:17:17.093   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Metadata.dll
+2026-10-23 07:17:17.093   Time stamp of our file: 2026-08-20 21:26:48.000
+2026-10-23 07:17:17.093   Installing the file.
+2026-10-23 07:17:17.118   Successfully installed the file.
+2026-10-23 07:17:17.118   -- File entry --
+2026-10-23 07:17:17.118   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.Primitives.dll
+2026-10-23 07:17:17.118   Time stamp of our file: 2026-08-20 21:17:32.000
+2026-10-23 07:17:17.118   Installing the file.
+2026-10-23 07:17:17.120   Successfully installed the file.
+2026-10-23 07:17:17.120   -- File entry --
+2026-10-23 07:17:17.120   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Reflection.TypeExtensions.dll
+2026-10-23 07:17:17.120   Time stamp of our file: 2026-08-20 21:26:50.000
+2026-10-23 07:17:17.120   Installing the file.
+2026-10-23 07:17:17.122   Successfully installed the file.
+2026-10-23 07:17:17.122   -- File entry --
+2026-10-23 07:17:17.122   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Resources.Extensions.dll
+2026-10-23 07:17:17.122   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:17.122   Installing the file.
+2026-10-23 07:17:17.124   Successfully installed the file.
+2026-10-23 07:17:17.124   -- File entry --
+2026-10-23 07:17:17.124   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Resources.Reader.dll
+2026-10-23 07:17:17.124   Time stamp of our file: 2026-08-20 21:17:12.000
+2026-10-23 07:17:17.124   Installing the file.
+2026-10-23 07:17:17.126   Successfully installed the file.
+2026-10-23 07:17:17.126   -- File entry --
+2026-10-23 07:17:17.126   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Resources.ResourceManager.dll
+2026-10-23 07:17:17.126   Time stamp of our file: 2026-08-20 21:17:08.000
+2026-10-23 07:17:17.126   Installing the file.
+2026-10-23 07:17:17.126   Successfully installed the file.
+2026-10-23 07:17:17.128   -- File entry --
+2026-10-23 07:17:17.128   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Resources.Writer.dll
+2026-10-23 07:17:17.128   Time stamp of our file: 2026-08-20 21:26:54.000
+2026-10-23 07:17:17.128   Installing the file.
+2026-10-23 07:17:17.128   Successfully installed the file.
+2026-10-23 07:17:17.128   -- File entry --
+2026-10-23 07:17:17.128   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.CompilerServices.Unsafe.dll
+2026-10-23 07:17:17.128   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.128   Installing the file.
+2026-10-23 07:17:17.132   Successfully installed the file.
+2026-10-23 07:17:17.132   -- File entry --
+2026-10-23 07:17:17.132   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.CompilerServices.VisualC.dll
+2026-10-23 07:17:17.132   Time stamp of our file: 2026-08-20 21:26:56.000
+2026-10-23 07:17:17.132   Installing the file.
+2026-10-23 07:17:17.134   Successfully installed the file.
+2026-10-23 07:17:17.134   -- File entry --
+2026-10-23 07:17:17.134   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.dll
+2026-10-23 07:17:17.134   Time stamp of our file: 2026-08-20 21:16:36.000
+2026-10-23 07:17:17.134   Installing the file.
+2026-10-23 07:17:17.136   Successfully installed the file.
+2026-10-23 07:17:17.136   -- File entry --
+2026-10-23 07:17:17.136   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Extensions.dll
+2026-10-23 07:17:17.136   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.136   Installing the file.
+2026-10-23 07:17:17.136   Successfully installed the file.
+2026-10-23 07:17:17.136   -- File entry --
+2026-10-23 07:17:17.136   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Handles.dll
+2026-10-23 07:17:17.136   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.136   Installing the file.
+2026-10-23 07:17:17.136   Successfully installed the file.
+2026-10-23 07:17:17.136   -- File entry --
+2026-10-23 07:17:17.138   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.InteropServices.dll
+2026-10-23 07:17:17.138   Time stamp of our file: 2026-08-20 21:27:00.000
+2026-10-23 07:17:17.138   Installing the file.
+2026-10-23 07:17:17.144   Successfully installed the file.
+2026-10-23 07:17:17.144   -- File entry --
+2026-10-23 07:17:17.144   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.InteropServices.JavaScript.dll
+2026-10-23 07:17:17.144   Time stamp of our file: 2026-08-20 21:27:02.000
+2026-10-23 07:17:17.144   Installing the file.
+2026-10-23 07:17:17.144   Successfully installed the file.
+2026-10-23 07:17:17.146   -- File entry --
+2026-10-23 07:17:17.146   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.InteropServices.RuntimeInformation.dll
+2026-10-23 07:17:17.146   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.146   Installing the file.
+2026-10-23 07:17:17.146   Successfully installed the file.
+2026-10-23 07:17:17.146   -- File entry --
+2026-10-23 07:17:17.146   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Intrinsics.dll
+2026-10-23 07:17:17.146   Time stamp of our file: 2026-08-20 21:17:48.000
+2026-10-23 07:17:17.146   Installing the file.
+2026-10-23 07:17:17.146   Successfully installed the file.
+2026-10-23 07:17:17.146   -- File entry --
+2026-10-23 07:17:17.146   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Loader.dll
+2026-10-23 07:17:17.148   Time stamp of our file: 2026-08-20 21:17:28.000
+2026-10-23 07:17:17.148   Installing the file.
+2026-10-23 07:17:17.148   Successfully installed the file.
+2026-10-23 07:17:17.148   -- File entry --
+2026-10-23 07:17:17.148   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Numerics.dll
+2026-10-23 07:17:17.148   Time stamp of our file: 2026-08-20 21:27:06.000
+2026-10-23 07:17:17.148   Installing the file.
+2026-10-23 07:17:17.156   Successfully installed the file.
+2026-10-23 07:17:17.156   -- File entry --
+2026-10-23 07:17:17.156   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Serialization.dll
+2026-10-23 07:17:17.156   Time stamp of our file: 2026-08-20 21:17:54.000
+2026-10-23 07:17:17.156   Installing the file.
+2026-10-23 07:17:17.158   Successfully installed the file.
+2026-10-23 07:17:17.158   -- File entry --
+2026-10-23 07:17:17.158   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Serialization.Formatters.dll
+2026-10-23 07:17:17.158   Time stamp of our file: 2026-08-20 21:27:08.000
+2026-10-23 07:17:17.158   Installing the file.
+2026-10-23 07:17:17.166   Successfully installed the file.
+2026-10-23 07:17:17.166   -- File entry --
+2026-10-23 07:17:17.166   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Serialization.Json.dll
+2026-10-23 07:17:17.166   Time stamp of our file: 2026-08-20 21:17:18.000
+2026-10-23 07:17:17.166   Installing the file.
+2026-10-23 07:17:17.166   Successfully installed the file.
+2026-10-23 07:17:17.167   -- File entry --
+2026-10-23 07:17:17.167   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Serialization.Primitives.dll
+2026-10-23 07:17:17.167   Time stamp of our file: 2026-08-20 21:27:12.000
+2026-10-23 07:17:17.167   Installing the file.
+2026-10-23 07:17:17.168   Successfully installed the file.
+2026-10-23 07:17:17.168   -- File entry --
+2026-10-23 07:17:17.168   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Runtime.Serialization.Xml.dll
+2026-10-23 07:17:17.168   Time stamp of our file: 2026-08-20 21:16:30.000
+2026-10-23 07:17:17.168   Installing the file.
+2026-10-23 07:17:17.169   Successfully installed the file.
+2026-10-23 07:17:17.169   -- File entry --
+2026-10-23 07:17:17.169   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.AccessControl.dll
+2026-10-23 07:17:17.169   Time stamp of our file: 2026-08-20 21:27:14.000
+2026-10-23 07:17:17.169   Installing the file.
+2026-10-23 07:17:17.175   Successfully installed the file.
+2026-10-23 07:17:17.175   -- File entry --
+2026-10-23 07:17:17.175   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Claims.dll
+2026-10-23 07:17:17.175   Time stamp of our file: 2026-08-20 21:27:18.000
+2026-10-23 07:17:17.175   Installing the file.
+2026-10-23 07:17:17.178   Successfully installed the file.
+2026-10-23 07:17:17.178   -- File entry --
+2026-10-23 07:17:17.178   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Algorithms.dll
+2026-10-23 07:17:17.178   Time stamp of our file: 2026-08-20 21:17:24.000
+2026-10-23 07:17:17.178   Installing the file.
+2026-10-23 07:17:17.179   Successfully installed the file.
+2026-10-23 07:17:17.179   -- File entry --
+2026-10-23 07:17:17.179   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Cng.dll
+2026-10-23 07:17:17.179   Time stamp of our file: 2026-08-20 21:17:26.000
+2026-10-23 07:17:17.179   Installing the file.
+2026-10-23 07:17:17.184   Successfully installed the file.
+2026-10-23 07:17:17.184   -- File entry --
+2026-10-23 07:17:17.184   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Csp.dll
+2026-10-23 07:17:17.184   Time stamp of our file: 2026-08-20 21:17:28.000
+2026-10-23 07:17:17.184   Installing the file.
+2026-10-23 07:17:17.184   Successfully installed the file.
+2026-10-23 07:17:17.184   -- File entry --
+2026-10-23 07:17:17.184   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.dll
+2026-10-23 07:17:17.184   Time stamp of our file: 2026-08-20 21:27:20.000
+2026-10-23 07:17:17.184   Installing the file.
+2026-10-23 07:17:17.229   Successfully installed the file.
+2026-10-23 07:17:17.229   -- File entry --
+2026-10-23 07:17:17.229   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Encoding.dll
+2026-10-23 07:17:17.229   Time stamp of our file: 2026-08-20 21:17:30.000
+2026-10-23 07:17:17.229   Installing the file.
+2026-10-23 07:17:17.229   Successfully installed the file.
+2026-10-23 07:17:17.229   -- File entry --
+2026-10-23 07:17:17.230   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.OpenSsl.dll
+2026-10-23 07:17:17.230   Time stamp of our file: 2026-08-20 21:17:24.000
+2026-10-23 07:17:17.230   Installing the file.
+2026-10-23 07:17:17.231   Successfully installed the file.
+2026-10-23 07:17:17.231   -- File entry --
+2026-10-23 07:17:17.231   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Pkcs.dll
+2026-10-23 07:17:17.231   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:17.231   Installing the file.
+2026-10-23 07:17:17.246   Successfully installed the file.
+2026-10-23 07:17:17.246   -- File entry --
+2026-10-23 07:17:17.246   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Primitives.dll
+2026-10-23 07:17:17.246   Time stamp of our file: 2026-08-20 21:17:24.000
+2026-10-23 07:17:17.246   Installing the file.
+2026-10-23 07:17:17.248   Successfully installed the file.
+2026-10-23 07:17:17.248   -- File entry --
+2026-10-23 07:17:17.248   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.ProtectedData.dll
+2026-10-23 07:17:17.248   Time stamp of our file: 2026-08-22 00:39:14.000
+2026-10-23 07:17:17.248   Installing the file.
+2026-10-23 07:17:17.250   Successfully installed the file.
+2026-10-23 07:17:17.250   -- File entry --
+2026-10-23 07:17:17.250   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.X509Certificates.dll
+2026-10-23 07:17:17.250   Time stamp of our file: 2026-08-20 21:17:28.000
+2026-10-23 07:17:17.250   Installing the file.
+2026-10-23 07:17:17.250   Successfully installed the file.
+2026-10-23 07:17:17.250   -- File entry --
+2026-10-23 07:17:17.250   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Cryptography.Xml.dll
+2026-10-23 07:17:17.250   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:17.250   Installing the file.
+2026-10-23 07:17:17.262   Successfully installed the file.
+2026-10-23 07:17:17.262   -- File entry --
+2026-10-23 07:17:17.262   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.dll
+2026-10-23 07:17:17.262   Time stamp of our file: 2026-08-20 21:18:12.000
+2026-10-23 07:17:17.262   Installing the file.
+2026-10-23 07:17:17.262   Successfully installed the file.
+2026-10-23 07:17:17.262   -- File entry --
+2026-10-23 07:17:17.264   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Permissions.dll
+2026-10-23 07:17:17.264   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:17.264   Installing the file.
+2026-10-23 07:17:17.268   Successfully installed the file.
+2026-10-23 07:17:17.268   -- File entry --
+2026-10-23 07:17:17.268   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Principal.dll
+2026-10-23 07:17:17.268   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:17.268   Installing the file.
+2026-10-23 07:17:17.268   Successfully installed the file.
+2026-10-23 07:17:17.268   -- File entry --
+2026-10-23 07:17:17.268   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.Principal.Windows.dll
+2026-10-23 07:17:17.268   Time stamp of our file: 2026-08-20 21:27:24.000
+2026-10-23 07:17:17.268   Installing the file.
+2026-10-23 07:17:17.272   Successfully installed the file.
+2026-10-23 07:17:17.272   -- File entry --
+2026-10-23 07:17:17.274   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Security.SecureString.dll
+2026-10-23 07:17:17.274   Time stamp of our file: 2026-08-20 21:18:18.000
+2026-10-23 07:17:17.274   Installing the file.
+2026-10-23 07:17:17.274   Successfully installed the file.
+2026-10-23 07:17:17.274   -- File entry --
+2026-10-23 07:17:17.274   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ServiceModel.Web.dll
+2026-10-23 07:17:17.274   Time stamp of our file: 2026-08-20 21:17:26.000
+2026-10-23 07:17:17.274   Installing the file.
+2026-10-23 07:17:17.276   Successfully installed the file.
+2026-10-23 07:17:17.276   -- File entry --
+2026-10-23 07:17:17.276   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ServiceProcess.dll
+2026-10-23 07:17:17.276   Time stamp of our file: 2026-08-20 21:17:26.000
+2026-10-23 07:17:17.276   Installing the file.
+2026-10-23 07:17:17.276   Successfully installed the file.
+2026-10-23 07:17:17.276   -- File entry --
+2026-10-23 07:17:17.276   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.Encoding.CodePages.dll
+2026-10-23 07:17:17.276   Time stamp of our file: 2026-08-20 21:27:28.000
+2026-10-23 07:17:17.276   Installing the file.
+2026-10-23 07:17:17.294   Successfully installed the file.
+2026-10-23 07:17:17.294   -- File entry --
+2026-10-23 07:17:17.294   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.Encoding.dll
+2026-10-23 07:17:17.295   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:17.295   Installing the file.
+2026-10-23 07:17:17.295   Successfully installed the file.
+2026-10-23 07:17:17.295   -- File entry --
+2026-10-23 07:17:17.295   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.Encoding.Extensions.dll
+2026-10-23 07:17:17.295   Time stamp of our file: 2026-08-20 21:17:46.000
+2026-10-23 07:17:17.295   Installing the file.
+2026-10-23 07:17:17.297   Successfully installed the file.
+2026-10-23 07:17:17.297   -- File entry --
+2026-10-23 07:17:17.297   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.Encodings.Web.dll
+2026-10-23 07:17:17.297   Time stamp of our file: 2026-08-20 21:27:30.000
+2026-10-23 07:17:17.297   Installing the file.
+2026-10-23 07:17:17.299   Successfully installed the file.
+2026-10-23 07:17:17.300   -- File entry --
+2026-10-23 07:17:17.300   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.Json.dll
+2026-10-23 07:17:17.300   Time stamp of our file: 2026-08-20 21:27:34.000
+2026-10-23 07:17:17.300   Installing the file.
+2026-10-23 07:17:17.333   Successfully installed the file.
+2026-10-23 07:17:17.333   -- File entry --
+2026-10-23 07:17:17.334   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Text.RegularExpressions.dll
+2026-10-23 07:17:17.334   Time stamp of our file: 2026-08-20 21:27:36.000
+2026-10-23 07:17:17.334   Installing the file.
+2026-10-23 07:17:17.367   Successfully installed the file.
+2026-10-23 07:17:17.367   -- File entry --
+2026-10-23 07:17:17.367   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.AccessControl.dll
+2026-10-23 07:17:17.367   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:17.367   Installing the file.
+2026-10-23 07:17:17.370   Successfully installed the file.
+2026-10-23 07:17:17.370   -- File entry --
+2026-10-23 07:17:17.370   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Channels.dll
+2026-10-23 07:17:17.370   Time stamp of our file: 2026-08-20 21:27:40.000
+2026-10-23 07:17:17.370   Installing the file.
+2026-10-23 07:17:17.374   Successfully installed the file.
+2026-10-23 07:17:17.374   -- File entry --
+2026-10-23 07:17:17.374   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.dll
+2026-10-23 07:17:17.374   Time stamp of our file: 2026-08-20 21:27:42.000
+2026-10-23 07:17:17.374   Installing the file.
+2026-10-23 07:17:17.377   Successfully installed the file.
+2026-10-23 07:17:17.377   -- File entry --
+2026-10-23 07:17:17.377   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Overlapped.dll
+2026-10-23 07:17:17.377   Time stamp of our file: 2026-08-20 21:16:32.000
+2026-10-23 07:17:17.377   Installing the file.
+2026-10-23 07:17:17.605   Successfully installed the file.
+2026-10-23 07:17:17.605   -- File entry --
+2026-10-23 07:17:17.605   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Tasks.Dataflow.dll
+2026-10-23 07:17:17.605   Time stamp of our file: 2026-08-20 21:27:46.000
+2026-10-23 07:17:17.605   Installing the file.
+2026-10-23 07:17:17.618   Successfully installed the file.
+2026-10-23 07:17:17.618   -- File entry --
+2026-10-23 07:17:17.619   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Tasks.dll
+2026-10-23 07:17:17.619   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:17.619   Installing the file.
+2026-10-23 07:17:17.620   Successfully installed the file.
+2026-10-23 07:17:17.620   -- File entry --
+2026-10-23 07:17:17.620   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Tasks.Extensions.dll
+2026-10-23 07:17:17.620   Time stamp of our file: 2026-08-20 21:16:44.000
+2026-10-23 07:17:17.620   Installing the file.
+2026-10-23 07:17:17.621   Successfully installed the file.
+2026-10-23 07:17:17.621   -- File entry --
+2026-10-23 07:17:17.621   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Tasks.Parallel.dll
+2026-10-23 07:17:17.621   Time stamp of our file: 2026-08-20 21:27:48.000
+2026-10-23 07:17:17.621   Installing the file.
+2026-10-23 07:17:17.623   Successfully installed the file.
+2026-10-23 07:17:17.623   -- File entry --
+2026-10-23 07:17:17.623   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Thread.dll
+2026-10-23 07:17:17.623   Time stamp of our file: 2026-08-20 21:17:46.000
+2026-10-23 07:17:17.623   Installing the file.
+2026-10-23 07:17:17.625   Successfully installed the file.
+2026-10-23 07:17:17.625   -- File entry --
+2026-10-23 07:17:17.625   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.ThreadPool.dll
+2026-10-23 07:17:17.625   Time stamp of our file: 2026-08-20 21:16:28.000
+2026-10-23 07:17:17.625   Installing the file.
+2026-10-23 07:17:17.625   Successfully installed the file.
+2026-10-23 07:17:17.625   -- File entry --
+2026-10-23 07:17:17.625   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Threading.Timer.dll
+2026-10-23 07:17:17.625   Time stamp of our file: 2026-08-20 21:16:44.000
+2026-10-23 07:17:17.625   Installing the file.
+2026-10-23 07:17:17.627   Successfully installed the file.
+2026-10-23 07:17:17.627   -- File entry --
+2026-10-23 07:17:17.627   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Transactions.dll
+2026-10-23 07:17:17.627   Time stamp of our file: 2026-08-20 21:17:32.000
+2026-10-23 07:17:17.627   Installing the file.
+2026-10-23 07:17:17.627   Successfully installed the file.
+2026-10-23 07:17:17.627   -- File entry --
+2026-10-23 07:17:17.629   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Transactions.Local.dll
+2026-10-23 07:17:17.629   Time stamp of our file: 2026-08-20 21:27:52.000
+2026-10-23 07:17:17.629   Installing the file.
+2026-10-23 07:17:17.643   Successfully installed the file.
+2026-10-23 07:17:17.643   -- File entry --
+2026-10-23 07:17:17.643   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.ValueTuple.dll
+2026-10-23 07:17:17.643   Time stamp of our file: 2026-08-20 21:17:14.000
+2026-10-23 07:17:17.643   Installing the file.
+2026-10-23 07:17:17.644   Successfully installed the file.
+2026-10-23 07:17:17.644   -- File entry --
+2026-10-23 07:17:17.644   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Web.dll
+2026-10-23 07:17:17.644   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:17.644   Installing the file.
+2026-10-23 07:17:17.645   Successfully installed the file.
+2026-10-23 07:17:17.645   -- File entry --
+2026-10-23 07:17:17.645   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Web.HttpUtility.dll
+2026-10-23 07:17:17.645   Time stamp of our file: 2026-08-20 21:27:54.000
+2026-10-23 07:17:17.645   Installing the file.
+2026-10-23 07:17:17.647   Successfully installed the file.
+2026-10-23 07:17:17.647   -- File entry --
+2026-10-23 07:17:17.647   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Controls.Ribbon.dll
+2026-10-23 07:17:17.647   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:17.647   Installing the file.
+2026-10-23 07:17:17.674   Successfully installed the file.
+2026-10-23 07:17:17.676   -- File entry --
+2026-10-23 07:17:17.676   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.dll
+2026-10-23 07:17:17.676   Time stamp of our file: 2026-08-20 21:17:18.000
+2026-10-23 07:17:17.676   Installing the file.
+2026-10-23 07:17:17.676   Successfully installed the file.
+2026-10-23 07:17:17.676   -- File entry --
+2026-10-23 07:17:17.676   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Extensions.dll
+2026-10-23 07:17:17.676   Time stamp of our file: 2026-08-22 00:39:16.000
+2026-10-23 07:17:17.676   Installing the file.
+2026-10-23 07:17:17.680   Successfully installed the file.
+2026-10-23 07:17:17.680   -- File entry --
+2026-10-23 07:17:17.680   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Forms.Design.dll
+2026-10-23 07:17:17.680   Time stamp of our file: 2026-08-22 00:39:18.000
+2026-10-23 07:17:17.680   Installing the file.
+2026-10-23 07:17:17.775   Successfully installed the file.
+2026-10-23 07:17:17.775   -- File entry --
+2026-10-23 07:17:17.775   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Forms.Design.Editors.dll
+2026-10-23 07:17:17.775   Time stamp of our file: 2026-08-21 21:57:08.000
+2026-10-23 07:17:17.775   Installing the file.
+2026-10-23 07:17:17.776   Successfully installed the file.
+2026-10-23 07:17:17.776   -- File entry --
+2026-10-23 07:17:17.777   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Forms.dll
+2026-10-23 07:17:17.777   Time stamp of our file: 2026-08-22 00:39:22.000
+2026-10-23 07:17:17.777   Installing the file.
+2026-10-23 07:17:18.023   Successfully installed the file.
+2026-10-23 07:17:18.023   -- File entry --
+2026-10-23 07:17:18.023   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Forms.Primitives.dll
+2026-10-23 07:17:18.023   Time stamp of our file: 2026-08-22 00:39:18.000
+2026-10-23 07:17:18.023   Installing the file.
+2026-10-23 07:17:18.075   Successfully installed the file.
+2026-10-23 07:17:18.075   -- File entry --
+2026-10-23 07:17:18.075   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Input.Manipulations.dll
+2026-10-23 07:17:18.075   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.075   Installing the file.
+2026-10-23 07:17:18.078   Successfully installed the file.
+2026-10-23 07:17:18.078   -- File entry --
+2026-10-23 07:17:18.078   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Windows.Presentation.dll
+2026-10-23 07:17:18.078   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.078   Installing the file.
+2026-10-23 07:17:18.080   Successfully installed the file.
+2026-10-23 07:17:18.080   -- File entry --
+2026-10-23 07:17:18.081   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xaml.dll
+2026-10-23 07:17:18.081   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.081   Installing the file.
+2026-10-23 07:17:18.112   Successfully installed the file.
+2026-10-23 07:17:18.112   -- File entry --
+2026-10-23 07:17:18.112   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.dll
+2026-10-23 07:17:18.113   Time stamp of our file: 2026-08-20 21:18:12.000
+2026-10-23 07:17:18.113   Installing the file.
+2026-10-23 07:17:18.113   Successfully installed the file.
+2026-10-23 07:17:18.113   -- File entry --
+2026-10-23 07:17:18.113   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.Linq.dll
+2026-10-23 07:17:18.113   Time stamp of our file: 2026-08-20 21:18:20.000
+2026-10-23 07:17:18.113   Installing the file.
+2026-10-23 07:17:18.118   Successfully installed the file.
+2026-10-23 07:17:18.118   -- File entry --
+2026-10-23 07:17:18.118   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.ReaderWriter.dll
+2026-10-23 07:17:18.118   Time stamp of our file: 2026-08-20 21:17:56.000
+2026-10-23 07:17:18.118   Installing the file.
+2026-10-23 07:17:18.119   Successfully installed the file.
+2026-10-23 07:17:18.119   -- File entry --
+2026-10-23 07:17:18.120   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.Serialization.dll
+2026-10-23 07:17:18.120   Time stamp of our file: 2026-08-20 21:18:02.000
+2026-10-23 07:17:18.120   Installing the file.
+2026-10-23 07:17:18.120   Successfully installed the file.
+2026-10-23 07:17:18.120   -- File entry --
+2026-10-23 07:17:18.120   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.XDocument.dll
+2026-10-23 07:17:18.120   Time stamp of our file: 2026-08-20 21:18:20.000
+2026-10-23 07:17:18.120   Installing the file.
+2026-10-23 07:17:18.121   Successfully installed the file.
+2026-10-23 07:17:18.121   -- File entry --
+2026-10-23 07:17:18.121   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.XmlDocument.dll
+2026-10-23 07:17:18.121   Time stamp of our file: 2026-08-20 21:18:02.000
+2026-10-23 07:17:18.121   Installing the file.
+2026-10-23 07:17:18.121   Successfully installed the file.
+2026-10-23 07:17:18.121   -- File entry --
+2026-10-23 07:17:18.123   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.XmlSerializer.dll
+2026-10-23 07:17:18.123   Time stamp of our file: 2026-08-20 21:17:16.000
+2026-10-23 07:17:18.123   Installing the file.
+2026-10-23 07:17:18.123   Successfully installed the file.
+2026-10-23 07:17:18.123   -- File entry --
+2026-10-23 07:17:18.123   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.XPath.dll
+2026-10-23 07:17:18.123   Time stamp of our file: 2026-08-20 21:17:26.000
+2026-10-23 07:17:18.123   Installing the file.
+2026-10-23 07:17:18.124   Successfully installed the file.
+2026-10-23 07:17:18.124   -- File entry --
+2026-10-23 07:17:18.124   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\System.Xml.XPath.XDocument.dll
+2026-10-23 07:17:18.125   Time stamp of our file: 2026-08-20 21:27:58.000
+2026-10-23 07:17:18.125   Installing the file.
+2026-10-23 07:17:18.125   Successfully installed the file.
+2026-10-23 07:17:18.125   -- File entry --
+2026-10-23 07:17:18.125   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\THIRD-PARTY-NOTICES.txt
+2026-10-23 07:17:18.125   Time stamp of our file: 2026-10-23 02:04:24.000
+2026-10-23 07:17:18.125   Installing the file.
+2026-10-23 07:17:18.129   Successfully installed the file.
+2026-10-23 07:17:18.129   -- File entry --
+2026-10-23 07:17:18.129   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Transmute.Core.dll
+2026-10-23 07:17:18.129   Time stamp of our file: 2026-10-23 02:06:22.000
+2026-10-23 07:17:18.129   Installing the file.
+2026-10-23 07:17:18.138   Successfully installed the file.
+2026-10-23 07:17:18.138   -- File entry --
+2026-10-23 07:17:18.138   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Transmute.Core.pdb
+2026-10-23 07:17:18.138   Time stamp of our file: 2026-10-23 02:06:22.000
+2026-10-23 07:17:18.138   Installing the file.
+2026-10-23 07:17:18.142   Successfully installed the file.
+2026-10-23 07:17:18.142   -- File entry --
+2026-10-23 07:17:18.144   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Transmute.Desktop.dll
+2026-10-23 07:17:18.144   Time stamp of our file: 2026-10-23 02:06:26.000
+2026-10-23 07:17:18.144   Installing the file.
+2026-10-23 07:17:18.146   Successfully installed the file.
+2026-10-23 07:17:18.146   -- File entry --
+2026-10-23 07:17:18.146   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\Transmute.Desktop.pdb
+2026-10-23 07:17:18.146   Time stamp of our file: 2026-10-23 02:06:26.000
+2026-10-23 07:17:18.146   Installing the file.
+2026-10-23 07:17:18.147   Successfully installed the file.
+2026-10-23 07:17:18.147   -- File entry --
+2026-10-23 07:17:18.147   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.Core.dll
+2026-10-23 07:17:18.147   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.147   Installing the file.
+2026-10-23 07:17:18.149   Successfully installed the file.
+2026-10-23 07:17:18.149   -- File entry --
+2026-10-23 07:17:18.149   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.dll
+2026-10-23 07:17:18.149   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.149   Installing the file.
+2026-10-23 07:17:18.211   Successfully installed the file.
+2026-10-23 07:17:18.211   -- File entry --
+2026-10-23 07:17:18.211   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.DocumentLayoutAnalysis.dll
+2026-10-23 07:17:18.211   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.211   Installing the file.
+2026-10-23 07:17:18.217   Successfully installed the file.
+2026-10-23 07:17:18.217   -- File entry --
+2026-10-23 07:17:18.217   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.Fonts.dll
+2026-10-23 07:17:18.217   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.217   Installing the file.
+2026-10-23 07:17:18.231   Successfully installed the file.
+2026-10-23 07:17:18.231   -- File entry --
+2026-10-23 07:17:18.232   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.Package.dll
+2026-10-23 07:17:18.232   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.232   Installing the file.
+2026-10-23 07:17:18.233   Successfully installed the file.
+2026-10-23 07:17:18.233   -- File entry --
+2026-10-23 07:17:18.233   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.Tokenization.dll
+2026-10-23 07:17:18.233   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.233   Installing the file.
+2026-10-23 07:17:18.234   Successfully installed the file.
+2026-10-23 07:17:18.234   -- File entry --
+2026-10-23 07:17:18.234   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UglyToad.PdfPig.Tokens.dll
+2026-10-23 07:17:18.234   Time stamp of our file: 2026-08-22 07:59:40.000
+2026-10-23 07:17:18.234   Installing the file.
+2026-10-23 07:17:18.235   Successfully installed the file.
+2026-10-23 07:17:18.235   -- File entry --
+2026-10-23 07:17:18.235   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UIAutomationClient.dll
+2026-10-23 07:17:18.235   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.235   Installing the file.
+2026-10-23 07:17:18.246   Successfully installed the file.
+2026-10-23 07:17:18.246   -- File entry --
+2026-10-23 07:17:18.246   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UIAutomationClientSideProviders.dll
+2026-10-23 07:17:18.246   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.246   Installing the file.
+2026-10-23 07:17:18.266   Successfully installed the file.
+2026-10-23 07:17:18.266   -- File entry --
+2026-10-23 07:17:18.266   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UIAutomationProvider.dll
+2026-10-23 07:17:18.266   Time stamp of our file: 2026-08-22 00:39:34.000
+2026-10-23 07:17:18.266   Installing the file.
+2026-10-23 07:17:18.267   Successfully installed the file.
+2026-10-23 07:17:18.267   -- File entry --
+2026-10-23 07:17:18.267   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\UIAutomationTypes.dll
+2026-10-23 07:17:18.268   Time stamp of our file: 2026-08-22 00:39:36.000
+2026-10-23 07:17:18.268   Installing the file.
+2026-10-23 07:17:18.274   Successfully installed the file.
+2026-10-23 07:17:18.274   -- File entry --
+2026-10-23 07:17:18.274   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\vcruntime140_cor3.dll
+2026-10-23 07:17:18.274   Time stamp of our file: 2026-08-05 02:43:18.000
+2026-10-23 07:17:18.274   Installing the file.
+2026-10-23 07:17:18.278   Successfully installed the file.
+2026-10-23 07:17:18.278   -- File entry --
+2026-10-23 07:17:18.278   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\WindowsBase.dll
+2026-10-23 07:17:18.278   Time stamp of our file: 2026-08-22 00:39:36.000
+2026-10-23 07:17:18.278   Installing the file.
+2026-10-23 07:17:18.325   Successfully installed the file.
+2026-10-23 07:17:18.325   -- File entry --
+2026-10-23 07:17:18.325   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\WindowsFormsIntegration.dll
+2026-10-23 07:17:18.326   Time stamp of our file: 2026-08-22 00:39:36.000
+2026-10-23 07:17:18.326   Installing the file.
+2026-10-23 07:17:18.330   Successfully installed the file.
+2026-10-23 07:17:18.330   -- File entry --
+2026-10-23 07:17:18.330   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\WinRT.Runtime.dll
+2026-10-23 07:17:18.330   Time stamp of our file: 2024-11-11 17:23:42.000
+2026-10-23 07:17:18.330   Installing the file.
+2026-10-23 07:17:18.341   Successfully installed the file.
+2026-10-23 07:17:18.341   -- File entry --
+2026-10-23 07:17:18.341   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\wpfgfx_cor3.dll
+2026-10-23 07:17:18.341   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:18.341   Installing the file.
+2026-10-23 07:17:18.383   Successfully installed the file.
+2026-10-23 07:17:18.383   -- File entry --
+2026-10-23 07:17:18.383   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zxing.dll
+2026-10-23 07:17:18.383   Time stamp of our file: 2025-01-26 18:43:46.000
+2026-10-23 07:17:18.383   Installing the file.
+2026-10-23 07:17:18.395   Successfully installed the file.
+2026-10-23 07:17:18.395   -- File entry --
+2026-10-23 07:17:18.397   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:18.397   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:18.397   Installing the file.
+2026-10-23 07:17:18.397   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs
+2026-10-23 07:17:18.397   Successfully installed the file.
+2026-10-23 07:17:18.397   -- File entry --
+2026-10-23 07:17:18.397   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\PresentationCore.resources.dll
+2026-10-23 07:17:18.397   Time stamp of our file: 2026-08-21 22:48:56.000
+2026-10-23 07:17:18.397   Installing the file.
+2026-10-23 07:17:18.401   Successfully installed the file.
+2026-10-23 07:17:18.401   -- File entry --
+2026-10-23 07:17:18.401   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\PresentationFramework.resources.dll
+2026-10-23 07:17:18.401   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:18.401   Installing the file.
+2026-10-23 07:17:18.407   Successfully installed the file.
+2026-10-23 07:17:18.407   -- File entry --
+2026-10-23 07:17:18.407   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\PresentationUI.resources.dll
+2026-10-23 07:17:18.407   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:18.407   Installing the file.
+2026-10-23 07:17:18.409   Successfully installed the file.
+2026-10-23 07:17:18.409   -- File entry --
+2026-10-23 07:17:18.409   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\ReachFramework.resources.dll
+2026-10-23 07:17:18.409   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:18.409   Installing the file.
+2026-10-23 07:17:18.411   Successfully installed the file.
+2026-10-23 07:17:18.411   -- File entry --
+2026-10-23 07:17:18.411   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:18.411   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:18.411   Installing the file.
+2026-10-23 07:17:18.412   Successfully installed the file.
+2026-10-23 07:17:18.412   -- File entry --
+2026-10-23 07:17:18.412   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:18.412   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:18.412   Installing the file.
+2026-10-23 07:17:18.415   Successfully installed the file.
+2026-10-23 07:17:18.415   -- File entry --
+2026-10-23 07:17:18.415   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:18.415   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:18.415   Installing the file.
+2026-10-23 07:17:18.416   Successfully installed the file.
+2026-10-23 07:17:18.416   -- File entry --
+2026-10-23 07:17:18.416   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Windows.Forms.resources.dll
+2026-10-23 07:17:18.416   Time stamp of our file: 2026-08-21 21:56:50.000
+2026-10-23 07:17:18.416   Installing the file.
+2026-10-23 07:17:18.422   Successfully installed the file.
+2026-10-23 07:17:18.422   -- File entry --
+2026-10-23 07:17:18.422   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:18.422   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:18.422   Installing the file.
+2026-10-23 07:17:18.424   Successfully installed the file.
+2026-10-23 07:17:18.424   -- File entry --
+2026-10-23 07:17:18.424   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\System.Xaml.resources.dll
+2026-10-23 07:17:18.424   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:18.424   Installing the file.
+2026-10-23 07:17:18.426   Successfully installed the file.
+2026-10-23 07:17:18.426   -- File entry --
+2026-10-23 07:17:18.426   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\UIAutomationClient.resources.dll
+2026-10-23 07:17:18.426   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:18.426   Installing the file.
+2026-10-23 07:17:18.426   Successfully installed the file.
+2026-10-23 07:17:18.426   -- File entry --
+2026-10-23 07:17:18.426   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:18.426   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:18.426   Installing the file.
+2026-10-23 07:17:18.428   Successfully installed the file.
+2026-10-23 07:17:18.428   -- File entry --
+2026-10-23 07:17:18.428   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\UIAutomationProvider.resources.dll
+2026-10-23 07:17:18.428   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:18.428   Installing the file.
+2026-10-23 07:17:18.429   Successfully installed the file.
+2026-10-23 07:17:18.429   -- File entry --
+2026-10-23 07:17:18.429   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\UIAutomationTypes.resources.dll
+2026-10-23 07:17:18.429   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:18.429   Installing the file.
+2026-10-23 07:17:18.431   Successfully installed the file.
+2026-10-23 07:17:18.431   -- File entry --
+2026-10-23 07:17:18.431   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\WindowsBase.resources.dll
+2026-10-23 07:17:18.431   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:18.431   Installing the file.
+2026-10-23 07:17:18.433   Successfully installed the file.
+2026-10-23 07:17:18.433   -- File entry --
+2026-10-23 07:17:18.433   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\cs\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:18.433   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:18.433   Installing the file.
+2026-10-23 07:17:18.434   Successfully installed the file.
+2026-10-23 07:17:18.435   -- File entry --
+2026-10-23 07:17:18.435   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:18.435   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:18.435   Installing the file.
+2026-10-23 07:17:18.435   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de
+2026-10-23 07:17:18.435   Successfully installed the file.
+2026-10-23 07:17:18.435   -- File entry --
+2026-10-23 07:17:18.436   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\PresentationCore.resources.dll
+2026-10-23 07:17:18.436   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:18.436   Installing the file.
+2026-10-23 07:17:18.438   Successfully installed the file.
+2026-10-23 07:17:18.438   -- File entry --
+2026-10-23 07:17:18.438   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\PresentationFramework.resources.dll
+2026-10-23 07:17:18.438   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:18.438   Installing the file.
+2026-10-23 07:17:18.444   Successfully installed the file.
+2026-10-23 07:17:18.444   -- File entry --
+2026-10-23 07:17:18.444   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\PresentationUI.resources.dll
+2026-10-23 07:17:18.444   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:18.444   Installing the file.
+2026-10-23 07:17:18.445   Successfully installed the file.
+2026-10-23 07:17:18.445   -- File entry --
+2026-10-23 07:17:18.445   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\ReachFramework.resources.dll
+2026-10-23 07:17:18.445   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:18.445   Installing the file.
+2026-10-23 07:17:18.446   Successfully installed the file.
+2026-10-23 07:17:18.446   -- File entry --
+2026-10-23 07:17:18.446   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:18.446   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:18.446   Installing the file.
+2026-10-23 07:17:18.447   Successfully installed the file.
+2026-10-23 07:17:18.447   -- File entry --
+2026-10-23 07:17:18.447   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:18.448   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:18.448   Installing the file.
+2026-10-23 07:17:18.450   Successfully installed the file.
+2026-10-23 07:17:18.450   -- File entry --
+2026-10-23 07:17:18.450   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:18.450   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:18.450   Installing the file.
+2026-10-23 07:17:18.451   Successfully installed the file.
+2026-10-23 07:17:18.451   -- File entry --
+2026-10-23 07:17:18.451   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Windows.Forms.resources.dll
+2026-10-23 07:17:18.451   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:18.451   Installing the file.
+2026-10-23 07:17:18.455   Successfully installed the file.
+2026-10-23 07:17:18.455   -- File entry --
+2026-10-23 07:17:18.455   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:18.455   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:18.455   Installing the file.
+2026-10-23 07:17:18.457   Successfully installed the file.
+2026-10-23 07:17:18.457   -- File entry --
+2026-10-23 07:17:18.457   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\System.Xaml.resources.dll
+2026-10-23 07:17:18.457   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:18.457   Installing the file.
+2026-10-23 07:17:18.457   Successfully installed the file.
+2026-10-23 07:17:18.459   -- File entry --
+2026-10-23 07:17:18.459   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\UIAutomationClient.resources.dll
+2026-10-23 07:17:18.459   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:18.459   Installing the file.
+2026-10-23 07:17:18.459   Successfully installed the file.
+2026-10-23 07:17:18.459   -- File entry --
+2026-10-23 07:17:18.459   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:18.459   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:18.459   Installing the file.
+2026-10-23 07:17:18.460   Successfully installed the file.
+2026-10-23 07:17:18.460   -- File entry --
+2026-10-23 07:17:18.460   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\UIAutomationProvider.resources.dll
+2026-10-23 07:17:18.460   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:18.460   Installing the file.
+2026-10-23 07:17:18.462   Successfully installed the file.
+2026-10-23 07:17:18.462   -- File entry --
+2026-10-23 07:17:18.462   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\UIAutomationTypes.resources.dll
+2026-10-23 07:17:18.462   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:18.462   Installing the file.
+2026-10-23 07:17:18.465   Successfully installed the file.
+2026-10-23 07:17:18.465   -- File entry --
+2026-10-23 07:17:18.465   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\WindowsBase.resources.dll
+2026-10-23 07:17:18.465   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:18.465   Installing the file.
+2026-10-23 07:17:18.469   Successfully installed the file.
+2026-10-23 07:17:18.469   -- File entry --
+2026-10-23 07:17:18.469   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\de\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:18.469   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:18.469   Installing the file.
+2026-10-23 07:17:18.471   Successfully installed the file.
+2026-10-23 07:17:18.471   -- File entry --
+2026-10-23 07:17:18.471   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:18.471   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:18.471   Installing the file.
+2026-10-23 07:17:18.471   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es
+2026-10-23 07:17:18.471   Successfully installed the file.
+2026-10-23 07:17:18.471   -- File entry --
+2026-10-23 07:17:18.471   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\PresentationCore.resources.dll
+2026-10-23 07:17:18.471   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:18.471   Installing the file.
+2026-10-23 07:17:18.473   Successfully installed the file.
+2026-10-23 07:17:18.475   -- File entry --
+2026-10-23 07:17:18.475   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\PresentationFramework.resources.dll
+2026-10-23 07:17:18.475   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:18.475   Installing the file.
+2026-10-23 07:17:18.479   Successfully installed the file.
+2026-10-23 07:17:18.479   -- File entry --
+2026-10-23 07:17:18.479   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\PresentationUI.resources.dll
+2026-10-23 07:17:18.479   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:18.479   Installing the file.
+2026-10-23 07:17:18.480   Successfully installed the file.
+2026-10-23 07:17:18.480   -- File entry --
+2026-10-23 07:17:18.480   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\ReachFramework.resources.dll
+2026-10-23 07:17:18.480   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:18.480   Installing the file.
+2026-10-23 07:17:18.481   Successfully installed the file.
+2026-10-23 07:17:18.481   -- File entry --
+2026-10-23 07:17:18.482   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:18.482   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:18.482   Installing the file.
+2026-10-23 07:17:18.483   Successfully installed the file.
+2026-10-23 07:17:18.483   -- File entry --
+2026-10-23 07:17:18.483   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:18.483   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:18.483   Installing the file.
+2026-10-23 07:17:18.484   Successfully installed the file.
+2026-10-23 07:17:18.484   -- File entry --
+2026-10-23 07:17:18.484   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:18.484   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:18.484   Installing the file.
+2026-10-23 07:17:18.484   Successfully installed the file.
+2026-10-23 07:17:18.484   -- File entry --
+2026-10-23 07:17:18.486   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Windows.Forms.resources.dll
+2026-10-23 07:17:18.486   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:18.486   Installing the file.
+2026-10-23 07:17:18.490   Successfully installed the file.
+2026-10-23 07:17:18.490   -- File entry --
+2026-10-23 07:17:18.490   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:18.490   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:18.490   Installing the file.
+2026-10-23 07:17:18.492   Successfully installed the file.
+2026-10-23 07:17:18.492   -- File entry --
+2026-10-23 07:17:18.492   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\System.Xaml.resources.dll
+2026-10-23 07:17:18.492   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:18.492   Installing the file.
+2026-10-23 07:17:18.493   Successfully installed the file.
+2026-10-23 07:17:18.493   -- File entry --
+2026-10-23 07:17:18.493   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\UIAutomationClient.resources.dll
+2026-10-23 07:17:18.493   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:18.493   Installing the file.
+2026-10-23 07:17:18.494   Successfully installed the file.
+2026-10-23 07:17:18.494   -- File entry --
+2026-10-23 07:17:18.494   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:18.494   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:18.494   Installing the file.
+2026-10-23 07:17:18.495   Successfully installed the file.
+2026-10-23 07:17:18.495   -- File entry --
+2026-10-23 07:17:18.495   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\UIAutomationProvider.resources.dll
+2026-10-23 07:17:18.495   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:18.495   Installing the file.
+2026-10-23 07:17:18.496   Successfully installed the file.
+2026-10-23 07:17:18.496   -- File entry --
+2026-10-23 07:17:18.496   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\UIAutomationTypes.resources.dll
+2026-10-23 07:17:18.496   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:18.496   Installing the file.
+2026-10-23 07:17:18.499   Successfully installed the file.
+2026-10-23 07:17:18.499   -- File entry --
+2026-10-23 07:17:18.499   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\WindowsBase.resources.dll
+2026-10-23 07:17:18.499   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:18.499   Installing the file.
+2026-10-23 07:17:18.501   Successfully installed the file.
+2026-10-23 07:17:18.501   -- File entry --
+2026-10-23 07:17:18.501   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\es\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:18.501   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:18.501   Installing the file.
+2026-10-23 07:17:18.502   Successfully installed the file.
+2026-10-23 07:17:18.502   -- File entry --
+2026-10-23 07:17:18.502   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ffmpeg\ffmpeg.exe
+2026-10-23 07:17:18.502   Time stamp of our file: 2026-10-22 12:59:32.000
+2026-10-23 07:17:18.502   Installing the file.
+2026-10-23 07:17:18.502   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ffmpeg
+2026-10-23 07:17:22.033   Successfully installed the file.
+2026-10-23 07:17:22.034   -- File entry --
+2026-10-23 07:17:22.034   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ffmpeg\LICENSE.txt
+2026-10-23 07:17:22.034   Time stamp of our file: 2026-10-22 12:59:32.000
+2026-10-23 07:17:22.034   Installing the file.
+2026-10-23 07:17:22.035   Successfully installed the file.
+2026-10-23 07:17:22.036   -- File entry --
+2026-10-23 07:17:22.036   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.036   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.036   Installing the file.
+2026-10-23 07:17:22.036   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr
+2026-10-23 07:17:22.062   Successfully installed the file.
+2026-10-23 07:17:22.064   -- File entry --
+2026-10-23 07:17:22.064   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\PresentationCore.resources.dll
+2026-10-23 07:17:22.064   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.064   Installing the file.
+2026-10-23 07:17:22.066   Successfully installed the file.
+2026-10-23 07:17:22.066   -- File entry --
+2026-10-23 07:17:22.066   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\PresentationFramework.resources.dll
+2026-10-23 07:17:22.066   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.066   Installing the file.
+2026-10-23 07:17:22.072   Successfully installed the file.
+2026-10-23 07:17:22.073   -- File entry --
+2026-10-23 07:17:22.073   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\PresentationUI.resources.dll
+2026-10-23 07:17:22.073   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.073   Installing the file.
+2026-10-23 07:17:22.074   Successfully installed the file.
+2026-10-23 07:17:22.074   -- File entry --
+2026-10-23 07:17:22.074   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\ReachFramework.resources.dll
+2026-10-23 07:17:22.074   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.074   Installing the file.
+2026-10-23 07:17:22.077   Successfully installed the file.
+2026-10-23 07:17:22.077   -- File entry --
+2026-10-23 07:17:22.077   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.077   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.077   Installing the file.
+2026-10-23 07:17:22.079   Successfully installed the file.
+2026-10-23 07:17:22.079   -- File entry --
+2026-10-23 07:17:22.079   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.079   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.079   Installing the file.
+2026-10-23 07:17:22.084   Successfully installed the file.
+2026-10-23 07:17:22.084   -- File entry --
+2026-10-23 07:17:22.084   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.084   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:22.084   Installing the file.
+2026-10-23 07:17:22.085   Successfully installed the file.
+2026-10-23 07:17:22.085   -- File entry --
+2026-10-23 07:17:22.085   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.085   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.085   Installing the file.
+2026-10-23 07:17:22.093   Successfully installed the file.
+2026-10-23 07:17:22.093   -- File entry --
+2026-10-23 07:17:22.093   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.093   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.093   Installing the file.
+2026-10-23 07:17:22.095   Successfully installed the file.
+2026-10-23 07:17:22.095   -- File entry --
+2026-10-23 07:17:22.095   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\System.Xaml.resources.dll
+2026-10-23 07:17:22.095   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.095   Installing the file.
+2026-10-23 07:17:22.097   Successfully installed the file.
+2026-10-23 07:17:22.097   -- File entry --
+2026-10-23 07:17:22.097   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.097   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.097   Installing the file.
+2026-10-23 07:17:22.097   Successfully installed the file.
+2026-10-23 07:17:22.097   -- File entry --
+2026-10-23 07:17:22.097   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.097   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.097   Installing the file.
+2026-10-23 07:17:22.099   Successfully installed the file.
+2026-10-23 07:17:22.099   -- File entry --
+2026-10-23 07:17:22.099   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.099   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.099   Installing the file.
+2026-10-23 07:17:22.099   Successfully installed the file.
+2026-10-23 07:17:22.099   -- File entry --
+2026-10-23 07:17:22.099   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.099   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.099   Installing the file.
+2026-10-23 07:17:22.103   Successfully installed the file.
+2026-10-23 07:17:22.103   -- File entry --
+2026-10-23 07:17:22.103   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\WindowsBase.resources.dll
+2026-10-23 07:17:22.103   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.103   Installing the file.
+2026-10-23 07:17:22.105   Successfully installed the file.
+2026-10-23 07:17:22.105   -- File entry --
+2026-10-23 07:17:22.105   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\fr\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.106   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.106   Installing the file.
+2026-10-23 07:17:22.107   Successfully installed the file.
+2026-10-23 07:17:22.107   -- File entry --
+2026-10-23 07:17:22.107   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.107   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.107   Installing the file.
+2026-10-23 07:17:22.107   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it
+2026-10-23 07:17:22.108   Successfully installed the file.
+2026-10-23 07:17:22.108   -- File entry --
+2026-10-23 07:17:22.109   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\PresentationCore.resources.dll
+2026-10-23 07:17:22.109   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.109   Installing the file.
+2026-10-23 07:17:22.111   Successfully installed the file.
+2026-10-23 07:17:22.111   -- File entry --
+2026-10-23 07:17:22.111   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\PresentationFramework.resources.dll
+2026-10-23 07:17:22.111   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.111   Installing the file.
+2026-10-23 07:17:22.116   Successfully installed the file.
+2026-10-23 07:17:22.116   -- File entry --
+2026-10-23 07:17:22.116   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\PresentationUI.resources.dll
+2026-10-23 07:17:22.116   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.116   Installing the file.
+2026-10-23 07:17:22.117   Successfully installed the file.
+2026-10-23 07:17:22.117   -- File entry --
+2026-10-23 07:17:22.117   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\ReachFramework.resources.dll
+2026-10-23 07:17:22.117   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.117   Installing the file.
+2026-10-23 07:17:22.119   Successfully installed the file.
+2026-10-23 07:17:22.119   -- File entry --
+2026-10-23 07:17:22.119   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.119   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.119   Installing the file.
+2026-10-23 07:17:22.119   Successfully installed the file.
+2026-10-23 07:17:22.119   -- File entry --
+2026-10-23 07:17:22.119   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.120   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.120   Installing the file.
+2026-10-23 07:17:22.122   Successfully installed the file.
+2026-10-23 07:17:22.122   -- File entry --
+2026-10-23 07:17:22.122   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.122   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:22.122   Installing the file.
+2026-10-23 07:17:22.123   Successfully installed the file.
+2026-10-23 07:17:22.123   -- File entry --
+2026-10-23 07:17:22.123   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.123   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.123   Installing the file.
+2026-10-23 07:17:22.128   Successfully installed the file.
+2026-10-23 07:17:22.128   -- File entry --
+2026-10-23 07:17:22.128   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.128   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.128   Installing the file.
+2026-10-23 07:17:22.128   Successfully installed the file.
+2026-10-23 07:17:22.128   -- File entry --
+2026-10-23 07:17:22.128   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\System.Xaml.resources.dll
+2026-10-23 07:17:22.128   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.128   Installing the file.
+2026-10-23 07:17:22.130   Successfully installed the file.
+2026-10-23 07:17:22.130   -- File entry --
+2026-10-23 07:17:22.130   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.130   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.130   Installing the file.
+2026-10-23 07:17:22.130   Successfully installed the file.
+2026-10-23 07:17:22.132   -- File entry --
+2026-10-23 07:17:22.132   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.132   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.132   Installing the file.
+2026-10-23 07:17:22.133   Successfully installed the file.
+2026-10-23 07:17:22.133   -- File entry --
+2026-10-23 07:17:22.133   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.133   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.133   Installing the file.
+2026-10-23 07:17:22.134   Successfully installed the file.
+2026-10-23 07:17:22.134   -- File entry --
+2026-10-23 07:17:22.134   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.134   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.134   Installing the file.
+2026-10-23 07:17:22.137   Successfully installed the file.
+2026-10-23 07:17:22.137   -- File entry --
+2026-10-23 07:17:22.137   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\WindowsBase.resources.dll
+2026-10-23 07:17:22.137   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.137   Installing the file.
+2026-10-23 07:17:22.138   Successfully installed the file.
+2026-10-23 07:17:22.138   -- File entry --
+2026-10-23 07:17:22.139   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\it\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.139   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.139   Installing the file.
+2026-10-23 07:17:22.139   Successfully installed the file.
+2026-10-23 07:17:22.139   -- File entry --
+2026-10-23 07:17:22.140   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.140   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.140   Installing the file.
+2026-10-23 07:17:22.140   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja
+2026-10-23 07:17:22.140   Successfully installed the file.
+2026-10-23 07:17:22.140   -- File entry --
+2026-10-23 07:17:22.140   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\PresentationCore.resources.dll
+2026-10-23 07:17:22.140   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.140   Installing the file.
+2026-10-23 07:17:22.142   Successfully installed the file.
+2026-10-23 07:17:22.142   -- File entry --
+2026-10-23 07:17:22.144   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\PresentationFramework.resources.dll
+2026-10-23 07:17:22.144   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.144   Installing the file.
+2026-10-23 07:17:22.148   Successfully installed the file.
+2026-10-23 07:17:22.148   -- File entry --
+2026-10-23 07:17:22.148   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\PresentationUI.resources.dll
+2026-10-23 07:17:22.148   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.148   Installing the file.
+2026-10-23 07:17:22.150   Successfully installed the file.
+2026-10-23 07:17:22.150   -- File entry --
+2026-10-23 07:17:22.150   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\ReachFramework.resources.dll
+2026-10-23 07:17:22.150   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.150   Installing the file.
+2026-10-23 07:17:22.154   Successfully installed the file.
+2026-10-23 07:17:22.154   -- File entry --
+2026-10-23 07:17:22.155   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.155   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.155   Installing the file.
+2026-10-23 07:17:22.156   Successfully installed the file.
+2026-10-23 07:17:22.156   -- File entry --
+2026-10-23 07:17:22.156   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.156   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.156   Installing the file.
+2026-10-23 07:17:22.158   Successfully installed the file.
+2026-10-23 07:17:22.158   -- File entry --
+2026-10-23 07:17:22.158   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.158   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:22.158   Installing the file.
+2026-10-23 07:17:22.160   Successfully installed the file.
+2026-10-23 07:17:22.160   -- File entry --
+2026-10-23 07:17:22.160   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.160   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.160   Installing the file.
+2026-10-23 07:17:22.165   Successfully installed the file.
+2026-10-23 07:17:22.165   -- File entry --
+2026-10-23 07:17:22.165   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.165   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.165   Installing the file.
+2026-10-23 07:17:22.165   Successfully installed the file.
+2026-10-23 07:17:22.165   -- File entry --
+2026-10-23 07:17:22.165   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\System.Xaml.resources.dll
+2026-10-23 07:17:22.165   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.165   Installing the file.
+2026-10-23 07:17:22.167   Successfully installed the file.
+2026-10-23 07:17:22.167   -- File entry --
+2026-10-23 07:17:22.167   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.167   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.167   Installing the file.
+2026-10-23 07:17:22.168   Successfully installed the file.
+2026-10-23 07:17:22.168   -- File entry --
+2026-10-23 07:17:22.168   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.168   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.168   Installing the file.
+2026-10-23 07:17:22.169   Successfully installed the file.
+2026-10-23 07:17:22.169   -- File entry --
+2026-10-23 07:17:22.169   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.169   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.169   Installing the file.
+2026-10-23 07:17:22.171   Successfully installed the file.
+2026-10-23 07:17:22.171   -- File entry --
+2026-10-23 07:17:22.171   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.171   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.171   Installing the file.
+2026-10-23 07:17:22.174   Successfully installed the file.
+2026-10-23 07:17:22.174   -- File entry --
+2026-10-23 07:17:22.174   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\WindowsBase.resources.dll
+2026-10-23 07:17:22.174   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.174   Installing the file.
+2026-10-23 07:17:22.175   Successfully installed the file.
+2026-10-23 07:17:22.175   -- File entry --
+2026-10-23 07:17:22.175   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ja\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.176   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.176   Installing the file.
+2026-10-23 07:17:22.176   Successfully installed the file.
+2026-10-23 07:17:22.176   -- File entry --
+2026-10-23 07:17:22.176   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.176   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.176   Installing the file.
+2026-10-23 07:17:22.176   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko
+2026-10-23 07:17:22.178   Successfully installed the file.
+2026-10-23 07:17:22.178   -- File entry --
+2026-10-23 07:17:22.178   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\PresentationCore.resources.dll
+2026-10-23 07:17:22.178   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.178   Installing the file.
+2026-10-23 07:17:22.180   Successfully installed the file.
+2026-10-23 07:17:22.180   -- File entry --
+2026-10-23 07:17:22.180   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\PresentationFramework.resources.dll
+2026-10-23 07:17:22.180   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.180   Installing the file.
+2026-10-23 07:17:22.186   Successfully installed the file.
+2026-10-23 07:17:22.186   -- File entry --
+2026-10-23 07:17:22.186   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\PresentationUI.resources.dll
+2026-10-23 07:17:22.186   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.186   Installing the file.
+2026-10-23 07:17:22.188   Successfully installed the file.
+2026-10-23 07:17:22.188   -- File entry --
+2026-10-23 07:17:22.188   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\ReachFramework.resources.dll
+2026-10-23 07:17:22.188   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.188   Installing the file.
+2026-10-23 07:17:22.188   Successfully installed the file.
+2026-10-23 07:17:22.188   -- File entry --
+2026-10-23 07:17:22.188   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.188   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.188   Installing the file.
+2026-10-23 07:17:22.190   Successfully installed the file.
+2026-10-23 07:17:22.190   -- File entry --
+2026-10-23 07:17:22.190   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.190   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.190   Installing the file.
+2026-10-23 07:17:22.192   Successfully installed the file.
+2026-10-23 07:17:22.192   -- File entry --
+2026-10-23 07:17:22.193   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.193   Time stamp of our file: 2026-08-21 21:56:18.000
+2026-10-23 07:17:22.193   Installing the file.
+2026-10-23 07:17:22.194   Successfully installed the file.
+2026-10-23 07:17:22.194   -- File entry --
+2026-10-23 07:17:22.194   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.194   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.194   Installing the file.
+2026-10-23 07:17:22.199   Successfully installed the file.
+2026-10-23 07:17:22.199   -- File entry --
+2026-10-23 07:17:22.199   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.199   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.199   Installing the file.
+2026-10-23 07:17:22.199   Successfully installed the file.
+2026-10-23 07:17:22.200   -- File entry --
+2026-10-23 07:17:22.200   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\System.Xaml.resources.dll
+2026-10-23 07:17:22.200   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.200   Installing the file.
+2026-10-23 07:17:22.201   Successfully installed the file.
+2026-10-23 07:17:22.201   -- File entry --
+2026-10-23 07:17:22.201   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.202   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.202   Installing the file.
+2026-10-23 07:17:22.202   Successfully installed the file.
+2026-10-23 07:17:22.202   -- File entry --
+2026-10-23 07:17:22.203   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.203   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.203   Installing the file.
+2026-10-23 07:17:22.203   Successfully installed the file.
+2026-10-23 07:17:22.203   -- File entry --
+2026-10-23 07:17:22.203   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.203   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.203   Installing the file.
+2026-10-23 07:17:22.204   Successfully installed the file.
+2026-10-23 07:17:22.204   -- File entry --
+2026-10-23 07:17:22.204   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.205   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.205   Installing the file.
+2026-10-23 07:17:22.207   Successfully installed the file.
+2026-10-23 07:17:22.207   -- File entry --
+2026-10-23 07:17:22.207   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\WindowsBase.resources.dll
+2026-10-23 07:17:22.209   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.209   Installing the file.
+2026-10-23 07:17:22.209   Successfully installed the file.
+2026-10-23 07:17:22.209   -- File entry --
+2026-10-23 07:17:22.209   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ko\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.209   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.209   Installing the file.
+2026-10-23 07:17:22.211   Successfully installed the file.
+2026-10-23 07:17:22.211   -- File entry --
+2026-10-23 07:17:22.211   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.211   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.211   Installing the file.
+2026-10-23 07:17:22.211   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl
+2026-10-23 07:17:22.213   Successfully installed the file.
+2026-10-23 07:17:22.213   -- File entry --
+2026-10-23 07:17:22.213   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\PresentationCore.resources.dll
+2026-10-23 07:17:22.213   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.213   Installing the file.
+2026-10-23 07:17:22.215   Successfully installed the file.
+2026-10-23 07:17:22.215   -- File entry --
+2026-10-23 07:17:22.215   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\PresentationFramework.resources.dll
+2026-10-23 07:17:22.215   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.215   Installing the file.
+2026-10-23 07:17:22.218   Successfully installed the file.
+2026-10-23 07:17:22.218   -- File entry --
+2026-10-23 07:17:22.220   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\PresentationUI.resources.dll
+2026-10-23 07:17:22.220   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.220   Installing the file.
+2026-10-23 07:17:22.221   Successfully installed the file.
+2026-10-23 07:17:22.221   -- File entry --
+2026-10-23 07:17:22.221   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\ReachFramework.resources.dll
+2026-10-23 07:17:22.221   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.221   Installing the file.
+2026-10-23 07:17:22.223   Successfully installed the file.
+2026-10-23 07:17:22.223   -- File entry --
+2026-10-23 07:17:22.223   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.223   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.223   Installing the file.
+2026-10-23 07:17:22.223   Successfully installed the file.
+2026-10-23 07:17:22.223   -- File entry --
+2026-10-23 07:17:22.223   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.224   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.224   Installing the file.
+2026-10-23 07:17:22.226   Successfully installed the file.
+2026-10-23 07:17:22.226   -- File entry --
+2026-10-23 07:17:22.226   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.226   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.226   Installing the file.
+2026-10-23 07:17:22.227   Successfully installed the file.
+2026-10-23 07:17:22.227   -- File entry --
+2026-10-23 07:17:22.227   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.227   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.227   Installing the file.
+2026-10-23 07:17:22.233   Successfully installed the file.
+2026-10-23 07:17:22.233   -- File entry --
+2026-10-23 07:17:22.233   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.233   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.233   Installing the file.
+2026-10-23 07:17:22.233   Successfully installed the file.
+2026-10-23 07:17:22.233   -- File entry --
+2026-10-23 07:17:22.234   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\System.Xaml.resources.dll
+2026-10-23 07:17:22.234   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.234   Installing the file.
+2026-10-23 07:17:22.234   Successfully installed the file.
+2026-10-23 07:17:22.234   -- File entry --
+2026-10-23 07:17:22.234   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.234   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.234   Installing the file.
+2026-10-23 07:17:22.236   Successfully installed the file.
+2026-10-23 07:17:22.236   -- File entry --
+2026-10-23 07:17:22.236   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.236   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.236   Installing the file.
+2026-10-23 07:17:22.238   Successfully installed the file.
+2026-10-23 07:17:22.238   -- File entry --
+2026-10-23 07:17:22.238   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.238   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.238   Installing the file.
+2026-10-23 07:17:22.238   Successfully installed the file.
+2026-10-23 07:17:22.238   -- File entry --
+2026-10-23 07:17:22.238   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.238   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.238   Installing the file.
+2026-10-23 07:17:22.242   Successfully installed the file.
+2026-10-23 07:17:22.242   -- File entry --
+2026-10-23 07:17:22.242   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\WindowsBase.resources.dll
+2026-10-23 07:17:22.242   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.242   Installing the file.
+2026-10-23 07:17:22.244   Successfully installed the file.
+2026-10-23 07:17:22.244   -- File entry --
+2026-10-23 07:17:22.244   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pl\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.244   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.244   Installing the file.
+2026-10-23 07:17:22.244   Successfully installed the file.
+2026-10-23 07:17:22.244   -- File entry --
+2026-10-23 07:17:22.244   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.244   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.244   Installing the file.
+2026-10-23 07:17:22.244   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR
+2026-10-23 07:17:22.246   Successfully installed the file.
+2026-10-23 07:17:22.246   -- File entry --
+2026-10-23 07:17:22.246   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\PresentationCore.resources.dll
+2026-10-23 07:17:22.246   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.246   Installing the file.
+2026-10-23 07:17:22.248   Successfully installed the file.
+2026-10-23 07:17:22.248   -- File entry --
+2026-10-23 07:17:22.248   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\PresentationFramework.resources.dll
+2026-10-23 07:17:22.248   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.248   Installing the file.
+2026-10-23 07:17:22.254   Successfully installed the file.
+2026-10-23 07:17:22.254   -- File entry --
+2026-10-23 07:17:22.254   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\PresentationUI.resources.dll
+2026-10-23 07:17:22.254   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.254   Installing the file.
+2026-10-23 07:17:22.254   Successfully installed the file.
+2026-10-23 07:17:22.254   -- File entry --
+2026-10-23 07:17:22.254   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\ReachFramework.resources.dll
+2026-10-23 07:17:22.254   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.254   Installing the file.
+2026-10-23 07:17:22.256   Successfully installed the file.
+2026-10-23 07:17:22.256   -- File entry --
+2026-10-23 07:17:22.256   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.256   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.256   Installing the file.
+2026-10-23 07:17:22.256   Successfully installed the file.
+2026-10-23 07:17:22.256   -- File entry --
+2026-10-23 07:17:22.258   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.258   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.258   Installing the file.
+2026-10-23 07:17:22.260   Successfully installed the file.
+2026-10-23 07:17:22.260   -- File entry --
+2026-10-23 07:17:22.260   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.260   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.260   Installing the file.
+2026-10-23 07:17:22.260   Successfully installed the file.
+2026-10-23 07:17:22.260   -- File entry --
+2026-10-23 07:17:22.260   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.260   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.260   Installing the file.
+2026-10-23 07:17:22.265   Successfully installed the file.
+2026-10-23 07:17:22.265   -- File entry --
+2026-10-23 07:17:22.265   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.265   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.265   Installing the file.
+2026-10-23 07:17:22.265   Successfully installed the file.
+2026-10-23 07:17:22.265   -- File entry --
+2026-10-23 07:17:22.265   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\System.Xaml.resources.dll
+2026-10-23 07:17:22.265   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.265   Installing the file.
+2026-10-23 07:17:22.267   Successfully installed the file.
+2026-10-23 07:17:22.267   -- File entry --
+2026-10-23 07:17:22.267   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.267   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.267   Installing the file.
+2026-10-23 07:17:22.269   Successfully installed the file.
+2026-10-23 07:17:22.269   -- File entry --
+2026-10-23 07:17:22.269   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.269   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.269   Installing the file.
+2026-10-23 07:17:22.269   Successfully installed the file.
+2026-10-23 07:17:22.269   -- File entry --
+2026-10-23 07:17:22.269   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.269   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.269   Installing the file.
+2026-10-23 07:17:22.271   Successfully installed the file.
+2026-10-23 07:17:22.271   -- File entry --
+2026-10-23 07:17:22.271   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.271   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.271   Installing the file.
+2026-10-23 07:17:22.277   Successfully installed the file.
+2026-10-23 07:17:22.277   -- File entry --
+2026-10-23 07:17:22.277   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\WindowsBase.resources.dll
+2026-10-23 07:17:22.277   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.277   Installing the file.
+2026-10-23 07:17:22.280   Successfully installed the file.
+2026-10-23 07:17:22.280   -- File entry --
+2026-10-23 07:17:22.280   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\pt-BR\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.280   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.280   Installing the file.
+2026-10-23 07:17:22.280   Successfully installed the file.
+2026-10-23 07:17:22.281   -- File entry --
+2026-10-23 07:17:22.281   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.281   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.281   Installing the file.
+2026-10-23 07:17:22.281   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru
+2026-10-23 07:17:22.283   Successfully installed the file.
+2026-10-23 07:17:22.283   -- File entry --
+2026-10-23 07:17:22.283   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\PresentationCore.resources.dll
+2026-10-23 07:17:22.283   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.283   Installing the file.
+2026-10-23 07:17:22.285   Successfully installed the file.
+2026-10-23 07:17:22.285   -- File entry --
+2026-10-23 07:17:22.285   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\PresentationFramework.resources.dll
+2026-10-23 07:17:22.285   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.285   Installing the file.
+2026-10-23 07:17:22.291   Successfully installed the file.
+2026-10-23 07:17:22.291   -- File entry --
+2026-10-23 07:17:22.291   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\PresentationUI.resources.dll
+2026-10-23 07:17:22.291   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.291   Installing the file.
+2026-10-23 07:17:22.293   Successfully installed the file.
+2026-10-23 07:17:22.293   -- File entry --
+2026-10-23 07:17:22.293   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\ReachFramework.resources.dll
+2026-10-23 07:17:22.293   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.293   Installing the file.
+2026-10-23 07:17:22.294   Successfully installed the file.
+2026-10-23 07:17:22.294   -- File entry --
+2026-10-23 07:17:22.294   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.294   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.294   Installing the file.
+2026-10-23 07:17:22.295   Successfully installed the file.
+2026-10-23 07:17:22.295   -- File entry --
+2026-10-23 07:17:22.295   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.295   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.295   Installing the file.
+2026-10-23 07:17:22.297   Successfully installed the file.
+2026-10-23 07:17:22.297   -- File entry --
+2026-10-23 07:17:22.297   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.297   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.297   Installing the file.
+2026-10-23 07:17:22.298   Successfully installed the file.
+2026-10-23 07:17:22.298   -- File entry --
+2026-10-23 07:17:22.298   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.298   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.298   Installing the file.
+2026-10-23 07:17:22.304   Successfully installed the file.
+2026-10-23 07:17:22.304   -- File entry --
+2026-10-23 07:17:22.304   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.304   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.304   Installing the file.
+2026-10-23 07:17:22.304   Successfully installed the file.
+2026-10-23 07:17:22.304   -- File entry --
+2026-10-23 07:17:22.305   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\System.Xaml.resources.dll
+2026-10-23 07:17:22.305   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.305   Installing the file.
+2026-10-23 07:17:22.306   Successfully installed the file.
+2026-10-23 07:17:22.306   -- File entry --
+2026-10-23 07:17:22.306   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.306   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.306   Installing the file.
+2026-10-23 07:17:22.307   Successfully installed the file.
+2026-10-23 07:17:22.307   -- File entry --
+2026-10-23 07:17:22.307   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.308   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.308   Installing the file.
+2026-10-23 07:17:22.308   Successfully installed the file.
+2026-10-23 07:17:22.308   -- File entry --
+2026-10-23 07:17:22.308   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.308   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.308   Installing the file.
+2026-10-23 07:17:22.309   Successfully installed the file.
+2026-10-23 07:17:22.309   -- File entry --
+2026-10-23 07:17:22.309   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.310   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.310   Installing the file.
+2026-10-23 07:17:22.312   Successfully installed the file.
+2026-10-23 07:17:22.312   -- File entry --
+2026-10-23 07:17:22.312   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\WindowsBase.resources.dll
+2026-10-23 07:17:22.312   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.312   Installing the file.
+2026-10-23 07:17:22.314   Successfully installed the file.
+2026-10-23 07:17:22.314   -- File entry --
+2026-10-23 07:17:22.314   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\ru\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.315   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.315   Installing the file.
+2026-10-23 07:17:22.315   Successfully installed the file.
+2026-10-23 07:17:22.315   -- File entry --
+2026-10-23 07:17:22.315   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.315   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.315   Installing the file.
+2026-10-23 07:17:22.315   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr
+2026-10-23 07:17:22.315   Successfully installed the file.
+2026-10-23 07:17:22.317   -- File entry --
+2026-10-23 07:17:22.317   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\PresentationCore.resources.dll
+2026-10-23 07:17:22.317   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.317   Installing the file.
+2026-10-23 07:17:22.319   Successfully installed the file.
+2026-10-23 07:17:22.319   -- File entry --
+2026-10-23 07:17:22.319   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\PresentationFramework.resources.dll
+2026-10-23 07:17:22.319   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.319   Installing the file.
+2026-10-23 07:17:22.324   Successfully installed the file.
+2026-10-23 07:17:22.324   -- File entry --
+2026-10-23 07:17:22.324   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\PresentationUI.resources.dll
+2026-10-23 07:17:22.324   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.324   Installing the file.
+2026-10-23 07:17:22.326   Successfully installed the file.
+2026-10-23 07:17:22.326   -- File entry --
+2026-10-23 07:17:22.326   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\ReachFramework.resources.dll
+2026-10-23 07:17:22.326   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.326   Installing the file.
+2026-10-23 07:17:22.326   Successfully installed the file.
+2026-10-23 07:17:22.326   -- File entry --
+2026-10-23 07:17:22.326   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.326   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.326   Installing the file.
+2026-10-23 07:17:22.328   Successfully installed the file.
+2026-10-23 07:17:22.328   -- File entry --
+2026-10-23 07:17:22.328   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.328   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.328   Installing the file.
+2026-10-23 07:17:22.329   Successfully installed the file.
+2026-10-23 07:17:22.329   -- File entry --
+2026-10-23 07:17:22.330   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.330   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.330   Installing the file.
+2026-10-23 07:17:22.331   Successfully installed the file.
+2026-10-23 07:17:22.331   -- File entry --
+2026-10-23 07:17:22.331   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.331   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.331   Installing the file.
+2026-10-23 07:17:22.336   Successfully installed the file.
+2026-10-23 07:17:22.336   -- File entry --
+2026-10-23 07:17:22.336   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.336   Time stamp of our file: 2026-08-21 22:48:16.000
+2026-10-23 07:17:22.336   Installing the file.
+2026-10-23 07:17:22.337   Successfully installed the file.
+2026-10-23 07:17:22.337   -- File entry --
+2026-10-23 07:17:22.337   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\System.Xaml.resources.dll
+2026-10-23 07:17:22.337   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.337   Installing the file.
+2026-10-23 07:17:22.339   Successfully installed the file.
+2026-10-23 07:17:22.339   -- File entry --
+2026-10-23 07:17:22.339   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.339   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.339   Installing the file.
+2026-10-23 07:17:22.340   Successfully installed the file.
+2026-10-23 07:17:22.340   -- File entry --
+2026-10-23 07:17:22.341   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.341   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.341   Installing the file.
+2026-10-23 07:17:22.341   Successfully installed the file.
+2026-10-23 07:17:22.341   -- File entry --
+2026-10-23 07:17:22.341   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.342   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.342   Installing the file.
+2026-10-23 07:17:22.342   Successfully installed the file.
+2026-10-23 07:17:22.342   -- File entry --
+2026-10-23 07:17:22.343   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.343   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.343   Installing the file.
+2026-10-23 07:17:22.347   Successfully installed the file.
+2026-10-23 07:17:22.347   -- File entry --
+2026-10-23 07:17:22.347   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\WindowsBase.resources.dll
+2026-10-23 07:17:22.347   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.347   Installing the file.
+2026-10-23 07:17:22.349   Successfully installed the file.
+2026-10-23 07:17:22.349   -- File entry --
+2026-10-23 07:17:22.349   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\tr\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.349   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.349   Installing the file.
+2026-10-23 07:17:22.351   Successfully installed the file.
+2026-10-23 07:17:22.351   -- File entry --
+2026-10-23 07:17:22.351   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.351   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.351   Installing the file.
+2026-10-23 07:17:22.351   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans
+2026-10-23 07:17:22.352   Successfully installed the file.
+2026-10-23 07:17:22.352   -- File entry --
+2026-10-23 07:17:22.352   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\PresentationCore.resources.dll
+2026-10-23 07:17:22.352   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.353   Installing the file.
+2026-10-23 07:17:22.355   Successfully installed the file.
+2026-10-23 07:17:22.355   -- File entry --
+2026-10-23 07:17:22.355   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\PresentationFramework.resources.dll
+2026-10-23 07:17:22.355   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.355   Installing the file.
+2026-10-23 07:17:22.360   Successfully installed the file.
+2026-10-23 07:17:22.360   -- File entry --
+2026-10-23 07:17:22.360   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\PresentationUI.resources.dll
+2026-10-23 07:17:22.360   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.360   Installing the file.
+2026-10-23 07:17:22.362   Successfully installed the file.
+2026-10-23 07:17:22.362   -- File entry --
+2026-10-23 07:17:22.362   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\ReachFramework.resources.dll
+2026-10-23 07:17:22.362   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.362   Installing the file.
+2026-10-23 07:17:22.364   Successfully installed the file.
+2026-10-23 07:17:22.364   -- File entry --
+2026-10-23 07:17:22.364   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.364   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.364   Installing the file.
+2026-10-23 07:17:22.364   Successfully installed the file.
+2026-10-23 07:17:22.364   -- File entry --
+2026-10-23 07:17:22.364   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.364   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.364   Installing the file.
+2026-10-23 07:17:22.369   Successfully installed the file.
+2026-10-23 07:17:22.369   -- File entry --
+2026-10-23 07:17:22.369   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.369   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.369   Installing the file.
+2026-10-23 07:17:22.369   Successfully installed the file.
+2026-10-23 07:17:22.369   -- File entry --
+2026-10-23 07:17:22.369   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.369   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.369   Installing the file.
+2026-10-23 07:17:22.375   Successfully installed the file.
+2026-10-23 07:17:22.375   -- File entry --
+2026-10-23 07:17:22.375   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.375   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.375   Installing the file.
+2026-10-23 07:17:22.376   Successfully installed the file.
+2026-10-23 07:17:22.376   -- File entry --
+2026-10-23 07:17:22.376   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\System.Xaml.resources.dll
+2026-10-23 07:17:22.376   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.376   Installing the file.
+2026-10-23 07:17:22.378   Successfully installed the file.
+2026-10-23 07:17:22.378   -- File entry --
+2026-10-23 07:17:22.378   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.378   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.378   Installing the file.
+2026-10-23 07:17:22.378   Successfully installed the file.
+2026-10-23 07:17:22.378   -- File entry --
+2026-10-23 07:17:22.378   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.378   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.378   Installing the file.
+2026-10-23 07:17:22.380   Successfully installed the file.
+2026-10-23 07:17:22.380   -- File entry --
+2026-10-23 07:17:22.380   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.380   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.380   Installing the file.
+2026-10-23 07:17:22.380   Successfully installed the file.
+2026-10-23 07:17:22.380   -- File entry --
+2026-10-23 07:17:22.380   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.380   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.380   Installing the file.
+2026-10-23 07:17:22.384   Successfully installed the file.
+2026-10-23 07:17:22.384   -- File entry --
+2026-10-23 07:17:22.384   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\WindowsBase.resources.dll
+2026-10-23 07:17:22.384   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.384   Installing the file.
+2026-10-23 07:17:22.384   Successfully installed the file.
+2026-10-23 07:17:22.384   -- File entry --
+2026-10-23 07:17:22.386   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hans\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.386   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.386   Installing the file.
+2026-10-23 07:17:22.386   Successfully installed the file.
+2026-10-23 07:17:22.386   -- File entry --
+2026-10-23 07:17:22.386   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\Microsoft.VisualBasic.Forms.resources.dll
+2026-10-23 07:17:22.386   Time stamp of our file: 2026-08-21 21:56:56.000
+2026-10-23 07:17:22.386   Installing the file.
+2026-10-23 07:17:22.386   Creating directory: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant
+2026-10-23 07:17:22.388   Successfully installed the file.
+2026-10-23 07:17:22.388   -- File entry --
+2026-10-23 07:17:22.388   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\PresentationCore.resources.dll
+2026-10-23 07:17:22.388   Time stamp of our file: 2026-08-21 22:48:58.000
+2026-10-23 07:17:22.388   Installing the file.
+2026-10-23 07:17:22.390   Successfully installed the file.
+2026-10-23 07:17:22.390   -- File entry --
+2026-10-23 07:17:22.390   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\PresentationFramework.resources.dll
+2026-10-23 07:17:22.390   Time stamp of our file: 2026-08-21 22:49:16.000
+2026-10-23 07:17:22.390   Installing the file.
+2026-10-23 07:17:22.396   Successfully installed the file.
+2026-10-23 07:17:22.396   -- File entry --
+2026-10-23 07:17:22.396   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\PresentationUI.resources.dll
+2026-10-23 07:17:22.396   Time stamp of our file: 2026-08-21 22:49:38.000
+2026-10-23 07:17:22.396   Installing the file.
+2026-10-23 07:17:22.398   Successfully installed the file.
+2026-10-23 07:17:22.398   -- File entry --
+2026-10-23 07:17:22.398   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\ReachFramework.resources.dll
+2026-10-23 07:17:22.398   Time stamp of our file: 2026-08-21 22:49:04.000
+2026-10-23 07:17:22.398   Installing the file.
+2026-10-23 07:17:22.399   Successfully installed the file.
+2026-10-23 07:17:22.399   -- File entry --
+2026-10-23 07:17:22.399   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Windows.Controls.Ribbon.resources.dll
+2026-10-23 07:17:22.399   Time stamp of our file: 2026-08-21 22:49:52.000
+2026-10-23 07:17:22.399   Installing the file.
+2026-10-23 07:17:22.400   Successfully installed the file.
+2026-10-23 07:17:22.400   -- File entry --
+2026-10-23 07:17:22.400   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Windows.Forms.Design.resources.dll
+2026-10-23 07:17:22.400   Time stamp of our file: 2026-08-21 21:57:04.000
+2026-10-23 07:17:22.400   Installing the file.
+2026-10-23 07:17:22.417   Successfully installed the file.
+2026-10-23 07:17:22.417   -- File entry --
+2026-10-23 07:17:22.417   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Windows.Forms.Primitives.resources.dll
+2026-10-23 07:17:22.418   Time stamp of our file: 2026-08-21 21:56:20.000
+2026-10-23 07:17:22.418   Installing the file.
+2026-10-23 07:17:22.418   Successfully installed the file.
+2026-10-23 07:17:22.418   -- File entry --
+2026-10-23 07:17:22.419   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Windows.Forms.resources.dll
+2026-10-23 07:17:22.419   Time stamp of our file: 2026-08-21 21:56:52.000
+2026-10-23 07:17:22.419   Installing the file.
+2026-10-23 07:17:22.423   Successfully installed the file.
+2026-10-23 07:17:22.423   -- File entry --
+2026-10-23 07:17:22.423   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Windows.Input.Manipulations.resources.dll
+2026-10-23 07:17:22.423   Time stamp of our file: 2026-08-21 22:48:18.000
+2026-10-23 07:17:22.423   Installing the file.
+2026-10-23 07:17:22.423   Successfully installed the file.
+2026-10-23 07:17:22.423   -- File entry --
+2026-10-23 07:17:22.423   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\System.Xaml.resources.dll
+2026-10-23 07:17:22.423   Time stamp of our file: 2026-08-21 22:48:20.000
+2026-10-23 07:17:22.423   Installing the file.
+2026-10-23 07:17:22.425   Successfully installed the file.
+2026-10-23 07:17:22.425   -- File entry --
+2026-10-23 07:17:22.425   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\UIAutomationClient.resources.dll
+2026-10-23 07:17:22.425   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.425   Installing the file.
+2026-10-23 07:17:22.427   Successfully installed the file.
+2026-10-23 07:17:22.427   -- File entry --
+2026-10-23 07:17:22.427   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\UIAutomationClientSideProviders.resources.dll
+2026-10-23 07:17:22.427   Time stamp of our file: 2026-08-21 22:49:00.000
+2026-10-23 07:17:22.427   Installing the file.
+2026-10-23 07:17:22.427   Successfully installed the file.
+2026-10-23 07:17:22.427   -- File entry --
+2026-10-23 07:17:22.428   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\UIAutomationProvider.resources.dll
+2026-10-23 07:17:22.428   Time stamp of our file: 2026-08-21 22:48:44.000
+2026-10-23 07:17:22.428   Installing the file.
+2026-10-23 07:17:22.429   Successfully installed the file.
+2026-10-23 07:17:22.429   -- File entry --
+2026-10-23 07:17:22.429   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\UIAutomationTypes.resources.dll
+2026-10-23 07:17:22.429   Time stamp of our file: 2026-08-21 22:48:38.000
+2026-10-23 07:17:22.429   Installing the file.
+2026-10-23 07:17:22.432   Successfully installed the file.
+2026-10-23 07:17:22.432   -- File entry --
+2026-10-23 07:17:22.432   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\WindowsBase.resources.dll
+2026-10-23 07:17:22.432   Time stamp of our file: 2026-08-21 22:48:36.000
+2026-10-23 07:17:22.432   Installing the file.
+2026-10-23 07:17:22.434   Successfully installed the file.
+2026-10-23 07:17:22.434   -- File entry --
+2026-10-23 07:17:22.434   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\zh-Hant\WindowsFormsIntegration.resources.dll
+2026-10-23 07:17:22.434   Time stamp of our file: 2026-08-21 22:49:18.000
+2026-10-23 07:17:22.434   Installing the file.
+2026-10-23 07:17:22.434   Successfully installed the file.
+2026-10-23 07:17:22.434   -- File entry --
+2026-10-23 07:17:22.434   Dest filename: C:\Users\runneradmin\AppData\Local\Programs\Spinform\models\isnet-general-use.onnx
+2026-10-23 07:17:22.434   Time stamp of our file: 2026-10-23 02:04:30.000
+2026-10-23 07:17:22.434   Installing the file.
+2026-10-23 07:17:26.532   Successfully installed the file.
+2026-10-23 07:17:26.532   -- Icon entry --
+2026-10-23 07:17:26.532   Dest filename: C:\Users\runneradmin\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Spinform.lnk
+2026-10-23 07:17:26.532   Creating the icon.
+2026-10-23 07:17:26.932   Successfully created the icon.
+2026-10-23 07:17:26.936   -- Icon entry --
+2026-10-23 07:17:26.936   Dest filename: C:\Users\runneradmin\AppData\Roaming\Microsoft\Windows\SendTo\Spinform.lnk
+2026-10-23 07:17:26.936   Creating the icon.
+2026-10-23 07:17:26.940   Successfully created the icon.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\*\shell\Transmute
+2026-10-23 07:17:26.942   Deleting the key.
+2026-10-23 07:17:26.942   Successfully deleted the key.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\Directory\shell\Transmute
+2026-10-23 07:17:26.942   Deleting the key.
+2026-10-23 07:17:26.942   Successfully deleted the key.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\*\shell\Spinform
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\*\shell\Spinform
+2026-10-23 07:17:26.942   Value name: Icon
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\*\shell\Spinform
+2026-10-23 07:17:26.942   Value name: MultiSelectModel
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\*\shell\Spinform\command
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\Directory\shell\Spinform
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\Directory\shell\Spinform
+2026-10-23 07:17:26.942   Value name: Icon
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\Directory\shell\Spinform\command
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\spinform
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\spinform
+2026-10-23 07:17:26.942   Value name: URL Protocol
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\spinform\DefaultIcon
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.942   Creating or setting the value.
+2026-10-23 07:17:26.942   Successfully created or set the value.
+2026-10-23 07:17:26.942   -- Registry entry --
+2026-10-23 07:17:26.942   Key: HKEY_CURRENT_USER\Software\Classes\spinform\shell\open\command
+2026-10-23 07:17:26.942   Creating or opening the key.
+2026-10-23 07:17:26.944   Creating or setting the value.
+2026-10-23 07:17:26.944   Successfully created or set the value.
+2026-10-23 07:17:26.944   -- Registry entry --
+2026-10-23 07:17:26.944   Key: HKEY_CURRENT_USER\Software\Classes\.spinform
+2026-10-23 07:17:26.944   Creating or opening the key.
+2026-10-23 07:17:26.944   Creating or setting the value.
+2026-10-23 07:17:26.944   Successfully created or set the value.
+2026-10-23 07:17:26.944   -- Registry entry --
+2026-10-23 07:17:26.944   Key: HKEY_CURRENT_USER\Software\Classes\Spinform.Project
+2026-10-23 07:17:26.944   Creating or opening the key.
+2026-10-23 07:17:26.944   Creating or setting the value.
+2026-10-23 07:17:26.944   Successfully created or set the value.
+2026-10-23 07:17:26.944   -- Registry entry --
+2026-10-23 07:17:26.944   Key: HKEY_CURRENT_USER\Software\Classes\Spinform.Project\DefaultIcon
+2026-10-23 07:17:26.944   Creating or opening the key.
+2026-10-23 07:17:26.944   Creating or setting the value.
+2026-10-23 07:17:26.944   Successfully created or set the value.
+2026-10-23 07:17:26.944   -- Registry entry --
+2026-10-23 07:17:26.944   Key: HKEY_CURRENT_USER\Software\Classes\Spinform.Project\shell\open\command
+2026-10-23 07:17:26.944   Creating or opening the key.
+2026-10-23 07:17:26.944   Creating or setting the value.
+2026-10-23 07:17:26.944   Successfully created or set the value.
+2026-10-23 07:17:26.944   Saving uninstall information.
+2026-10-23 07:17:26.944   Creating new uninstall key: HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\{6C1C2A53-1F8E-4C4B-9D0B-3E7A1B5F2D90}_is1
+2026-10-23 07:17:26.944   Writing uninstall key values.
+2026-10-23 07:17:26.944   Detected previous administrative 64-bit install? No
+2026-10-23 07:17:26.944   Detected previous administrative 32-bit install? No
+2026-10-23 07:17:26.971   Installation process succeeded.
+2026-10-23 07:17:26.971   Need to restart Windows? No
+2026-10-23 07:17:26.973   Deinitializing Setup.
+2026-10-23 07:17:26.984   Log closed.

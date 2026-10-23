@@ -1,0 +1,13 @@
+Updating Spinform-Setup-x64.exe
+PASS Spinform.exe installed in C:\Users\runneradmin\AppData\Local\Programs\Spinform
+PASS ffmpeg installed
+PASS background model installed
+PASS third-party notices installed
+PASS Start menu shortcut Spinform
+PASS Send to › Spinform
+PASS right-click Convert with Spinform
+PASS one entry in Installed apps, named Spinform (found: Spinform)
+PASS Spinform keeps running after launch
+PASS uninstalling removes Spinform
+PASS uninstalling removes the Start menu shortcut
+PASS uninstalling removes start when I sign in
