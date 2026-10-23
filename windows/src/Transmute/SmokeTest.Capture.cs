@@ -97,9 +97,13 @@ static partial class SmokeTest
             var image = new Image { Source = bitmap, Stretch = Stretch.None, SnapsToDevicePixels = true };
             RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
             var pattern = new Window { Content = image, SizeToContent = SizeToContent.WidthAndHeight, WindowStyle = WindowStyle.None, ResizeMode = ResizeMode.NoResize, Topmost = true, ShowInTaskbar = false, UseLayoutRounding = true, Title = "Pattern" };
+            pattern.WindowStartupLocation = WindowStartupLocation.Manual;
+            pattern.Left = (monitor.Bounds.X + 4) / monitor.Scale;
+            pattern.Top = (monitor.Bounds.Y + 100) / monitor.Scale;
             pattern.Show();
-            CaptureKit.MoveTo(pattern, monitor.Bounds.X + 4, monitor.Bounds.Y + 100);
-            await Wait(0.6);
+            await Wait(0.3);
+            CaptureKit.MoveTo(pattern, monitor.Bounds.X + 4, monitor.Bounds.Y + 100); // after WPF's own placement
+            await Wait(0.5);
             var origin = image.PointToScreen(new Point(0, 0));
             var rect = new PixelRect((int)Math.Round(origin.X), (int)Math.Round(origin.Y), pw, ph);
             int Wrong(BgraImage got)
