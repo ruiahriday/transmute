@@ -204,7 +204,7 @@ enum EditedDrag {
                         .appendingPathComponent(UUID().uuidString, isDirectory: true)
                     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                     let out = folder.appendingPathComponent(name + ".png")
-                    try ImageConverter.data(from: image, type: .png).write(to: out, options: .atomic)
+                    try ImageConverter.data(from: image, type: .png, dpi: ImageConverter.dpi(of: url)).write(to: out, options: .atomic)
                     done(out, false, nil)
                 } catch {
                     done(nil, false, error)

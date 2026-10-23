@@ -463,6 +463,7 @@ final class ScrollCaptureSession: ObservableObject {
     private func captureLoop() async {
         let capturer = ScreenGrabber.AreaCapturer(rect: rect)
         let pixelsPerPoint = ScreenGrabber.screen(containing: CGPoint(x: rect.midX, y: rect.midY))?.backingScaleFactor ?? 2
+        ScreenGrabber.lastScale = pixelsPerPoint
         var failures = 0
         while !Task.isCancelled {
             do {

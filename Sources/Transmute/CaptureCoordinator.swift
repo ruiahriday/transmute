@@ -139,6 +139,7 @@ final class CaptureCoordinator: ObservableObject {
                 try? await Task.sleep(nanoseconds: 120_000_000)
                 return try await ScreenGrabber.captureArea(rect, excludingSelf: true)
             }
+            ScreenGrabber.lastScale = shot.scale
             return ScreenGrabber.crop(shot, to: rect)
         case .window(let window):
             // Give the overlay a moment to leave the screen.
@@ -306,7 +307,7 @@ final class CaptureCoordinator: ObservableObject {
 
     /// Saves, copies, keeps and shows a new picture.
     func deliver(_ image: CGImage, kind: HistoryItem.Kind) {
-        guard let encoded = CaptureFiles.encode(image, format: CaptureSettings.format) else {
+        guard let encoded = CaptureFiles.encode(image, format: CaptureSettings.format, scale: ScreenGrabber.lastScale) else {
             Toast.show("Couldn't save the capture", symbol: "exclamationmark.triangle.fill")
             return
         }

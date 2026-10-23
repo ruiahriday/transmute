@@ -499,7 +499,7 @@ enum ScreenGrabber {
                 let me = ProcessInfo.processInfo.processIdentifier
                 let filter = SCContentFilter(display: display, excludingApplications: content.applications.filter { $0.processID == me },
                                              exceptingWindows: [])
-                let config = SCStreamConfiguration()
+                let config = ScreenGrabber.stillConfig()
                 config.sourceRect = ScreenGrabber.localRect(area, in: screen.frame)
                 config.width = max(1, Int((area.width * screen.backingScaleFactor).rounded()))
                 config.height = max(1, Int((area.height * screen.backingScaleFactor).rounded()))
@@ -512,6 +512,19 @@ enum ScreenGrabber {
             return try await ScreenGrabber.screenshot(pair.0, pair.1)
         }
     }
+
+    /// A still-picture setup that asks for every Retina pixel (`.automatic` may hand back a
+    /// point-sized frame scaled up, which looks soft).
+    @available(macOS 14.0, *)
+    static func stillConfig() -> SCStreamConfiguration {
+        let config = SCStreamConfiguration()
+        config.captureResolution = .best
+        config.scalesToFit = false
+        return config
+    }
+
+    /// Pixels per point of the last picture taken, saved as its DPI.
+    @MainActor static var lastScale: CGFloat = 2
 
     static func displayID(of screen: NSScreen) -> CGDirectDisplayID {
         let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
@@ -571,6 +584,7 @@ enum ScreenGrabber {
         let id = displayID(of: screen)
         let frame = screen.frame
         let scale = screen.backingScaleFactor
+        lastScale = scale
         let image: CGImage
         if #available(macOS 14.0, *) {
             let content = try await shareableContent()
@@ -578,9 +592,9 @@ enum ScreenGrabber {
                 throw ConversionError("Couldn't find that screen.")
             }
             let filter = SCContentFilter(display: display, excludingWindows: [])
-            let config = SCStreamConfiguration()
-            config.width = max(1, Int(frame.width * scale))
-            config.height = max(1, Int(frame.height * scale))
+            let config = stillConfig()
+            config.width = max(1, Int((frame.width * scale).rounded()))
+            config.height = max(1, Int((frame.height * scale).rounded()))
             config.showsCursor = false
             image = try await screenshot(filter, config)
         } else {
@@ -602,6 +616,7 @@ enum ScreenGrabber {
         let area = rect.intersection(screen.frame)
         guard area.width >= 1, area.height >= 1 else { throw ConversionError("That area isn't on a screen.") }
         let scale = screen.backingScaleFactor
+        lastScale = scale
         if #available(macOS 14.0, *) {
             let id = displayID(of: screen)
             let content = try await shareableContent()
@@ -611,7 +626,7 @@ enum ScreenGrabber {
             let me = ProcessInfo.processInfo.processIdentifier
             let mine = excludingSelf ? content.applications.filter { $0.processID == me } : []
             let filter = SCContentFilter(display: display, excludingApplications: mine, exceptingWindows: [])
-            let config = SCStreamConfiguration()
+            let config = stillConfig()
             config.sourceRect = localRect(area, in: screen.frame)
             config.width = max(1, Int((area.width * scale).rounded()))
             config.height = max(1, Int((area.height * scale).rounded()))
@@ -629,6 +644,7 @@ enum ScreenGrabber {
     @MainActor
     static func captureWindow(_ window: WindowInfo, shadow: Bool) async throws -> CGImage {
         let scale = screen(containing: CGPoint(x: window.frame.midX, y: window.frame.midY))?.backingScaleFactor ?? 2
+        lastScale = scale
         var image: CGImage
         if #available(macOS 14.0, *) {
             let content = try await shareableContent(excludingDesktopWindows: true)
@@ -636,7 +652,7 @@ enum ScreenGrabber {
                 throw ConversionError("That window closed.")
             }
             let filter = SCContentFilter(desktopIndependentWindow: scWindow)
-            let config = SCStreamConfiguration()
+            let config = stillConfig()
             config.width = max(1, Int((scWindow.frame.width * scale).rounded()))
             config.height = max(1, Int((scWindow.frame.height * scale).rounded()))
             config.showsCursor = false
@@ -706,11 +722,13 @@ enum CaptureFiles {
     }
 
     /// Encodes in the chosen format; HEIC falls back to PNG on Macs that can't write it.
-    static func encode(_ image: CGImage, format: CaptureImageFormat) -> (data: Data, ext: String)? {
-        if let data = try? ImageConverter.data(from: image, type: format.utType, quality: 0.92) {
+    /// Pixels are kept exactly as captured; `scale` (pixels per point) is saved as DPI (72 × scale).
+    static func encode(_ image: CGImage, format: CaptureImageFormat, scale: CGFloat = 1) -> (data: Data, ext: String)? {
+        let dpi = 72 * Double(max(1, scale))
+        if let data = try? ImageConverter.data(from: image, type: format.utType, quality: 0.95, dpi: dpi) {
             return (data, format.fileExtension)
         }
-        guard format != .png, let png = try? ImageConverter.data(from: image, type: .png) else { return nil }
+        guard format != .png, let png = try? ImageConverter.data(from: image, type: .png, dpi: dpi) else { return nil }
         return (png, "png")
     }
 

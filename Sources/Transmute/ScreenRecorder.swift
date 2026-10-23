@@ -291,6 +291,7 @@ final class ScreenRecorder: NSObject, ObservableObject {
             config.height = height
             config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(options.fps))
             config.queueDepth = 6
+            if #available(macOS 14.0, *) { config.captureResolution = .best }
             // Studio draws its own smooth pointer, so the recording leaves the real one out.
             config.showsCursor = options.cursor && !options.studio
             config.pixelFormat = kCVPixelFormatType_32BGRA

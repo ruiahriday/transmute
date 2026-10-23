@@ -139,13 +139,28 @@ enum ImageConverter {
         return ctx.makeImage() ?? image
     }
 
-    static func data(from image: CGImage, type: UTType, quality: Double = 0.9) throws -> Data {
+    /// The DPI a file was saved with (144 for a Retina capture), so edits and frames keep it.
+    static func dpi(of url: URL) -> Double? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let dpi = (props[kCGImagePropertyDPIWidth] as? NSNumber)?.doubleValue, dpi > 72 else { return nil }
+        return dpi
+    }
+
+    /// `dpi` records the true size for Retina pixels (144 for 2x), so Preview and the pasteboard
+    /// show the picture at its on-screen size instead of blown up to double.
+    static func data(from image: CGImage, type: UTType, quality: Double = 0.9, dpi: Double? = nil) throws -> Data {
         let output = NSMutableData()
         guard let dest = CGImageDestinationCreateWithData(output as CFMutableData, type.identifier as CFString, 1, nil) else {
             throw ConversionError("Couldn't create the image encoder.")
         }
         let finalImage = supportsAlpha(type) ? image : flatten(image)
-        CGImageDestinationAddImage(dest, finalImage, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
+        var props: [CFString: Any] = [kCGImageDestinationLossyCompressionQuality: quality]
+        if let dpi, dpi > 0 {
+            props[kCGImagePropertyDPIWidth] = dpi
+            props[kCGImagePropertyDPIHeight] = dpi
+        }
+        CGImageDestinationAddImage(dest, finalImage, props as CFDictionary)
         guard CGImageDestinationFinalize(dest) else { throw ConversionError("Couldn't encode the image.") }
         return output as Data
     }

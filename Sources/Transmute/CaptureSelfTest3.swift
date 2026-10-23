@@ -264,5 +264,87 @@ extension SelfTest {
             guard stitcher.add(f0, scrolledPoints: -300) == .noMatch else { throw ConversionError("scrolled back") }
             return []
         }
+
+        await retinaChecks(dir: dir)
+    }
+
+    /// Every pixel as RGBA bytes, drawn the same way for any image so two can be compared.
+    static func rgbaBytes(_ image: CGImage) -> [UInt8] {
+        let w = image.width, h = image.height
+        var bytes = [UInt8](repeating: 0, count: w * h * 4)
+        let space = CGColorSpace(name: CGColorSpace.sRGB)!
+        bytes.withUnsafeMutableBytes { buffer in
+            if let ctx = CGContext(data: buffer.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                                   space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) {
+                ctx.interpolationQuality = .none
+                ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+            }
+        }
+        return bytes
+    }
+
+    static func retinaChecks(dir: URL) async {
+        await check("Sharpness: a 2x screen keeps every Retina pixel, untouched, saved at 144 DPI") {
+            // A 200×150-point screen at 2x, filled with a fine pattern that any resampling would smear.
+            let w = 400, h = 300
+            var pixels = [UInt8](repeating: 255, count: w * h * 4)
+            for y in 0..<h { for x in 0..<w {
+                let i = (y * w + x) * 4
+                pixels[i] = UInt8((x * 7 + y * 13) & 0xFF)
+                pixels[i + 1] = (x + y) % 2 == 0 ? 0 : 255
+                pixels[i + 2] = UInt8((x ^ y) & 0xFF)
+            } }
+            let space = CGColorSpace(name: CGColorSpace.sRGB)!
+            guard let provider = CGDataProvider(data: Data(pixels) as CFData),
+                  let source = CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4, space: space,
+                                       bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.noneSkipLast.rawValue),
+                                       provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent) else {
+                throw ConversionError("couldn't make the screen")
+            }
+            let shot = DisplayShot(image: source, frame: CGRect(x: 0, y: 0, width: 200, height: 150), displayID: CGMainDisplayID())
+            // 60×30 points, 40 points up from the bottom: rows 80–110 points from the top.
+            guard let crop = ScreenGrabber.crop(shot, to: CGRect(x: 50, y: 40, width: 60, height: 30)) else { throw ConversionError("crop") }
+            guard crop.width == 120, crop.height == 60 else { throw ConversionError("crop is \(crop.width)×\(crop.height), wanted 120×60") }
+            guard let expected = source.cropping(to: CGRect(x: 100, y: 160, width: 120, height: 60)) else { throw ConversionError("source crop") }
+            let want = rgbaBytes(expected)
+            guard rgbaBytes(crop) == want else { throw ConversionError("the crop's pixels differ from the screen's") }
+
+            var outputs: [URL] = []
+            for format in [CaptureImageFormat.png, .jpeg] {
+                guard let encoded = CaptureFiles.encode(crop, format: format, scale: 2) else { throw ConversionError("encode \(format)") }
+                let url = dir.appendingPathComponent("retina.\(encoded.ext)")
+                try encoded.data.write(to: url)
+                guard let src = CGImageSourceCreateWithData(encoded.data as CFData, nil),
+                      let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+                      let decoded = CGImageSourceCreateImageAtIndex(src, 0, nil) else { throw ConversionError("read \(format)") }
+                let dpi = (props[kCGImagePropertyDPIWidth] as? NSNumber)?.doubleValue ?? 0
+                guard decoded.width == 120, decoded.height == 60, abs(dpi - 144) < 0.5 else {
+                    throw ConversionError("\(format): \(decoded.width)×\(decoded.height) at \(dpi) DPI")
+                }
+                guard let size = NSImage(contentsOf: url)?.size, abs(size.width - 60) < 0.5, abs(size.height - 30) < 0.5 else {
+                    throw ConversionError("\(format) opens at the wrong size")
+                }
+                if format == .png, rgbaBytes(decoded) != want { throw ConversionError("PNG changed pixels") }
+                outputs.append(url)
+            }
+            guard ImageConverter.dpi(of: outputs[0]) == 144 else { throw ConversionError("DPI isn't read back") }
+            return outputs
+        }
+
+        if CapturePermissions.screenRecording, let screen = NSScreen.main {
+            await check("Sharpness: a live area capture is point size × the screen's scale") {
+                let rect = CGRect(x: screen.frame.minX + 40, y: screen.frame.minY + 40, width: 101, height: 77)
+                let image = try await ScreenGrabber.captureArea(rect, excludingSelf: true)
+                let scale = screen.backingScaleFactor
+                let w = Int((rect.width * scale).rounded()), h = Int((rect.height * scale).rounded())
+                guard abs(image.width - w) <= 1, abs(image.height - h) <= 1 else {
+                    throw ConversionError("got \(image.width)×\(image.height), wanted \(w)×\(h) at \(scale)x")
+                }
+                guard ScreenGrabber.lastScale == scale else { throw ConversionError("scale not recorded") }
+                return []
+            }
+        } else {
+            skipped += 1
+        }
     }
 }

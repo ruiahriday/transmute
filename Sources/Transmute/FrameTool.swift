@@ -387,7 +387,7 @@ enum FrameRenderer {
         let image = try ImageConverter.loadCGImage(input)
         let framed = try render(image, style: style)
         let out = OutputPaths.destination(for: input, ext: "png", suffix: "framed", folder: folder)
-        try ImageConverter.data(from: framed, type: .png).write(to: out, options: .atomic)
+        try ImageConverter.data(from: framed, type: .png, dpi: ImageConverter.dpi(of: input)).write(to: out, options: .atomic)
         return out
     }
 }
@@ -764,7 +764,7 @@ struct FrameToolView: View {
             do {
                 let data = try await Task.detached(priority: .userInitiated) { () throws -> Data in
                     let framed = try FrameRenderer.render(try ImageConverter.loadCGImage(url), style: style)
-                    return try ImageConverter.data(from: framed, type: .png)
+                    return try ImageConverter.data(from: framed, type: .png, dpi: ImageConverter.dpi(of: url))
                 }.value
                 let board = NSPasteboard.general
                 board.clearContents()
