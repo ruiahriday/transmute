@@ -207,8 +207,10 @@ sealed class BackgroundPanel : StackPanel
     public static DrawingBrush Checkerboard(double size)
     {
         var group = new DrawingGroup();
-        group.Children.Add(new GeometryDrawing(Brushes.White, null, new RectangleGeometry(new Rect(0, 0, 2, 2))));
-        var grey = new SolidColorBrush(Color.FromRgb(0xE2, 0xE2, 0xE2));
+        // Quiet in either mode: light squares in light mode, dark ones in dark mode.
+        var dark = ThemeManager.Dark;
+        group.Children.Add(new GeometryDrawing(new SolidColorBrush(dark ? Color.FromRgb(0x2A, 0x2A, 0x2A) : Colors.White), null, new RectangleGeometry(new Rect(0, 0, 2, 2))));
+        var grey = new SolidColorBrush(dark ? Color.FromRgb(0x33, 0x33, 0x33) : Color.FromRgb(0xE2, 0xE2, 0xE2));
         group.Children.Add(new GeometryDrawing(grey, null, new RectangleGeometry(new Rect(0, 0, 1, 1))));
         group.Children.Add(new GeometryDrawing(grey, null, new RectangleGeometry(new Rect(1, 1, 1, 1))));
         var brush = new DrawingBrush(group) { TileMode = TileMode.Tile, Viewport = new Rect(0, 0, size * 2, size * 2), ViewportUnits = BrushMappingMode.Absolute, Stretch = Stretch.Fill };
