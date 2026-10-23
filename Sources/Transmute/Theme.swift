@@ -50,7 +50,9 @@ enum Theme {
     static let textSecondary = Color(nsColor: .secondaryLabelColor)
     static let textTertiary = Color(nsColor: .tertiaryLabelColor)
     /// Behind pictures and video in the editors.
-    static let stage = Color(nsColor: .underPageBackgroundColor)
+    static let stage = Color(nsColor: NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? NSColor(white: 0.09, alpha: 1) : NSColor(white: 0.91, alpha: 1)
+    })
 
     /// Corner radii, so cards, controls and chips agree.
     enum Radius {

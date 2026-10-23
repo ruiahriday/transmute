@@ -49,7 +49,7 @@ struct StudioSettings: Codable, Equatable, Sendable {
     /// nil runs to the end.
     var trimEnd: Double? = nil
     var output: StudioAspect = .landscape
-    var background: FrameStyle.Background = .gradient(0x4338CA, 0xEC4899)
+    var background: FrameStyle.Background = .gradient(0x48484A, 0x1C1C1E)
     /// Space around the recording, as a fraction of the output's shorter side.
     var padding = 0.06
     /// Corner radius, as a fraction of the recording's shorter side on the output.

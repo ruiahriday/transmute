@@ -176,7 +176,7 @@ struct CaptureChooserView: View {
                     .font(.system(size: 17, weight: .regular))
                     .foregroundStyle(recording ? Theme.rose : (selected ? Theme.accent : Theme.textPrimary))
                     .frame(width: 30, height: 30)
-                Text(recording ? "Record \(action.shortTitle)" : action.shortTitle)
+                Text(action == .recordScreen ? "Record Screen" : (recording ? "Record \(action.shortTitle)" : action.shortTitle))
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(1)

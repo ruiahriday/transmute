@@ -526,7 +526,7 @@ extension Snapshots {
             for i in 0...600 { track.samples.append(.init(t: Double(i) / 60, x: 0.3 + Double(i) / 1500, y: 0.35 + Double(i) / 3000)) }
             track.clicks = [.init(t: 0.6, x: 0.36, y: 0.38)]
             var settings = StudioSettings()
-            settings.background = .gradient(0x4338CA, 0xEC4899)
+            settings.background = .gradient(0x48484A, 0x1C1C1E)
             StudioEngine.preparePointer()
             await shoot("studio-\(suffix)", output, size: CGSize(width: 1100, height: 720), wait: 4) {
                 StudioView(url: clip, settings: settings, track: track, time: 1.2)
