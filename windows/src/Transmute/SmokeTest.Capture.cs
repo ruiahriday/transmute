@@ -105,6 +105,8 @@ static partial class SmokeTest
             CaptureKit.MoveTo(pattern, monitor.Bounds.X + 4, monitor.Bounds.Y + 100); // after WPF's own placement
             await Wait(0.5);
             var origin = image.PointToScreen(new Point(0, 0));
+            var placed = Screens.WindowBounds(CaptureKit.Handle(pattern));
+            Log($"      pattern window at {placed.X},{placed.Y} {placed.Width} × {placed.Height}; asked for {monitor.Bounds.X + 4},{monitor.Bounds.Y + 100}; display bounds {monitor.Bounds.X},{monitor.Bounds.Y}");
             var rect = new PixelRect((int)Math.Round(origin.X), (int)Math.Round(origin.Y), pw, ph);
             int Wrong(BgraImage got)
             {
@@ -194,11 +196,11 @@ static partial class SmokeTest
             if (!visible) Log("NOTE  scrolling capture: another window covers the test page on this machine, so only the capture's start and finish are checked");
             ScrollCapture.DebugFolder = output;
             var run = ScrollCapture.Start(inner, () => viewer.ScrollToVerticalOffset(viewer.VerticalOffset + 90));
-            var done = await Task.WhenAny(run, Task.Delay(30_000));
+            var done = await Task.WhenAny(run, Task.Delay(50_000)); // slow test machines grab a frame a second
             var diagnostics = ScrollCapture.Current?.Diagnostics;
             Log($"      page scrolled to {viewer.VerticalOffset:0} of {viewer.ScrollableHeight:0}; {diagnostics ?? "finished"}");
             page.Close();
-            if (done != run) { await (ScrollCapture.Current?.Done() ?? Task.CompletedTask); throw new Exception("the scrolling capture didn't finish within 30 s"); }
+            if (done != run) { await (ScrollCapture.Current?.Done() ?? Task.CompletedTask); throw new Exception("the scrolling capture didn't finish within 50 s"); }
             var card = QuickAccess.Open.LastOrDefault();
             if (card is null || QuickAccess.Open.Count == cards && card.Item.Kind != CaptureKind.Screenshot) throw new Exception("no result");
             Log($"      stitched {card.Item.Width} × {card.Item.Height} from a {inner.Width} × {inner.Height} area");

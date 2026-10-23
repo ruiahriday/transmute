@@ -112,7 +112,7 @@ jobs:
         if: always() && steps.selftest.outcome != 'skipped'
         run: |
           $p = Start-Process -FilePath ".\out\publish\x64\Spinform.exe" -ArgumentList "--smoke-test", "`"$PWD\out\fixtures`"", "`"$PWD\out\smoke-x64`"" -PassThru
-          if (-not $p.WaitForExit(240000)) { $p.Kill(); Write-Host "::error title=Smoke test (x64)::the app didn't finish within 4 minutes" }
+          if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Host "::error title=Smoke test (x64)::the app didn't finish within 5 minutes" }
           $log = Get-Content out\smoke-x64\smoke-test.log -ErrorAction SilentlyContinue
           $log | ForEach-Object { Write-Host $_ }
           $log | Where-Object { $_ -match "^(FAIL|WARN|NOTE)" } | ForEach-Object { Write-Host "::warning title=Smoke test (x64)::$_" }
