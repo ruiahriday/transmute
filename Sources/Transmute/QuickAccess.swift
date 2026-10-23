@@ -70,7 +70,9 @@ final class QuickAccess: ObservableObject {
         let panel = KeyPanel.floating(NSRect(origin: .zero, size: size), level: .statusBar)
         let screen = ScreenGrabber.screenUnderMouse ?? NSScreen.main
         let card = Card(result: result, panel: panel, screenID: screen.map { ScreenGrabber.displayID(of: $0) })
+        // Laid out at the normal size, then scaled, so every button stays inside the panel at any card size.
         let host = SwipeHostingView(rootView: QuickAccessCard(result: result, actions: actions(for: result))
+            .frame(width: Self.cardSize.width, height: Self.cardSize.height)
             .scaleEffect(CaptureSettings.overlayScale, anchor: .topLeading)
             .frame(width: size.width, height: size.height, alignment: .topLeading))
         let id = result.id
@@ -196,7 +198,7 @@ final class QuickAccess: ObservableObject {
         if inside { card.hideTask?.cancel() } else { scheduleHide(card) }
     }
 
-    private func actions(for result: CaptureResult) -> QuickActions {
+    func actions(for result: CaptureResult) -> QuickActions {
         let id = result.id
         let url = result.url
         let coordinator = CaptureCoordinator.shared

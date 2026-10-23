@@ -335,13 +335,16 @@ enum PermissionPrompt {
         info += "\n\nIn System Settings → Privacy & Security → \(kind == .screen ? "Screen & System Audio Recording" : kind.title), turn on Spinform."
         if kind == .screen || kind == .accessibility {
             info += " Then quit and reopen Spinform."
-            info += "\n\nAfter each Spinform update macOS may ask again: if Spinform is already on, switch it off and on."
+            info += "\n\nIf Spinform is already switched on, macOS may be remembering an older copy of the app: select Spinform, remove it with the – button, then add it again (or switch it off and on)."
         }
         alert.informativeText = info
         alert.addButton(withTitle: "Open System Settings")
         alert.addButton(withTitle: "Not Now")
-        if kind == .screen { _ = CGRequestScreenCaptureAccess() }
+        // Nothing else is on screen while this asks: capture overlays are never up at the same time.
+        CaptureCleanup.closeAll()
         if alert.runModal() == .alertFirstButtonReturn {
+            // Puts Spinform in the list (needed after the entry was reset), then opens the pane.
+            if kind == .screen { _ = CGRequestScreenCaptureAccess() }
             CapturePermissions.openSettings(kind)
         }
     }
@@ -352,6 +355,60 @@ enum PermissionPrompt {
         configuration.createsNewApplicationInstance = true
         NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in
             Task { @MainActor in NSApp.terminate(nil) }
+        }
+    }
+}
+
+// MARK: - Deadlines
+
+/// Why a capture couldn't go ahead.
+enum CaptureFailure: LocalizedError, Equatable {
+    /// macOS refused the screen (Screen Recording is off, or its entry is stale after an update).
+    case screenPermission
+    /// macOS didn't answer in time.
+    case timedOut(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .screenPermission: "macOS didn't allow Spinform to see the screen."
+        case .timedOut(let what): "\(what) took too long. Try again; if it keeps happening, check Screen Recording permission."
+        }
+    }
+}
+
+/// Runs async work with a deadline. When it's late the caller gets `CaptureFailure.timedOut` straight
+/// away, so a stuck system call can never hold up the capture tools (the work is cancelled and left to end).
+enum Deadline {
+    private final class Once: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        func claim() -> Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            if done { return false }
+            done = true
+            return true
+        }
+    }
+
+    static func run<T>(_ seconds: Double, _ what: String, _ work: @escaping () async throws -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
+            let once = Once()
+            let task = Task {
+                do {
+                    let value = try await work()
+                    if once.claim() { continuation.resume(returning: value) }
+                } catch {
+                    if once.claim() { continuation.resume(throwing: error) }
+                }
+            }
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
+                if once.claim() {
+                    task.cancel()
+                    continuation.resume(throwing: CaptureFailure.timedOut(what))
+                }
+            }
         }
     }
 }
@@ -378,6 +435,84 @@ struct WindowInfo: Equatable, Sendable {
 }
 
 enum ScreenGrabber {
+    /// How long macOS gets to answer a screen question before the capture gives up.
+    static let systemTimeout = 8.0
+
+    /// What's on screen, with a deadline. A refusal from macOS becomes `CaptureFailure.screenPermission`.
+    static func shareableContent(excludingDesktopWindows: Bool = false) async throws -> SCShareableContent {
+        do {
+            return try await Deadline.run(systemTimeout, "Asking macOS for the screen") {
+                try await SCShareableContent.excludingDesktopWindows(excludingDesktopWindows, onScreenWindowsOnly: true)
+            }
+        } catch let failure as CaptureFailure {
+            throw failure
+        } catch {
+            throw permissionAware(error)
+        }
+    }
+
+    @available(macOS 14.0, *)
+    static func screenshot(_ filter: SCContentFilter, _ config: SCStreamConfiguration) async throws -> CGImage {
+        do {
+            return try await Deadline.run(systemTimeout, "Taking the screenshot") {
+                try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            }
+        } catch let failure as CaptureFailure {
+            throw failure
+        } catch {
+            throw permissionAware(error)
+        }
+    }
+
+    /// ScreenCaptureKit's "user declined" (and a missing permission) as a permission failure.
+    static func permissionAware(_ error: Error) -> Error {
+        let ns = error as NSError
+        if ns.domain == SCStreamErrorDomain && ns.code == -3801 { return CaptureFailure.screenPermission }
+        if !CGPreflightScreenCaptureAccess() { return CaptureFailure.screenPermission }
+        return error
+    }
+
+    /// Takes the same area again and again (scrolling capture) without asking macOS for the
+    /// screen list each time.
+    @MainActor
+    final class AreaCapturer {
+        let rect: CGRect
+        private var prepared: Any?
+
+        init(rect: CGRect) { self.rect = rect }
+
+        func capture() async throws -> CGImage {
+            guard #available(macOS 14.0, *) else {
+                return try await ScreenGrabber.captureArea(rect, excludingSelf: true)
+            }
+            if prepared == nil {
+                guard let screen = ScreenGrabber.screen(containing: CGPoint(x: rect.midX, y: rect.midY)) else {
+                    throw ConversionError("That area isn't on a screen.")
+                }
+                let area = rect.intersection(screen.frame)
+                guard area.width >= 1, area.height >= 1 else { throw ConversionError("That area isn't on a screen.") }
+                let id = ScreenGrabber.displayID(of: screen)
+                let content = try await ScreenGrabber.shareableContent()
+                guard let display = content.displays.first(where: { $0.displayID == id }) else {
+                    throw ConversionError("Couldn't find that screen.")
+                }
+                let me = ProcessInfo.processInfo.processIdentifier
+                let filter = SCContentFilter(display: display, excludingApplications: content.applications.filter { $0.processID == me },
+                                             exceptingWindows: [])
+                let config = SCStreamConfiguration()
+                config.sourceRect = ScreenGrabber.localRect(area, in: screen.frame)
+                config.width = max(1, Int((area.width * screen.backingScaleFactor).rounded()))
+                config.height = max(1, Int((area.height * screen.backingScaleFactor).rounded()))
+                config.showsCursor = false
+                prepared = (filter, config)
+            }
+            guard let pair = prepared as? (SCContentFilter, SCStreamConfiguration) else {
+                throw ConversionError("Couldn't set up the capture.")
+            }
+            return try await ScreenGrabber.screenshot(pair.0, pair.1)
+        }
+    }
+
     static func displayID(of screen: NSScreen) -> CGDirectDisplayID {
         let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
         return number?.uint32Value ?? CGMainDisplayID()
@@ -438,7 +573,7 @@ enum ScreenGrabber {
         let scale = screen.backingScaleFactor
         let image: CGImage
         if #available(macOS 14.0, *) {
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            let content = try await shareableContent()
             guard let display = content.displays.first(where: { $0.displayID == id }) else {
                 throw ConversionError("Couldn't find that screen.")
             }
@@ -447,7 +582,7 @@ enum ScreenGrabber {
             config.width = max(1, Int(frame.width * scale))
             config.height = max(1, Int(frame.height * scale))
             config.showsCursor = false
-            image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            image = try await screenshot(filter, config)
         } else {
             guard let legacy = CGWindowListCreateImage(CGDisplayBounds(id), .optionOnScreenOnly, kCGNullWindowID, [.bestResolution]) else {
                 throw ConversionError("macOS didn't hand over the screen. Check Screen Recording permission.")
@@ -469,7 +604,7 @@ enum ScreenGrabber {
         let scale = screen.backingScaleFactor
         if #available(macOS 14.0, *) {
             let id = displayID(of: screen)
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            let content = try await shareableContent()
             guard let display = content.displays.first(where: { $0.displayID == id }) else {
                 throw ConversionError("Couldn't find that screen.")
             }
@@ -481,7 +616,7 @@ enum ScreenGrabber {
             config.width = max(1, Int((area.width * scale).rounded()))
             config.height = max(1, Int((area.height * scale).rounded()))
             config.showsCursor = false
-            return try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            return try await screenshot(filter, config)
         }
         let global = cgRect(area, primaryHeight: primaryHeight)
         guard let image = CGWindowListCreateImage(global, .optionOnScreenOnly, kCGNullWindowID, [.bestResolution]) else {
@@ -496,7 +631,7 @@ enum ScreenGrabber {
         let scale = screen(containing: CGPoint(x: window.frame.midX, y: window.frame.midY))?.backingScaleFactor ?? 2
         var image: CGImage
         if #available(macOS 14.0, *) {
-            let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+            let content = try await shareableContent(excludingDesktopWindows: true)
             guard let scWindow = content.windows.first(where: { $0.windowID == window.id }) else {
                 throw ConversionError("That window closed.")
             }
@@ -506,7 +641,7 @@ enum ScreenGrabber {
             config.height = max(1, Int((scWindow.frame.height * scale).rounded()))
             config.showsCursor = false
             config.ignoreShadowsSingleWindow = true
-            image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            image = try await screenshot(filter, config)
         } else {
             guard let legacy = CGWindowListCreateImage(.null, .optionIncludingWindow, window.id,
                                                        [.boundsIgnoreFraming, .bestResolution]) else {

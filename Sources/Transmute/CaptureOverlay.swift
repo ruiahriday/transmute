@@ -33,8 +33,25 @@ enum SelectionOutcome {
 @MainActor
 final class SelectionOverlay {
     private static var active: SelectionOverlay?
+    /// With no mouse or key input for this long, the crosshair closes itself (it covers every screen).
+    static var watchdogSeconds: Double = 60
     private var panels: [KeyPanel] = []
     private var continuation: CheckedContinuation<SelectionOutcome?, Never>?
+    private var monitors: [Any] = []
+    private var watchdog: Task<Void, Never>?
+    private var lastInput = Date()
+    private var previousApp: NSRunningApplication?
+
+    /// True while the crosshair is on screen.
+    static var isActive: Bool { active != nil }
+
+    /// Closes the crosshair if it's up, as if Esc was pressed.
+    static func cancelActive() {
+        active?.finish(nil)
+    }
+
+    /// The crosshair's windows on screen (for the self-test).
+    static var visiblePanelCount: Int { active?.panels.filter(\.isVisible).count ?? 0 }
 
     /// nil when the user pressed Esc.
     static func select(mode: SelectionMode, shots: [DisplayShot], windows: [WindowInfo],
@@ -73,11 +90,50 @@ final class SelectionOverlay {
             }
             panels.append(panel)
         }
+        // Spinform comes to the front so Esc always reaches the crosshair; the app that was in front
+        // gets its place back afterwards.
+        let front = NSWorkspace.shared.frontmostApplication
+        if front?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = front }
+        NSApp.activate(ignoringOtherApps: true)
         if panels.allSatisfy({ !$0.isKeyWindow }), let first = panels.first {
             first.makeKey()
             first.makeFirstResponder(first.contentView)
         }
         NSCursor.crosshair.push()
+        lastInput = Date()
+        let watched: NSEvent.EventTypeMask = [.keyDown, .mouseMoved, .leftMouseDown, .leftMouseDragged, .leftMouseUp,
+                                              .rightMouseDown, .scrollWheel, .flagsChanged]
+        if let local = NSEvent.addLocalMonitorForEvents(matching: watched, handler: { [weak self] event in
+            MainActor.assumeIsolated {
+                guard let self else { return event }
+                self.lastInput = Date()
+                if event.type == .keyDown && event.keyCode == 53 {
+                    self.finish(nil)
+                    return nil
+                }
+                return event
+            }
+        }) {
+            monitors.append(local)
+        }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: watched, handler: { [weak self] event in
+            MainActor.assumeIsolated {
+                self?.lastInput = Date()
+                if event.type == .keyDown && event.keyCode == 53 { self?.finish(nil) }
+            }
+        }) {
+            monitors.append(global)
+        }
+        watchdog = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                guard let self, !Task.isCancelled else { return }
+                if Date().timeIntervalSince(self.lastInput) > SelectionOverlay.watchdogSeconds {
+                    self.finish(nil)
+                    return
+                }
+            }
+        }
     }
 
     func finish(_ outcome: SelectionOutcome?) {
@@ -89,6 +145,12 @@ final class SelectionOverlay {
         }
         panels.removeAll()
         NSCursor.pop()
+        for monitor in monitors { NSEvent.removeMonitor(monitor) }
+        monitors.removeAll()
+        watchdog?.cancel()
+        watchdog = nil
+        if let previousApp, outcome == nil { previousApp.activate() }
+        previousApp = nil
         if SelectionOverlay.active === self { SelectionOverlay.active = nil }
         continuation.resume(returning: outcome)
     }
@@ -511,20 +573,37 @@ struct AreaFrameView: View {
 /// Big numbers counting down before a timed capture or a recording starts.
 @MainActor
 enum Countdown {
+    private static var panels: [KeyPanel] = []
+
+    /// Takes any countdown off the screen.
+    static func cancelAll() {
+        for panel in panels {
+            panel.orderOut(nil)
+            panel.close()
+        }
+        panels.removeAll()
+    }
+
     static func run(seconds: Int, centredOn rect: CGRect?) async {
         guard seconds > 0 else { return }
         let target = rect ?? ScreenGrabber.screenUnderMouse?.frame ?? .zero
         let side: CGFloat = 132
         let frame = NSRect(x: target.midX - side / 2, y: target.midY - side / 2, width: side, height: side)
         let panel = KeyPanel.floating(frame, level: .screenSaver, clickThrough: true)
+        panels.append(panel)
+        defer {
+            panel.orderOut(nil)
+            panel.close()
+            panels.removeAll { $0 === panel }
+        }
         for number in stride(from: seconds, to: 0, by: -1) {
+            guard panels.contains(where: { $0 === panel }) else { return }
             panel.contentView = NSHostingView(rootView: CountdownView(number: number))
             panel.setFrame(frame, display: true)
             panel.orderFrontRegardless()
             try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
         panel.orderOut(nil)
-        panel.close()
         // Give the window server a moment to take it off the screen before capturing.
         try? await Task.sleep(nanoseconds: 180_000_000)
     }
@@ -582,5 +661,25 @@ enum DesktopIconHider {
             window.close()
         }
         windows.removeAll()
+    }
+}
+
+// MARK: - Cleanup
+
+/// Takes every capture overlay off the screen: the crosshair, countdowns, the all-in-one chooser and
+/// (unless a recording needs them) the desktop-hiding windows. Every capture path ends here, whether
+/// it finished, failed, timed out or was cancelled, so nothing can be left covering the screen.
+@MainActor
+enum CaptureCleanup {
+    static func closeAll() {
+        SelectionOverlay.cancelActive()
+        Countdown.cancelAll()
+        CaptureChooser.finish(nil)
+        if !ScreenRecorder.shared.isActive { DesktopIconHider.hide() }
+    }
+
+    /// Spinform windows above normal level that are on screen and take clicks (the self-test checks none are left).
+    static var blockingWindows: [NSWindow] {
+        NSApp.windows.filter { $0.isVisible && !$0.ignoresMouseEvents && $0.level.rawValue >= NSWindow.Level.screenSaver.rawValue }
     }
 }

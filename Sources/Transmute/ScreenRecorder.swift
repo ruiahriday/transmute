@@ -280,7 +280,8 @@ final class ScreenRecorder: NSObject, ObservableObject {
             writer.onStop = { error in
                 Task { @MainActor in ScreenRecorder.shared.streamStopped(error) }
             }
-            let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            let content = try await ScreenGrabber.shareableContent()
+            guard phase == .countdown else { writer.cancel(); return }
             var hidden = Set<CGWindowID>()
             if let number = controls?.windowNumber { hidden.insert(CGWindowID(number)) }
             if let number = areaFrame?.panel.windowNumber { hidden.insert(CGWindowID(number)) }
@@ -320,7 +321,14 @@ final class ScreenRecorder: NSObject, ObservableObject {
                 try stream.addStreamOutput(writer, type: .audio, sampleHandlerQueue: writer.queue)
             }
             if options.microphone { startMicrophone(into: writer) }
-            try await stream.startCapture()
+            try await Deadline.run(10, "Starting the recording") { try await stream.startCapture() }
+            guard phase == .countdown else {
+                // Stopped while macOS was starting the stream.
+                Task { _ = try? await Deadline.run(5, "Stopping the recording") { try await stream.stopCapture() } }
+                stopMicrophone()
+                writer.cancel()
+                return
+            }
             self.stream = stream
             self.writer = writer
             micOn = micSession != nil
@@ -335,9 +343,23 @@ final class ScreenRecorder: NSObject, ObservableObject {
                 self.tracker = tracker
             }
         } catch {
+            stopMicrophone()
+            phase = .idle
             cleanUp()
-            Toast.show("Couldn't start recording", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+            if (error as? CaptureFailure) == .screenPermission {
+                PermissionPrompt.show(.screen)
+            } else {
+                Toast.show("Couldn't start recording", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+            }
         }
+    }
+
+    /// Stops the microphone off the main thread (stopRunning can take a moment).
+    private func stopMicrophone() {
+        guard let session = micSession else { return }
+        micSession = nil
+        let box = SessionBox(session: session)
+        DispatchQueue.global(qos: .userInitiated).async { box.session.stopRunning() }
     }
 
     private static func even(_ value: CGFloat) -> Int {
@@ -395,7 +417,8 @@ final class ScreenRecorder: NSObject, ObservableObject {
         let stream = self.stream
         writer?.cancel()
         writer = nil
-        Task { try? await stream?.stopCapture() }
+        stopMicrophone()
+        if let stream { Task { _ = try? await Deadline.run(5, "Stopping the recording") { try await stream.stopCapture() } } }
         phase = .idle
         cleanUp()
         Toast.show("Recording discarded", symbol: "trash")
@@ -409,8 +432,9 @@ final class ScreenRecorder: NSObject, ObservableObject {
 
     private func finish() async {
         let duration = startedAt.map { Date().timeIntervalSince($0) } ?? 0
-        try? await stream?.stopCapture()
-        micSession?.stopRunning()
+        // Each step has a deadline, so Stop always ends the recording even if macOS doesn't answer.
+        if let stream { _ = try? await Deadline.run(5, "Stopping the recording") { try await stream.stopCapture() } }
+        stopMicrophone()
         let writer = self.writer
         let mixedNeeded = writer?.hasTwoAudioTracks == true
         let size = outputSize
@@ -418,7 +442,9 @@ final class ScreenRecorder: NSObject, ObservableObject {
         let track = tracker?.finish()
         let openStudio = studio
         cleanUp()
-        guard let writer, var file = await writer.finish() else {
+        var finished: URL?
+        if let writer { finished = (try? await Deadline.run(20, "Saving the recording") { await writer.finish() }) ?? nil }
+        guard var file = finished else {
             phase = .idle
             Toast.show("Nothing was recorded", detail: "The recording stopped before the first frame.", symbol: "exclamationmark.triangle.fill")
             return

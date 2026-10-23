@@ -479,6 +479,7 @@ extension SelfTest {
             guard StudioTracks.load(for: source, in: tracks) == track else { throw ConversionError("track not kept") }
             return [done, still]
         }
+        await robustnessChecks(dir: dir)
     }
 }
 

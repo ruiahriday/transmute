@@ -31,6 +31,8 @@ final class CaptureCoordinator: ObservableObject {
         busy = true
         Task {
             await run(action)
+            // Whatever happened, nothing the capture put up stays on the screen.
+            CaptureCleanup.closeAll()
             busy = false
         }
     }
@@ -69,8 +71,12 @@ final class CaptureCoordinator: ObservableObject {
                 break
             }
         } catch {
-            DesktopIconHider.hide()
-            Toast.show("Couldn't capture", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+            CaptureCleanup.closeAll()
+            if (error as? CaptureFailure) == .screenPermission {
+                PermissionPrompt.show(.screen)
+            } else {
+                Toast.show("Couldn't capture", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+            }
         }
     }
 
@@ -244,6 +250,7 @@ final class CaptureCoordinator: ObservableObject {
 
     /// Copies the text in an image or PDF (a quick access card's Text button, the URL scheme).
     func recognizeText(inFile url: URL) {
+        Toast.show("Reading text…", symbol: "text.viewfinder")
         Task {
             do {
                 let result = try await Task.detached(priority: .userInitiated) { try TextRecognizer.recognize(fileAt: url) }.value
@@ -272,6 +279,9 @@ final class CaptureCoordinator: ObservableObject {
     // MARK: Recording
 
     private func startRecording(mode: SelectionMode?) async throws {
+        // Ask macOS for the screen first, so a missing or stale permission shows the prompt
+        // before anything goes on screen.
+        _ = try await ScreenGrabber.shareableContent()
         let target: RecordingTarget
         if let mode {
             guard let outcome = try await choose(mode: mode, hint: mode == .area ? "Drag over the area to record" : "Click the window to record")
