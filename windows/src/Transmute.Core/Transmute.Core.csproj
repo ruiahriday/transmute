@@ -24,6 +24,18 @@
     <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
     <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
   </ItemGroup>
+  <!-- "Create link" (ShareLinks.cs): the service's address and the app token, baked in when the
+       build has them (environment variables SpinformLinkService / SpinformLinkToken on CI). -->
+  <ItemGroup Condition="'$(SpinformLinkService)' != '' And '$(SpinformLinkToken)' != ''">
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SpinformLinkService</_Parameter1>
+      <_Parameter2>$(SpinformLinkService)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>SpinformLinkToken</_Parameter1>
+      <_Parameter2>$(SpinformLinkToken)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
   <ItemGroup>
     <!-- The background-removal network (windows/models, downloaded by the build from the
          windows-models branch). It is copied next to the app and the self-test. -->

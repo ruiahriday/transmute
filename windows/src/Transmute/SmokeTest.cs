@@ -149,6 +149,51 @@ static partial class SmokeTest
                 await Wait(0.8);
                 return Hud.Shared;
             });
+            Hud.Shared.Hide();
+
+            // "Create link": the wheel with Link on it, and the card while and after it uploads.
+            var hadService = Environment.GetEnvironmentVariable("SPINFORM_LINK_SERVICE");
+            var hadToken = Environment.GetEnvironmentVariable("SPINFORM_LINK_TOKEN");
+            if (!LinkService.IsAvailable)
+            {
+                Environment.SetEnvironmentVariable("SPINFORM_LINK_SERVICE", "https://links.example");
+                Environment.SetEnvironmentVariable("SPINFORM_LINK_TOKEN", "t");
+            }
+            await Step("drag wheel (link)", async () =>
+            {
+                WheelWindow.Shared.Preview(WheelKind.Actions, [photo]);
+                await Wait(0.8);
+                return WheelWindow.Shared;
+            });
+            WheelWindow.Shared.Hide();
+            await Step("link card (uploading)", async () =>
+            {
+                LinkCard.Shared.Showcase(done: false);
+                await Wait(0.8);
+                return LinkCard.Shared;
+            });
+            await Step("link card (done)", async () =>
+            {
+                LinkCard.Shared.Showcase(done: true);
+                await Wait(0.8);
+                return LinkCard.Shared;
+            });
+            LinkCard.Shared.Hide();
+            await Step("settings (links)", async () =>
+            {
+                SharedLinks.FilePath = Path.Combine(Path.GetTempPath(), "spinform-smoke-links.json");
+                SharedLinks.Add(new SharedLink("x7k2Qm9aPz", "Holiday video.mp4", 1_840_000_000, "https://links.spinform.app/l/x7k2Qm9aPz#key", "", DateTimeOffset.Now.AddDays(7), ""));
+                foreach (var w in Application.Current.Windows.OfType<SettingsWindow>().ToList()) w.Close();
+                SettingsWindow.Open();
+                var settings = Application.Current.Windows.OfType<SettingsWindow>().Single();
+                await Wait(0.6);
+                settings.LinksSection.BringIntoView();
+                await Wait(0.6);
+                return settings;
+            });
+            Application.Current.Windows.OfType<SettingsWindow>().SingleOrDefault()?.Close();
+            Environment.SetEnvironmentVariable("SPINFORM_LINK_SERVICE", hadService);
+            Environment.SetEnvironmentVariable("SPINFORM_LINK_TOKEN", hadToken);
 
             var main = Application.Current.Windows.OfType<MainWindow>().Single();
             await Step("photo editor", async () =>

@@ -48,6 +48,8 @@
                 <TextBlock Style="{StaticResource Caption}" Margin="22,4,0,0"
                            Text="Choose which formats, tools and actions each wheel shows for each kind of file, and where they sit." />
 
+                <StackPanel x:Name="LinksSection" />
+
                 <TextBlock Text="Floating files" Style="{StaticResource SectionTitle}" />
                 <CheckBox x:Name="ShakeBox" Content="Open when I shake files while dragging them" Click="OnChanged" />
                 <CheckBox x:Name="EdgeBox" Content="Open when I drag files to the middle of the top edge of the screen" Click="OnChanged" />

@@ -134,7 +134,7 @@ sealed class ShakeDetector
     }
 }
 
-enum FileAction { Float, Copy, CopyPath, Terminal, Move, ShowInFolder }
+enum FileAction { Float, Copy, CopyPath, Terminal, Move, ShowInFolder, Link }
 
 /// Glyph is the name of one of Spinform's icons (Icons.cs).
 sealed record WheelItem(string Label, string Glyph, JobOperation? Operation = null, BatchTool? Batch = null, FileAction? Action = null, bool Edit = false);
@@ -166,6 +166,7 @@ static class WheelItems
             "action:terminal" => new("Terminal", "terminal", Action: FileAction.Terminal),
             "action:move" => new("Move…", "move", Action: FileAction.Move),
             "action:show" => new("Show", "search", Action: FileAction.ShowInFolder),
+            "action:link" => new("Link", "share", Action: FileAction.Link),
             _ => null,
         };
     }
@@ -193,6 +194,7 @@ static class WheelItems
             "action:terminal" => "Open Terminal here",
             "action:move" => "Move to a folder",
             "action:show" => "Show in File Explorer",
+            "action:link" => "Create link (share big files, lasts 7 days)",
             _ => id,
         };
     }
@@ -254,6 +256,9 @@ static class WheelItems
                 break;
             case FileAction.ShowInFolder:
                 Native.RevealInExplorer(paths);
+                break;
+            case FileAction.Link:
+                LinkCard.Shared.Create(paths);
                 break;
             case FileAction.Move:
                 var dialog = new OpenFolderDialog { Title = "Move to" };

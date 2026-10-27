@@ -42,6 +42,7 @@ static partial class Tests
         string Fixture(string name) => inputs.FirstOrDefault(f => Path.GetFileName(f) == name) ?? throw new Exception($"fixture {name} missing");
 
         await WheelLayoutChecks();
+        await LinkChecks(inputs);
         await CaptureChecks(options with { OutputFolder = Sub("capture") });
 
         // Pass 1: every input through every operation it supports.

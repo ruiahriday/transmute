@@ -45,6 +45,7 @@ public partial class SettingsWindow : Window
             box.SelectedIndex = (int)key;
         }
         BuildCaptureSection();
+        BuildLinksSection();
         VersionLabel.Text = $"Spinform {Feedback.Version} (formerly Transmute)";
         FfmpegLabel.Text = Tools.Ffmpeg is { } path
             ? $"Found at {path}"
