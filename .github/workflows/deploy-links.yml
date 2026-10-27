@@ -1,0 +1,54 @@
+name: Deploy the link service
+
+# Puts server/links (the service behind "Create link") on Cloudflare. Needs the repository
+# secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and SPINFORM_LINK_TOKEN (setup steps in
+# server/links/README.md); until they're set it does nothing.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["server/links/**", ".github/workflows/deploy-links.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server/links
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test the service locally first
+        run: |
+          set -euo pipefail
+          printf 'UPLOAD_TOKENS=test-token,other\n' > .dev.vars
+          npx -y wrangler@4.153.0 dev --local --port 8787 > "$RUNNER_TEMP/wrangler.log" 2>&1 &
+          for i in $(seq 1 60); do curl -fs http://127.0.0.1:8787/ >/dev/null && break; sleep 2; done
+          SERVICE=http://127.0.0.1:8787 node test/run.mjs
+          rm .dev.vars
+
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          LINK_TOKEN: ${{ secrets.SPINFORM_LINK_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CLOUDFLARE_API_TOKEN" || -z "$CLOUDFLARE_ACCOUNT_ID" || -z "$LINK_TOKEN" ]]; then
+            echo "::notice title=Link service::Cloudflare isn't set up yet (see server/links/README.md), so nothing was deployed."
+            exit 0
+          fi
+          W="npx -y wrangler@4.153.0"
+          # The bucket and its clean-up rules; "already exists" is fine on later runs.
+          $W r2 bucket create spinform-links || true
+          $W r2 bucket lifecycle add spinform-links backstop links/ --expire-days 8 --abort-multipart-days 2 -y || true
+          $W r2 bucket lifecycle add spinform-links quotas quota/ --expire-days 3 -y || true
+          $W deploy 2>&1 | tee "$RUNNER_TEMP/deploy.log"
+          printf '%s' "$LINK_TOKEN" | $W secret put UPLOAD_TOKENS
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -1 || true)
+          echo "::notice title=Link service address::${url:-see the Deploy step log}"
+          echo "### Link service address: ${url:-see the Deploy step log}" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -n "$url" ]]; then curl -fsS "$url/" > /dev/null && echo "The service answers at $url"; fi

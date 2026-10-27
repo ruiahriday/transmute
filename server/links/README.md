@@ -22,22 +22,27 @@ and US$4.50 per million uploads of a part (first million a month free). A 2 GB l
 
 ## Setting it up (once)
 
-1. Create a free Cloudflare account at https://dash.cloudflare.com/sign-up.
-2. In the dashboard: **R2 Object Storage** → turn R2 on (a card is required, but the free
-   allowance covers the start) → **Create bucket** → name `spinform-links` → Create.
-3. In the bucket: **Settings → Object lifecycle rules → Add rule**: name `backstop`, prefix
-   `links/`, delete objects after **8 days**. Add a second rule: prefix `quota/`, 3 days.
-4. On a computer with Node.js: in this folder run `npx wrangler login`, then
-   `npx wrangler deploy`. It prints the service's address, e.g.
-   `https://spinform-links.<your-name>.workers.dev`.
-5. Make an app token (any long random text, e.g. from `openssl rand -base64 32`) and run
-   `npx wrangler secret put UPLOAD_TOKENS`, pasting it.
-6. In GitHub: the repository → **Settings → Secrets and variables → Actions → New repository
-   secret**: `SPINFORM_LINK_SERVICE` = the address from step 4, and `SPINFORM_LINK_TOKEN` =
-   the token from step 5. The next Mac and Windows builds have the Link bubble.
-7. Optional: a nicer address. **Workers & Pages → spinform-links → Settings → Domains &
-   Routes → Add → Custom domain**, e.g. `links.spinform.app` (the domain must be on
-   Cloudflare). Then update the `SPINFORM_LINK_SERVICE` secret.
+The workflow **Deploy the link service** (`.github/workflows/deploy-links.yml`) creates the
+R2 bucket and its clean-up rules, deploys the Worker and gives it the app token. It needs:
+
+1. A Cloudflare account (https://dash.cloudflare.com/sign-up). Open **Workers & Pages** once
+   so the account gets its `workers.dev` address, and **R2 Object Storage** once to turn R2
+   on (it asks for a card; the free allowance covers the start).
+2. An API token: **My Profile → API Tokens → Create Token → Create Custom Token** with
+   *Account · Workers Scripts · Edit* and *Account · Workers R2 Storage · Edit*.
+3. Three repository secrets (GitHub: **Settings → Secrets and variables → Actions**):
+   `CLOUDFLARE_API_TOKEN` (step 2), `CLOUDFLARE_ACCOUNT_ID` (shown on the Workers & Pages
+   page) and `SPINFORM_LINK_TOKEN` (any long random text; the apps send it).
+4. Run the workflow (**Actions → Deploy the link service → Run workflow**). Its summary shows
+   the address, e.g. `https://spinform-links.<name>.workers.dev`. Save it as a fourth secret,
+   `SPINFORM_LINK_SERVICE`. From the next build on, the Mac and Windows apps have Link.
+
+Optional: a nicer address. **Workers & Pages → spinform-links → Settings → Domains & Routes →
+Add → Custom domain**, e.g. `links.spinform.app` (the domain must be on Cloudflare). Then
+update the `SPINFORM_LINK_SERVICE` secret.
+
+By hand instead: `npx wrangler login`, `npx wrangler r2 bucket create spinform-links`,
+`npx wrangler deploy`, `npx wrangler secret put UPLOAD_TOKENS`.
 
 Change `ABUSE_EMAIL` in `wrangler.toml` to an inbox you read before the link goes public.
 
