@@ -86,7 +86,7 @@ enum Snapshots {
             setenv("SPINFORM_LINK_SERVICE", ProcessInfo.processInfo.environment["SPINFORM_LINK_SERVICE"] ?? "https://links.example", 1)
             setenv("SPINFORM_LINK_TOKEN", ProcessInfo.processInfo.environment["SPINFORM_LINK_TOKEN"] ?? "t", 1)
             let actionItems = DragWheelController.items(for: .actions, urls: [fixtures.appendingPathComponent("clip.mp4")])
-            await shoot("drag-wheel-link-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), clear: true, wait: 1) {
+            await shoot("drag-wheel-link-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), wait: 1, clear: true) {
                 WheelView(kind: .actions, items: actionItems) { _ in }
             }
 

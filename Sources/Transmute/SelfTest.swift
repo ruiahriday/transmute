@@ -907,9 +907,8 @@ enum SelfTest {
         let opened = (try? LinkCrypto.seal(plain, key: key, nonce: LinkCrypto.chunkNonce(3, last: true)))
             .flatMap { try? LinkCrypto.open($0, key: key, nonce: LinkCrypto.chunkNonce(3, last: false)) }
         record("Links: a chunk with the wrong last flag doesn't open", [], opened == nil ? nil : "it opened")
-        record("Links: chunk counts", [],
-               [LinkCrypto.chunkCount(0), LinkCrypto.chunkCount(1), LinkCrypto.chunkCount(Int64(LinkService.chunk)),
-                LinkCrypto.chunkCount(Int64(LinkService.chunk) + 1)] == [1, 1, 1, 2] ? nil : "wrong")
+        let counts: [Int] = [0, 1, Int64(LinkService.chunk), Int64(LinkService.chunk) + 1].map { LinkCrypto.chunkCount($0) }
+        record("Links: chunk counts", [], counts == [1, 1, 1, 2] ? nil : "got \(counts)")
         record("Links: base64url round-trips", [],
                LinkCrypto.fromBase64url(LinkCrypto.base64url(Data((0..<32).map { UInt8($0) }))) == Data((0..<32).map { UInt8($0) }) ? nil : "wrong")
 
