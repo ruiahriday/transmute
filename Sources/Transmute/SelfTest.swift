@@ -1,3 +1,4 @@
+import CryptoKit
 import AppKit
 import CoreImage
 import ImageIO
@@ -52,6 +53,7 @@ enum SelfTest {
 
         wheelLayoutChecks()
         brandChecks()
+        await linkChecks(inputs: inputs)
 
         // Pass 1: every input through every operation it supports.
         for input in inputs {
@@ -882,6 +884,102 @@ enum SelfTest {
         same("saved layouts are cleaned up", [String(cleaned.count), cleaned[0]], [String(WheelLayout.maxSlots), "convert:pdf"])
         same("unknown ids have no bubble", ["tool:zip", "action:airdrop", "convert:pdf", "gap", "nope"].map { WheelItem(id: $0) == nil ? "-" : "ok" },
              ["ok", "ok", "ok", "-", "-"])
+    }
+
+    // MARK: Links
+
+    /// The link format against FORMAT.md's test vectors, the Link bubble only showing when a
+    /// service is set up, and, when SPINFORM_LINK_SERVICE points at a running service, a real
+    /// upload that is downloaded and decrypted again.
+    private static func linkChecks(inputs: [URL]) async {
+        let key = SymmetricKey(data: Data((0..<32).map { UInt8($0) }))
+        let plain = Data("Spinform".utf8)
+        func hex(_ d: Data) -> String { d.map { String(format: "%02x", $0) }.joined() }
+        let last = (try? LinkCrypto.seal(plain, key: key, nonce: LinkCrypto.chunkNonce(0, last: true))).map(hex) ?? "-"
+        let second = (try? LinkCrypto.seal(plain, key: key, nonce: LinkCrypto.chunkNonce(1, last: false))).map(hex) ?? "-"
+        record("Links: chunk test vectors match FORMAT.md", [],
+               last == "b15ceb51c2c09e6a25bed4a095a883ff5d4a73a241d0e2d1" && second == "46a6d692229b4273c0ec8d676e77d010a6c642928d1ddcd4"
+               ? nil : "got \(last) / \(second)")
+        let meta = (try? LinkCrypto.seal(Data(#"{"name":"a.txt","size":8,"type":"text/plain"}"#.utf8), key: key, nonce: LinkCrypto.metaNonce)).map(hex) ?? "-"
+        record("Links: meta test vector matches FORMAT.md", [],
+               meta == "e2adc4ae55e38c9d95523d6c3900f0f3722ac324e2d8e43eb1be94be0fc64165b0564cf454b4b5ebba92ef41357aec5f1743209464ff08268b9643aa33"
+               ? nil : "got \(meta)")
+        let opened = (try? LinkCrypto.seal(plain, key: key, nonce: LinkCrypto.chunkNonce(3, last: true)))
+            .flatMap { try? LinkCrypto.open($0, key: key, nonce: LinkCrypto.chunkNonce(3, last: false)) }
+        record("Links: a chunk with the wrong last flag doesn't open", [], opened == nil ? nil : "it opened")
+        record("Links: chunk counts", [],
+               [LinkCrypto.chunkCount(0), LinkCrypto.chunkCount(1), LinkCrypto.chunkCount(Int64(LinkService.chunk)),
+                LinkCrypto.chunkCount(Int64(LinkService.chunk) + 1)] == [1, 1, 1, 2] ? nil : "wrong")
+        record("Links: base64url round-trips", [],
+               LinkCrypto.fromBase64url(LinkCrypto.base64url(Data((0..<32).map { UInt8($0) }))) == Data((0..<32).map { UInt8($0) }) ? nil : "wrong")
+
+        let configured = LinkService.isAvailable
+        let saved = (ProcessInfo.processInfo.environment["SPINFORM_LINK_SERVICE"], ProcessInfo.processInfo.environment["SPINFORM_LINK_TOKEN"])
+        unsetenv("SPINFORM_LINK_SERVICE")
+        unsetenv("SPINFORM_LINK_TOKEN")
+        let hidden = !LinkService.isAvailable ? !WheelLayout.resolve(.actions, [.pdf], custom: nil).contains("action:link") : true
+        setenv("SPINFORM_LINK_SERVICE", "https://links.example", 1)
+        setenv("SPINFORM_LINK_TOKEN", "t", 1)
+        let shown = WheelLayout.resolve(.actions, [.pdf], custom: nil).last == "action:link"
+        unsetenv("SPINFORM_LINK_SERVICE")
+        unsetenv("SPINFORM_LINK_TOKEN")
+        if let s = saved.0 { setenv("SPINFORM_LINK_SERVICE", s, 1) }
+        if let t = saved.1 { setenv("SPINFORM_LINK_TOKEN", t, 1) }
+        record("Drag wheel: Link only when a link service is set up", [], hidden && shown ? nil : "hidden \(hidden), shown \(shown)")
+        record("Drag wheel: Link has a bubble", [], WheelItem(id: "action:link")?.label == "Link" ? nil : "no bubble")
+
+        guard configured, let service = LinkService.endpoint, let token = LinkService.token else {
+            print("SKIP  Links: upload (set SPINFORM_LINK_SERVICE and SPINFORM_LINK_TOKEN to run it)")
+            return
+        }
+        // A file over two chunks, so the multi-part path runs, plus two fixtures zipped together.
+        let big = FileManager.default.temporaryDirectory.appendingPathComponent("link test \(UUID().uuidString.prefix(6)).bin")
+        let bigData = Data((0..<(LinkService.chunk * 2 + 4321)).map { UInt8(truncatingIfNeeded: $0 &* 31 &+ ($0 >> 12)) })
+        try? bigData.write(to: big)
+        defer { try? FileManager.default.removeItem(at: big) }
+        await check("Links: an 8 MB+ file uploads and downloads intact") {
+            try await linkRoundTrip([big], service: service, token: token, expectName: big.lastPathComponent, expect: bigData)
+            return []
+        }
+        let pair = Array(inputs.prefix(2))
+        if pair.count == 2 {
+            await check("Links: two files go as one zip") {
+                try await linkRoundTrip(pair, service: service, token: token, expectName: "2 files.zip", expect: nil)
+                return []
+            }
+        }
+    }
+
+    private static func linkRoundTrip(_ urls: [URL], service: URL, token: String, expectName: String, expect: Data?) async throws {
+        let prepared = try await LinkUploader.prepare(urls)
+        defer { if let c = prepared.cleanup { try? FileManager.default.removeItem(at: c) } }
+        let link = try await LinkUploader.upload(prepared.file, service: service, token: token) { _ in }
+        guard let hash = link.url.split(separator: "#").last, let rawKey = LinkCrypto.fromBase64url(String(hash)), rawKey.count == 32 else {
+            throw ConversionError("no key in \(link.url)")
+        }
+        let key = SymmetricKey(data: rawKey)
+        let (infoData, _) = try await URLSession.shared.data(from: service.appendingPathComponent("api/links/\(link.id)"))
+        guard let info = try JSONSerialization.jsonObject(with: infoData) as? [String: Any],
+              let metaText = info["meta"] as? String, let metaSealed = Data(base64Encoded: metaText),
+              let total = info["size"] as? Int else { throw ConversionError("odd info") }
+        let meta = try JSONSerialization.jsonObject(with: LinkCrypto.open(metaSealed, key: key, nonce: LinkCrypto.metaNonce)) as? [String: Any]
+        guard meta?["name"] as? String == expectName else { throw ConversionError("name \(meta?["name"] ?? "-")") }
+        let (sealed, _) = try await URLSession.shared.data(from: service.appendingPathComponent("api/links/\(link.id)/data"))
+        guard sealed.count == total else { throw ConversionError("got \(sealed.count) of \(total) bytes") }
+        var plain = Data()
+        let part = LinkService.chunk + LinkService.tag
+        let chunks = (total + part - 1) / part
+        for i in 0..<chunks {
+            let slice = sealed.subdata(in: (i * part)..<min(total, (i + 1) * part))
+            plain += try LinkCrypto.open(slice, key: key, nonce: LinkCrypto.chunkNonce(i, last: i == chunks - 1))
+        }
+        let original = try expect ?? Data(contentsOf: prepared.file)
+        guard plain == original else { throw ConversionError("the downloaded file differs (\(plain.count) vs \(original.count) bytes)") }
+        guard link.url.hasPrefix(service.absoluteString + "/l/\(link.id)#") else { throw ConversionError("odd link \(link.url)") }
+        print("      \(link.url.split(separator: "#")[0]) · \(Int64(original.count).formattedSize)")
+        try await LinkUploader.deleteRemote(service: service.absoluteString, id: link.id, deleteToken: link.deleteToken)
+        let (_, gone) = try await URLSession.shared.data(from: service.appendingPathComponent("api/links/\(link.id)"))
+        guard (gone as? HTTPURLResponse)?.statusCode == 404 else { throw ConversionError("still there after delete") }
     }
 
     // MARK: Background removal

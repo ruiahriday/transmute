@@ -6,6 +6,7 @@
 # Environment:
 #   UNIVERSAL=1        build one app that runs on both Apple Silicon and Intel Macs
 #   FFMPEG_BIN=path    bundle this (static) ffmpeg binary inside the app
+#   LINK_SERVICE=url LINK_TOKEN=token   turn on "Create link" (see server/links/README.md)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -28,6 +29,13 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 # and in feedback).
 if [[ -n "${BUILD_NUMBER:-}" ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
+fi
+
+# The "Create link" service (server/links). Without both, Link stays off the wheels.
+if [[ -n "${LINK_SERVICE:-}" && -n "${LINK_TOKEN:-}" ]]; then
+  /usr/libexec/PlistBuddy -c "Add :SpinformLinkService string $LINK_SERVICE" "$APP/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Add :SpinformLinkToken string $LINK_TOKEN" "$APP/Contents/Info.plist"
+  echo "==> Link service: $LINK_SERVICE"
 fi
 
 # App icon from a 1024x1024 PNG.

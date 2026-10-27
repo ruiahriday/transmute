@@ -46,6 +46,10 @@ jobs:
 
       - name: Build app (universal)
         id: build
+        env:
+          # Repository secrets; until they're set, builds have no "Create link".
+          LINK_SERVICE: ${{ secrets.SPINFORM_LINK_SERVICE }}
+          LINK_TOKEN: ${{ secrets.SPINFORM_LINK_TOKEN }}
         run: |
           mkdir -p logs
           UNIVERSAL=1 BUILD_NUMBER=${{ github.run_number }} bash build-app.sh 2>&1 | tee logs/build.log
@@ -71,6 +75,21 @@ jobs:
             cat logs/launch.log
             exit 1
           fi
+
+      # A local copy of the link service (server/links) for the self-test's real uploads.
+      - name: Link service tests (local)
+        id: links
+        continue-on-error: true
+        working-directory: server/links
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/logs"
+          printf 'UPLOAD_TOKENS=ci-token,other\n' > .dev.vars
+          npx -y wrangler@4.153.0 dev --local --port 8787 --test-scheduled > "$RUNNER_TEMP/wrangler.log" 2>&1 &
+          for i in $(seq 1 90); do curl -fs http://127.0.0.1:8787/ >/dev/null && break; sleep 2; done
+          echo "SPINFORM_LINK_SERVICE=http://127.0.0.1:8787" >> "$GITHUB_ENV"
+          echo "SPINFORM_LINK_TOKEN=ci-token" >> "$GITHUB_ENV"
+          SERVICE=http://127.0.0.1:8787 TOKEN=ci-token node test/run.mjs 2>&1 | tee "$GITHUB_WORKSPACE/logs/links.log"
 
       - name: Conversion self-test (with bundled ffmpeg)
         id: selftest
@@ -117,6 +136,7 @@ jobs:
           bash scripts/ci-report.sh "$(level '${{ steps.launch.outcome }}')" "Launch test" logs/launch.log 40
           bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "Fixtures" logs/fixtures.log 40
           bash scripts/ci-report.sh "$(level '${{ steps.selftest.outcome }}')" "Self-test" logs/selftest.log 400
+          bash scripts/ci-report.sh "$(level '${{ steps.links.outcome }}')" "Link service" logs/links.log 60
           bash scripts/ci-report.sh warning "Self-test without ffmpeg" logs/selftest-noffmpeg.log 400
 
       - name: Package zip and disk image

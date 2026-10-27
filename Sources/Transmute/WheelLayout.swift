@@ -3,14 +3,17 @@ import Foundation
 /// Which bubbles each drag wheel shows, and where. A layout is a list of item ids going clockwise
 /// from the top; "gap" leaves a position empty so the others stay where the user put them.
 /// Ids: "convert:pdf", "tool:edit" (and nobg, half, quarter, clean, split, merge, topdf, qr, zip),
-/// "action:airdrop" (and float, copy, copypath, terminal, move). Any item can go on any wheel.
+/// "action:airdrop" (and float, copy, copypath, terminal, move, link). Any item can go on any wheel.
 enum WheelLayout {
     static let gap = "gap"
     static let maxSlots = 12
     static let prefKey = "wheelLayouts"
 
     static let tools = ["edit", "nobg", "half", "quarter", "clean", "split", "merge", "topdf", "qr", "zip"]
-    static let actions = FileAction.allCases.map(\.id)
+    /// Link only appears in builds that have a link service (LinkService).
+    static var actions: [String] {
+        FileAction.allCases.filter { $0 != .link || LinkService.isAvailable }.map(\.id)
+    }
 
     /// Where a customized layout is kept in the saved dictionary: "convert.document", "tools.image"…
     static func key(_ wheel: WheelKind, _ kind: FileKind) -> String { "\(wheel.id).\(kind.rawValue)" }

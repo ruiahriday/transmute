@@ -4,7 +4,7 @@ import SwiftUI
 /// The drag wheel: while you drag files anywhere (Finder, Desktop, another app) and hold
 ///   ⇧ Shift      → a ring of output formats,
 ///   ⌘ Command    → tools (compress, clean metadata, zip…),
-///   ⌃ Control    → file actions (AirDrop, float, copy, copy path, Terminal, move).
+///   ⌃ Control    → file actions (AirDrop, float, copy, copy path, Terminal, move, link).
 /// The keys, and what each wheel shows and where (WheelLayout), can be changed in Settings.
 /// Drop the files on a bubble to run it.
 /// The converted copy lands next to the original.
@@ -324,13 +324,14 @@ struct WheelItem: Identifiable {
         case "action:copypath": return "Copy path"
         case "action:terminal": return "Open Terminal here"
         case "action:move": return "Move to a folder"
+        case "action:link": return "Create link (share big files, lasts 7 days)"
         default: return id
         }
     }
 }
 
 enum FileAction: CaseIterable {
-    case airDrop, float, copy, copyPath, terminal, move
+    case airDrop, float, copy, copyPath, terminal, move, link
 
     /// Its name in WheelLayout ids ("action:copypath").
     var id: String {
@@ -341,6 +342,7 @@ enum FileAction: CaseIterable {
         case .copyPath: "copypath"
         case .terminal: "terminal"
         case .move: "move"
+        case .link: "link"
         }
     }
 
@@ -352,6 +354,7 @@ enum FileAction: CaseIterable {
         case .copyPath: "Copy Path"
         case .terminal: "Terminal"
         case .move: "Move…"
+        case .link: "Link"
         }
     }
 
@@ -363,6 +366,7 @@ enum FileAction: CaseIterable {
         case .copyPath: "link"
         case .terminal: "terminal"
         case .move: "folder"
+        case .link: "link.badge.plus"
         }
     }
 
@@ -395,6 +399,8 @@ enum FileAction: CaseIterable {
                 try? FileManager.default.moveItem(at: url, to: target)
             }
             NSWorkspace.shared.activateFileViewerSelecting([destination])
+        case .link:
+            LinkPanelController.shared.create(urls)
         }
     }
 }

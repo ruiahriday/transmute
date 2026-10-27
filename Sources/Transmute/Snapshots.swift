@@ -70,6 +70,26 @@ enum Snapshots {
                 HUDView(ids: Array(ids.prefix(3))).environmentObject(queue)
             }
 
+            // "Create link": the wheel with Link, and the little window while and after it uploads.
+            let uploading = LinkPanelModel()
+            uploading.state = .uploading("Holiday video.mov", 0.42, 1_840_000_000)
+            await shoot("link-uploading-\(suffix)", output, size: CGSize(width: 334, height: 94), clear: true) {
+                LinkPanelView(model: uploading)
+            }
+            let done = LinkPanelModel()
+            done.state = .done(SharedLink(id: "x7k2Qm9aPz", name: "Holiday video.mov", size: 1_840_000_000,
+                                          url: "https://links.spinform.app/l/x7k2Qm9aPz#key", deleteToken: "",
+                                          expires: Date().addingTimeInterval(7 * 86400), service: ""))
+            await shoot("link-done-\(suffix)", output, size: CGSize(width: 334, height: 94), clear: true) {
+                LinkPanelView(model: done)
+            }
+            setenv("SPINFORM_LINK_SERVICE", ProcessInfo.processInfo.environment["SPINFORM_LINK_SERVICE"] ?? "https://links.example", 1)
+            setenv("SPINFORM_LINK_TOKEN", ProcessInfo.processInfo.environment["SPINFORM_LINK_TOKEN"] ?? "t", 1)
+            let actionItems = DragWheelController.items(for: .actions, urls: [fixtures.appendingPathComponent("clip.mp4")])
+            await shoot("drag-wheel-link-\(suffix)", output, size: CGSize(width: WheelView.size, height: WheelView.size), clear: true, wait: 1) {
+                WheelView(kind: .actions, items: actionItems) { _ in }
+            }
+
             if FileManager.default.fileExists(atPath: subjectPhoto.path) {
                 await shoot("photo-editor-background-\(suffix)", output, size: CGSize(width: 980, height: 680), wait: 6) {
                     ImageEditorView(url: subjectPhoto, showcase: BackgroundEdit(fill: GradientPreset.all[2].fill),

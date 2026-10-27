@@ -1,0 +1,25 @@
+# Spinform links: the service behind the drag wheel's "Create link" bubble.
+# Setup steps are in README.md.
+name = "spinform-links"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+
+# Deletes expired links once an hour (an R2 lifecycle rule is the backstop, see README).
+[triggers]
+crons = ["17 * * * *"]
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "spinform-links"
+
+[vars]
+# How long a link lasts, and the largest upload, in bytes (5 GB).
+LINK_DAYS = "7"
+MAX_BYTES = "5368709120"
+# How much one app token may upload per day, in bytes (20 GB).
+DAILY_BYTES = "21474836480"
+# Shown on the download page under "Report this link".
+ABUSE_EMAIL = "abuse@spinform.app"
+
+# Secret, set with `npx wrangler secret put UPLOAD_TOKENS`: the tokens the app sends,
+# separated by commas. Uploads without one of them are refused.

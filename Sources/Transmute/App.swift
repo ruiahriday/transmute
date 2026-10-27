@@ -298,6 +298,7 @@ struct SettingsView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
+                SharedLinksSection()
                 CaptureSettingsSections()
                 Section("Floating files") {
                     Toggle("Open when I shake files while dragging them", isOn: $shakeToShelf)
