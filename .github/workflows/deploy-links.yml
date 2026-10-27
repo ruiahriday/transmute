@@ -41,6 +41,14 @@ jobs:
             echo "::notice title=Link service::Cloudflare isn't set up yet (see server/links/README.md), so nothing was deployed."
             exit 0
           fi
+          # Pasted secrets often carry a stray space or line break.
+          CLOUDFLARE_ACCOUNT_ID=$(printf '%s' "$CLOUDFLARE_ACCOUNT_ID" | tr -d '[:space:]"')
+          CLOUDFLARE_API_TOKEN=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]"')
+          export CLOUDFLARE_ACCOUNT_ID CLOUDFLARE_API_TOKEN
+          if ! [[ "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]; then
+            echo "::error title=CLOUDFLARE_ACCOUNT_ID::This secret should be 32 letters and digits (0-9, a-f). It is ${#CLOUDFLARE_ACCOUNT_ID} characters long; copy it again from Cloudflare."
+            exit 1
+          fi
           # Each step's output is also sent as an annotation when it fails (raw logs need a download).
           run() {
             local title="$1"; shift
