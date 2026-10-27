@@ -105,27 +105,26 @@ jobs:
             Write-Host ("{0}: {1:N0} MB" -f $arch, $size)
           }
 
-      - name: Start a local link service (for the self-test's uploads)
-        id: links
-        continue-on-error: true
-        working-directory: links-service/server/links
-        run: |
-          "UPLOAD_TOKENS=ci-token" | Set-Content .dev.vars
-          Start-Process -FilePath "npx.cmd" -ArgumentList "-y", "wrangler@4.153.0", "dev", "--local", "--port", "8787" `
-            -RedirectStandardOutput "$env:RUNNER_TEMP\wrangler.log" -RedirectStandardError "$env:RUNNER_TEMP\wrangler-err.log"
-          for ($i = 0; $i -lt 90; $i++) {
-            try { Invoke-WebRequest http://127.0.0.1:8787/ -UseBasicParsing | Out-Null; Write-Host "link service ready"; exit 0 } catch { Start-Sleep 2 }
-          }
-          Get-Content "$env:RUNNER_TEMP\wrangler.log", "$env:RUNNER_TEMP\wrangler-err.log" -ErrorAction SilentlyContinue
-          Write-Host "::warning title=Link service::the local link service didn't start; upload checks are skipped"
-          exit 1
-
       - name: Self-test every conversion (x64)
         id: selftest
         run: |
-          if ('${{ steps.links.outcome }}' -eq 'success') {
+          # A local copy of the link service (server/links on main) for the real upload checks. It
+          # starts here because Windows runners stop background processes when a step ends.
+          Push-Location "$env:GITHUB_WORKSPACE\links-service\server\links"
+          "UPLOAD_TOKENS=ci-token" | Set-Content .dev.vars
+          $wrangler = Start-Process -FilePath "npx.cmd" -ArgumentList "-y", "wrangler@4.153.0", "dev", "--local", "--port", "8787" `
+            -RedirectStandardOutput "$env:RUNNER_TEMP\wrangler.log" -RedirectStandardError "$env:RUNNER_TEMP\wrangler-err.log" -PassThru
+          Pop-Location
+          $ready = $false
+          for ($i = 0; $i -lt 90 -and -not $ready; $i++) {
+            try { Invoke-WebRequest http://127.0.0.1:8787/ -UseBasicParsing | Out-Null; $ready = $true } catch { Start-Sleep 2 }
+          }
+          if ($ready) {
             $env:SPINFORM_LINK_SERVICE = "http://127.0.0.1:8787"
             $env:SPINFORM_LINK_TOKEN = "ci-token"
+          } else {
+            Get-Content "$env:RUNNER_TEMP\wrangler.log", "$env:RUNNER_TEMP\wrangler-err.log" -ErrorAction SilentlyContinue
+            Write-Host "::warning title=Link service::the local link service didn't start; upload checks are skipped"
           }
           $env:TRANSMUTE_FFMPEG = "$PWD\out\publish\x64\ffmpeg\ffmpeg.exe"
           New-Item -ItemType Directory -Force out\logs | Out-Null
