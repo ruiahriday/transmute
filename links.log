@@ -1,0 +1,15 @@
+ok   test vector matches FORMAT.md
+ok   creating a link needs a token
+ok   sizes over the limit are refused
+ok   parts must match the size
+ok   a small file round-trips
+ok   the server only sees ciphertext
+ok   the wrong last-chunk flag doesn't decrypt (no truncation)
+ok   a 16 MB file in three parts round-trips with ranges
+ok   bad ranges get 416
+ok   a part of the wrong size is refused
+ok   another token can't upload into someone's link
+ok   the download page and service worker are served
+ok   deleting needs the delete token, then the link is gone
+
+13 passed

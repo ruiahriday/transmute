@@ -1,0 +1,439 @@
+IOServiceMatchingfailed for: AppleM2ScalerParavirtDriver
+ffmpeg: not available
+HEIC encoder: available
+output: /var/folders/nj/vtw8zd2j31d1gdrtntc5y4600000gn/T/transmute-selftest-A4CB8172-94CC-4813-8C8E-16E2AFA90392
+
+PASS  Drag wheel: documents default to PDF first
+PASS  Drag wheel: default document wheel starts with PDF
+PASS  Drag wheel: one PDF has no Merge
+PASS  Drag wheel: two PDFs get Merge
+PASS  Drag wheel: mixed files share formats
+PASS  Drag wheel: images get Edit, then Remove background, on the tools wheel
+PASS  Drag wheel: Remove background has a bubble
+PASS  Drag wheel: Remove background is offered for images only
+PASS  Drag wheel: videos get Edit first on the actions wheel
+PASS  Drag wheel: a photo and a PDF have no Edit
+PASS  Drag wheel: Edit has a bubble
+PASS  Drag wheel: customized order, spaces and mixed-in items
+PASS  Drag wheel: other kinds keep the default
+PASS  Drag wheel: items that don't suit every file leave a space
+PASS  Drag wheel: nothing usable means no wheel
+PASS  Drag wheel: saved layouts are cleaned up
+PASS  Drag wheel: unknown ids have no bubble
+PASS  Bundle: display name is Spinform
+PASS  Bundle: identifier unchanged
+PASS  Brand mark: swoosh fits its box
+PASS  Links: chunk test vectors match FORMAT.md
+PASS  Links: meta test vector matches FORMAT.md
+PASS  Links: a chunk with the wrong last flag doesn't open
+PASS  Links: chunk counts
+PASS  Links: base64url round-trips
+PASS  Drag wheel: Link only when a link service is set up
+PASS  Drag wheel: Link has a bubble
+      http://127.0.0.1:8787/l/CdGf4ukWxP · 16.8 MB
+PASS  Links: an 8 MB+ file uploads and downloads intact
+      http://127.0.0.1:8787/l/ixKfDpLSeK · 55 KB
+PASS  Links: two files go as one zip
+PASS  anim.gif → JPEG → anim.jpg (16 KB)
+PASS  anim.gif → PNG → anim.png (9 KB)
+PASS  anim.gif → HEIC → anim.heic (8 KB)
+FAIL  anim.gif → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  anim.gif → TIFF → anim.tiff (234 KB)
+PASS  anim.gif → BMP → anim.bmp (230 KB)
+PASS  anim.gif → GIF → anim.gif (51 KB)
+PASS  anim.gif → PDF → anim.pdf (14 KB)
+PASS  anim.gif → SVG → anim.svg (12 KB)
+PASS  anim.gif compress 50% → anim (compressed).gif (21 KB)
+PASS  anim.gif remove metadata → anim (clean).gif (51 KB)
+PASS  backup.tar.gz → Extract → backup (96 bytes)
+PASS  backup.tar.gz → ZIP → backup.zip (4 KB)
+PASS  backup.tar.gz → TAR.GZ → backup.tar.gz (3 KB)
+PASS  book.epub → PDF → book.pdf (31 KB)
+PASS  book.epub → TXT → book.txt (71 bytes)
+PASS  book.epub → HTML → book.html (5 KB)
+PASS  book.epub → DOCX → book.docx (4 KB)
+PASS  book.epub → RTF → book.rtf (919 bytes)
+PASS  budget.xlsx → CSV → budget.csv (45 bytes)
+PASS  budget.xlsx → XLSX → budget.xlsx (2 KB)
+SKIP  budget.xlsx → NUMBERS: needs Numbers, which isn't installed
+PASS  budget.xlsx → PDF → budget.pdf (18 KB)
+PASS  budget.xlsx → HTML → budget.html (856 bytes)
+PASS  bundle.zip → Extract → bundle (96 bytes)
+PASS  bundle.zip → ZIP → bundle.zip (4 KB)
+PASS  bundle.zip → TAR.GZ → bundle.tar.gz (3 KB)
+PASS  captions.vtt → SRT → captions.srt (90 bytes)
+PASS  captions.vtt → VTT → captions.vtt (134 bytes)
+PASS  clip.mp4 → MP4 → clip.mp4 (45 KB)
+PASS  clip.mp4 → MOV → clip.mov (45 KB)
+FAIL  clip.mp4 → MKV: MKV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  clip.mp4 → WEBM: WEBM needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  clip.mp4 → AVI: AVI needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  clip.mp4 → WMV: WMV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  clip.mp4 → GIF: GIF needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  clip.mp4 → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  clip.mp4 → M4A → clip.m4a (28 KB)
+PASS  clip.mp4 → WAV → clip.wav (269 KB)
+PASS  clip.mp4 compress 50% → clip (compressed).mp4 (45 KB)
+PASS  clip.mp4 remove metadata → clip (clean).mp4 (45 KB)
+PASS  letter.rtf → PDF → letter.pdf (9 KB)
+PASS  letter.rtf → DOCX → letter.docx (4 KB)
+PASS  letter.rtf → RTF → letter.rtf (411 bytes)
+PASS  letter.rtf → TXT → letter.txt (90 bytes)
+PASS  letter.rtf → HTML → letter.html (735 bytes)
+PASS  letter.rtf → ODT → letter.odt (2 KB)
+PASS  letter.rtf → EPUB → letter.epub (2 KB)
+SKIP  letter.rtf → PAGES: needs Pages, which isn't installed
+PASS  logo.svg → JPEG → logo.jpg (10 KB)
+PASS  logo.svg → PNG → logo.png (13 KB)
+PASS  logo.svg → HEIC → logo.heic (8 KB)
+FAIL  logo.svg → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  logo.svg → TIFF → logo.tiff (388 KB)
+PASS  logo.svg → BMP → logo.bmp (288 KB)
+PASS  logo.svg → GIF → logo.gif (3 KB)
+PASS  logo.svg → PDF → logo.pdf (12 KB)
+PASS  logo.svg → SVG → logo.svg (18 KB)
+PASS  logo.svg compress 50% → logo (compressed).jpg (1 KB)
+PASS  logo.svg remove metadata → logo (clean).svg (291 bytes)
+FAIL  movie.mkv → MP4: The operation could not be completed
+FAIL  movie.mkv → MOV: The operation could not be completed
+FAIL  movie.mkv → MKV: MKV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → WEBM: WEBM needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → AVI: AVI needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → WMV: WMV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → GIF: GIF needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  movie.mkv → M4A: The operation could not be completed
+FAIL  movie.mkv → WAV: The operation could not be completed
+FAIL  movie.mkv compress 50%: Couldn't read the length of movie.mkv.
+FAIL  movie.mkv remove metadata: Removing metadata from MKV files needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  note.txt → PDF → note.pdf (8 KB)
+PASS  note.txt → DOCX → note.docx (4 KB)
+PASS  note.txt → RTF → note.rtf (407 bytes)
+PASS  note.txt → TXT → note.txt (90 bytes)
+PASS  note.txt → HTML → note.html (733 bytes)
+PASS  note.txt → ODT → note.odt (2 KB)
+PASS  note.txt → EPUB → note.epub (2 KB)
+SKIP  note.txt → PAGES: needs Pages, which isn't installed
+PASS  page.html → PDF → page.pdf (9 KB)
+PASS  page.html → DOCX → page.docx (4 KB)
+PASS  page.html → RTF → page.rtf (430 bytes)
+PASS  page.html → TXT → page.txt (90 bytes)
+PASS  page.html → HTML → page.html (920 bytes)
+PASS  page.html → ODT → page.odt (2 KB)
+PASS  page.html → EPUB → page.epub (2 KB)
+SKIP  page.html → PAGES: needs Pages, which isn't installed
+PASS  phone.heic → JPEG → phone.jpg (27 KB)
+PASS  phone.heic → PNG → phone.png (37 KB)
+PASS  phone.heic → HEIC → phone.heic (6 KB)
+FAIL  phone.heic → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  phone.heic → TIFF → phone.tiff (925 KB)
+PASS  phone.heic → BMP → phone.bmp (922 KB)
+PASS  phone.heic → GIF → phone.gif (25 KB)
+PASS  phone.heic → PDF → phone.pdf (55 KB)
+PASS  phone.heic → SVG → phone.svg (57 KB)
+PASS  phone.heic compress 50% → phone (compressed).heic (3 KB)
+PASS  phone.heic remove metadata → phone (clean).heic (11 KB)
+PASS  photo.jpg → JPEG → photo.jpg (21 KB)
+PASS  photo.jpg → PNG → photo.png (55 KB)
+PASS  photo.jpg → HEIC → photo.heic (8 KB)
+FAIL  photo.jpg → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  photo.jpg → TIFF → photo.tiff (925 KB)
+PASS  photo.jpg → BMP → photo.bmp (922 KB)
+PASS  photo.jpg → GIF → photo.gif (25 KB)
+PASS  photo.jpg → PDF → photo.pdf (69 KB)
+PASS  photo.jpg → SVG → photo.svg (73 KB)
+PASS  photo.jpg compress 50% → photo (compressed).jpg (10 KB)
+PASS  photo.jpg remove metadata → photo (clean).jpg (26 KB)
+PASS  readme.md → PDF → readme.pdf (8 KB)
+PASS  readme.md → DOCX → readme.docx (4 KB)
+PASS  readme.md → RTF → readme.rtf (407 bytes)
+PASS  readme.md → TXT → readme.txt (90 bytes)
+PASS  readme.md → HTML → readme.html (733 bytes)
+PASS  readme.md → ODT → readme.odt (2 KB)
+PASS  readme.md → EPUB → readme.epub (2 KB)
+SKIP  readme.md → PAGES: needs Pages, which isn't installed
+PASS  report.docx → PDF → report.pdf (9 KB)
+PASS  report.docx → DOCX → report.docx (4 KB)
+PASS  report.docx → RTF → report.rtf (352 bytes)
+PASS  report.docx → TXT → report.txt (90 bytes)
+PASS  report.docx → HTML → report.html (735 bytes)
+PASS  report.docx → ODT → report.odt (2 KB)
+PASS  report.docx → EPUB → report.epub (2 KB)
+SKIP  report.docx → PAGES: needs Pages, which isn't installed
+PASS  sample.png → JPEG → sample.jpg (21 KB)
+PASS  sample.png → PNG → sample.png (8 KB)
+PASS  sample.png → HEIC → sample.heic (6 KB)
+FAIL  sample.png → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  sample.png → TIFF → sample.tiff (925 KB)
+PASS  sample.png → BMP → sample.bmp (922 KB)
+PASS  sample.png → GIF → sample.gif (24 KB)
+PASS  sample.png → PDF → sample.pdf (23 KB)
+PASS  sample.png → SVG → sample.svg (11 KB)
+PASS  sample.png compress 50% → sample (compressed).png (3 KB)
+PASS  sample.png remove metadata → sample (clean).png (8 KB)
+PASS  scan.tiff → JPEG → scan.jpg (21 KB)
+PASS  scan.tiff → PNG → scan.png (9 KB)
+PASS  scan.tiff → HEIC → scan.heic (6 KB)
+FAIL  scan.tiff → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  scan.tiff → TIFF → scan.tiff (925 KB)
+PASS  scan.tiff → BMP → scan.bmp (922 KB)
+PASS  scan.tiff → GIF → scan.gif (24 KB)
+PASS  scan.tiff → PDF → scan.pdf (23 KB)
+PASS  scan.tiff → SVG → scan.svg (11 KB)
+PASS  scan.tiff compress 50% → scan (compressed).tiff (380 KB)
+PASS  scan.tiff remove metadata → scan (clean).tiff (925 KB)
+FAIL  song.mp3 → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  song.mp3 → M4A → song.m4a (19 KB)
+PASS  song.mp3 → WAV → song.wav (271 KB)
+PASS  song.mp3 → FLAC → song.flac (43 KB)
+FAIL  song.mp3 → OGG: OGG needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  song.mp3 → OPUS: OPUS needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  song.mp3 → AIFF → song.aiff (271 KB)
+PASS  song.mp3 compress 50% → song (compressed).m4a (14 KB)
+FAIL  song.mp3 remove metadata: Removing metadata from MP3 files needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → MP4: Cannot Decode
+FAIL  spatial.mov → MOV: Cannot Decode
+FAIL  spatial.mov → MKV: MKV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → WEBM: WEBM needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → AVI: AVI needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → WMV: WMV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → GIF: GIF needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  spatial.mov → M4A: Cannot Decode
+FAIL  spatial.mov → WAV: Cannot Decode
+FAIL  spatial.mov compress 50%: Cannot Decode
+PASS  spatial.mov remove metadata → spatial (clean).mov (111 KB)
+PASS  subs.srt → SRT → subs.srt (97 bytes)
+PASS  subs.srt → VTT → subs.vtt (105 bytes)
+PASS  surround.mts → MP4 → surround.mp4 (76 KB)
+PASS  surround.mts → MOV → surround.mov (77 KB)
+FAIL  surround.mts → MKV: MKV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  surround.mts → WEBM: WEBM needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  surround.mts → AVI: AVI needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  surround.mts → WMV: WMV needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  surround.mts → GIF: GIF needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  surround.mts → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  surround.mts → M4A → surround.m4a (18 KB)
+PASS  surround.mts → WAV → surround.wav (359 KB)
+PASS  surround.mts compress 50% → surround (compressed).mp4 (75 KB)
+FAIL  surround.mts remove metadata: Removing metadata from MTS files needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  table.csv → CSV → table.csv (54 bytes)
+PASS  table.csv → XLSX → table.xlsx (2 KB)
+SKIP  table.csv → NUMBERS: needs Numbers, which isn't installed
+PASS  table.csv → PDF → table.pdf (18 KB)
+PASS  table.csv → HTML → table.html (859 bytes)
+FAIL  tone.wav → MP3: MP3 needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  tone.wav → M4A → tone.m4a (14 KB)
+PASS  tone.wav → WAV → tone.wav (269 KB)
+PASS  tone.wav → FLAC → tone.flac (43 KB)
+FAIL  tone.wav → OGG: OGG needs ffmpeg. Install it once with: brew install ffmpeg
+FAIL  tone.wav → OPUS: OPUS needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  tone.wav → AIFF → tone.aiff (269 KB)
+FAIL  tone.wav compress 50%: Error: Couldn't set audio converter property ('!dat')
+PASS  tone.wav remove metadata → tone (clean).wav (269 KB)
+PASS  web.webp → JPEG → web.jpg (28 KB)
+PASS  web.webp → PNG → web.png (59 KB)
+PASS  web.webp → HEIC → web.heic (8 KB)
+FAIL  web.webp → WEBP: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  web.webp → TIFF → web.tiff (925 KB)
+PASS  web.webp → BMP → web.bmp (922 KB)
+PASS  web.webp → GIF → web.gif (25 KB)
+PASS  web.webp → PDF → web.pdf (82 KB)
+PASS  web.webp → SVG → web.svg (79 KB)
+PASS  web.webp compress 50% → web (compressed).jpg (3 KB)
+FAIL  web.webp remove metadata: Saving WebP needs ffmpeg. Install it once with: brew install ffmpeg
+PASS  letter.pdf → PNG → letter.png (58 KB)
+PASS  letter.pdf → JPEG → letter.jpg (46 KB)
+PASS  letter.pdf → TXT → letter.txt (88 bytes)
+PASS  letter.pdf → RTF → letter.rtf (437 bytes)
+PASS  letter.pdf → DOCX → letter.docx (4 KB)
+PASS  letter.pdf → HTML → letter.html (637 bytes)
+PASS  letter.pdf compress 50% → letter (compressed).pdf (9 KB)
+PASS  letter.pdf remove metadata → letter (clean).pdf (9 KB)
+PASS  letter.pdf split pages → letter (pages) (96 bytes)
+PASS  letter.epub → PDF → letter.pdf (15 KB)
+PASS  letter.epub → TXT → letter.txt (89 bytes)
+PASS  letter.epub → HTML → letter.html (517 bytes)
+PASS  letter.epub → DOCX → letter.docx (4 KB)
+PASS  letter.epub → RTF → letter.rtf (424 bytes)
+      50.9 MB → 5.6 MB
+PASS  Photo PDF compress 50% is at most 60% of the original → photo scan (compressed).pdf (5.6 MB)
+PASS  office: budget.xlsx → csv content → budget.csv (45 bytes)
+PASS  office: table.csv → xlsx → csv keeps quoted comma → table.xlsx (2 KB), table.csv (54 bytes)
+PASS  office: note.txt → epub → txt → note.epub (2 KB), note.txt (89 bytes)
+PASS  office: html → epub markup → styled.epub (2 KB)
+PASS  office: book.epub → txt/html → book.txt (71 bytes), book.html (5 KB)
+PASS  office: tsv → csv/xlsx → tabs.csv (15 bytes), tabs.xlsx (2 KB)
+PASS  office: .pages preview → txt (no Pages needed) → preview.txt (88 bytes)
+PASS  office: missing iWork app gives a clear error
+PASS  Merge PDFs → Merged.pdf (42 KB)
+PASS  Images → PDF → Images.pdf (176 KB)
+PASS  Zip several files → Archive.zip (60 KB)
+PASS  anim.gif photo edit → anim (edited).gif (6 KB)
+PASS  logo.svg photo edit → logo (edited).png (13 KB)
+PASS  phone.heic photo edit → phone (edited).heic (6 KB)
+PASS  photo.jpg photo edit → photo (edited).jpg (15 KB)
+PASS  sample.png photo edit → sample (edited).png (14 KB)
+PASS  scan.tiff photo edit → scan (edited).tiff (519 KB)
+PASS  web.webp photo edit → web (edited).png (22 KB)
+PASS  Photo editor: turn, flip, black box, box outline, brightness → editor-canvas (edited).png (2 KB), editor-canvas (edited) 2.png (3 KB), editor-canvas (edited) 3.png (3 KB), editor-canvas (edited).jpg (1 KB)
+Background removal: any subject (Vision foreground instance mask) on macOS Version 15.7.9 (Build 24G830)
+PASS  Background: cut-out of a JPEG is a transparent PNG → circle (no-bg).png (22 KB)
+PASS  Background: solid colour keeps the JPEG and paints the corners → circle (new-bg).jpg (6 KB)
+PASS  Background: gradient runs from the top colour to the bottom colour → circle (new-bg).png (13 KB)
+PASS  Background: blur keeps the original's colours behind the subject → circle (new-bg) 2.png (31 KB)
+PASS  Background: a picture behind the subject fills the frame → circle (new-bg) 3.png (40 KB)
+PASS  Background: anim.gif → transparent PNG → anim (no-bg).png (9 KB)
+PASS  Background: logo.svg → transparent PNG → logo (no-bg).png (15 KB)
+PASS  Background: phone.heic → transparent HEIC → phone (no-bg).heic (7 KB)
+PASS  Background: photo.jpg → transparent PNG → photo (no-bg).png (22 KB)
+PASS  Background: sample.png → transparent PNG → sample (no-bg).png (17 KB)
+PASS  Background: scan.tiff → transparent TIFF → scan (no-bg).tiff (1.2 MB)
+PASS  Background: web.webp → transparent PNG → web (no-bg).png (24 KB)
+PASS  Background: Vision finds the subject in the red circle on blue → circle (no-bg) 2.png (13 KB)
+PASS  Background: Vision finds the subject in the product-style photo → orange (no-bg).png (77 KB)
+PASS  Background: macOS 13 mode says no person was found
+SKIP  video editor: needs ffmpeg and the clip.mp4 / movie.mkv fixtures
+PASS  tone.wav waveform
+SKIP  audio editor: needs ffmpeg and the tone.wav / song.mp3 / clip.mp4 fixtures
+PASS  Metadata: date taken parsing
+PASS  photo.jpg metadata: write, read back, clear a field → photo (tagged).jpg (24 KB), photo (tagged) (tagged).jpg (24 KB)
+PASS  Photo metadata: GPS is shown and can be removed → gps-photo (tagged).jpg (23 KB)
+PASS  sample.png metadata: description and artist → sample (tagged).png (4 KB)
+PASS  PDF metadata: title, author, subject, keywords → metadata-test (tagged).pdf (23 KB)
+PASS  web.webp metadata: readable, writing refused with a clear error
+PASS  note.txt info: file facts only
+SKIP  metadata tags: need ffmpeg and the song.mp3 / clip.mp4 / tone.wav fixtures
+PASS  Shake detection
+PASS  QR code read
+PASS  Scrolling capture: frames stitch back into the page → page stitched.png (30 KB)
+PASS  Scrolling capture: still, backwards and unrelated frames are ignored
+PASS  Background frame: layout with padding and aspect presets
+PASS  Background frame: renders background, rounded picture and shadow → framed.png (9 KB), framed gradient.png (38 KB)
+PASS  Background frame: 20 presets, custom presets saved and removed
+PASS  Annotate: arrow, line and oval are drawn where placed → white (edited).png (9 KB)
+PASS  Annotate: numbered steps → white (edited) 2.png (11 KB)
+PASS  Annotate: spotlight dims everything else → white (edited) 3.png (4 KB)
+PASS  Annotate: resize to half → white (edited) 4.png (2 KB)
+PASS  Annotate: pixelate turns fine detail into flat blocks → checker (edited).png (5 KB)
+      read: "Spinform reads this text"
+PASS  Copy text: reads a line of text on this Mac
+PASS  Copy text: reads a scanned PDF page and QR codes → Images.pdf (29 KB)
+PASS  Copy text: lines in reading order
+PASS  History: keeps, prunes, reloads, restores and deletes → Spinform 2026-10-27 at 07.26.06.png (233 bytes)
+PASS  Shortcuts: parse, show and store
+PASS  Shortcuts: 9 default shortcuts registered with macOS
+PASS  Recording: keystrokes are shown as symbols
+PASS  Capture: screen area to pixels
+      permissions: screen granted, microphone granted, camera notDetermined, accessibility granted
+PASS  Capture: permission check answers without asking
+      windows on screen: 0
+PASS  Capture: window list
+      captured 1 screen(s), first 1024×768
+PASS  Capture: a real screenshot of this Mac's screen → real screen.png (83 KB)
+      recorded 2.0 s
+PASS  Recording: a real 2-second screen recording → transmute-59C42ECC-2925-499F-9136-DF2EAF424879.mp4 (45 KB)
+SKIP  Recording: GIF and audio mixing need ffmpeg and the clip.mp4 / tone.wav fixtures
+PASS  Annotate: four arrow styles, including a curved one → arrow-solid.png (4 KB), arrow-double.png (5 KB), arrow-open.png (5 KB), arrow-curved.png (8 KB)
+PASS  Annotate: pencil smoothing, filled box and placed picture → white-2 (edited) 5.png (5 KB)
+PASS  Annotate: seven text styles, the label style on a coloured box → grey-2 (edited) 3.png (6 KB)
+PASS  Annotate: pixelate is scrambled; secure blur leaves no detail → checker-2 (edited).png (37 KB)
+PASS  Annotate: highlighter fits the text line
+PASS  Annotate: finds text lines for the highlighter
+PASS  Annotate: crop snaps to edges and the middle
+PASS  Annotate: my colours are kept
+PASS  Annotate: dropped pictures land where dropped
+PASS  Annotate: .spinform project saves and reopens with everything editable → Shot.spinform (6 KB)
+PASS  Background frame: alignment, auto balance, picture and desktop backgrounds → framed-picture.png (1 KB)
+PASS  Window capture: backdrop choices become frame looks
+PASS  Scrolling capture: sideways frames stitch into a wide picture → stitched-sideways.png (12 KB)
+PASS  All-in-one: sizes, shape lock and memory
+PASS  Quick access: corners, sizes and file info
+PASS  Pin: arrow keys nudge
+PASS  Recording: options for keys, clicks, camera and resolution
+PASS  Copy text: languages and line breaks
+PASS  Copy text: a chosen language, and a frame of a video → text-video.mp4 (23 KB)
+PASS  History: recognised text is kept and filtered by type
+PASS  Automation: spinform:// links
+PASS  Studio: automatic zooms, smoothing and framing
+PASS  Studio: exports a trimmed, zoomed, square video with background and pointer → studio-export.mp4 (23 KB), studio-frame.png (11 KB)
+PASS  Deadlines: a system call that never answers gives up on time
+PASS  Crosshair: Esc closes it and leaves nothing on screen
+PASS  Crosshair: an error while it's open takes it down
+PASS  Crosshair: closes itself when left alone (watchdog)
+PASS  All-in-one chooser: closes on cleanup
+PASS  Actions: every capture action has a name and an icon
+PASS  Actions: every spinform:// link in Settings resolves
+PASS  Capture card: Text copies the words, Copy, Pin, Frame, Markup and close all work
+PASS  Recording: Stop during the countdown and during recording always ends it
+PASS  Scrolling capture: big uneven steps with a sticky header and footer → sticky-page stitched.png (26 KB)
+PASS  Scrolling capture: a jump past the overlap keeps the frame, using the scroll distance
+PASS  Sharpness: a 2x screen keeps every Retina pixel, untouched, saved at 144 DPI → retina.png (2 KB), retina.jpg (9 KB)
+PASS  Sharpness: a live area capture is point size × the screen's scale
+      16-bit: "spinform reads this text"
+      Display P3: "spinform reads this text"
+      IOSurface: "spinform reads this text"
+      tiny crop: "spinform"
+      huge: "spinform reads this text"
+PASS  Copy text: 16-bit, P3, IOSurface, tiny and huge pictures all read
+      Vision accurate (latest revision): ok
+      Vision fast: ok
+      Vision on the CPU only: ok
+      Vision RecognizeTextRequest (macOS 15): ok
+      Vision older revision: ok
+PASS  Copy text: unknown languages are ignored and every reader in the chain works
+PASS  Copy text: the clipboard holds only the text, and the result window opens
+
+298 passed, 52 failed, 12 skipped
+  FAILED: anim.gif → WEBP
+  FAILED: clip.mp4 → MKV
+  FAILED: clip.mp4 → WEBM
+  FAILED: clip.mp4 → AVI
+  FAILED: clip.mp4 → WMV
+  FAILED: clip.mp4 → GIF
+  FAILED: clip.mp4 → MP3
+  FAILED: logo.svg → WEBP
+  FAILED: movie.mkv → MP4
+  FAILED: movie.mkv → MOV
+  FAILED: movie.mkv → MKV
+  FAILED: movie.mkv → WEBM
+  FAILED: movie.mkv → AVI
+  FAILED: movie.mkv → WMV
+  FAILED: movie.mkv → GIF
+  FAILED: movie.mkv → MP3
+  FAILED: movie.mkv → M4A
+  FAILED: movie.mkv → WAV
+  FAILED: movie.mkv compress 50%
+  FAILED: movie.mkv remove metadata
+  FAILED: phone.heic → WEBP
+  FAILED: photo.jpg → WEBP
+  FAILED: sample.png → WEBP
+  FAILED: scan.tiff → WEBP
+  FAILED: song.mp3 → MP3
+  FAILED: song.mp3 → OGG
+  FAILED: song.mp3 → OPUS
+  FAILED: song.mp3 remove metadata
+  FAILED: spatial.mov → MP4
+  FAILED: spatial.mov → MOV
+  FAILED: spatial.mov → MKV
+  FAILED: spatial.mov → WEBM
+  FAILED: spatial.mov → AVI
+  FAILED: spatial.mov → WMV
+  FAILED: spatial.mov → GIF
+  FAILED: spatial.mov → MP3
+  FAILED: spatial.mov → M4A
+  FAILED: spatial.mov → WAV
+  FAILED: spatial.mov compress 50%
+  FAILED: surround.mts → MKV
+  FAILED: surround.mts → WEBM
+  FAILED: surround.mts → AVI
+  FAILED: surround.mts → WMV
+  FAILED: surround.mts → GIF
+  FAILED: surround.mts → MP3
+  FAILED: surround.mts remove metadata
+  FAILED: tone.wav → MP3
+  FAILED: tone.wav → OGG
+  FAILED: tone.wav → OPUS
+  FAILED: tone.wav compress 50%
+  FAILED: web.webp → WEBP
+  FAILED: web.webp remove metadata
