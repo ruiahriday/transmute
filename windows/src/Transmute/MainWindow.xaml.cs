@@ -1,0 +1,385 @@
+using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+using System.Windows.Shapes;
+using Microsoft.Win32;
+
+namespace Transmute.App;
+
+public partial class MainWindow : Window
+{
+    static JobQueue Queue => JobQueue.Shared;
+    static Settings Prefs => Settings.Current;
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        FileList.ItemsSource = Queue.Jobs;
+        QualitySlider.Value = Prefs.ImageQuality;
+        StripBox.IsChecked = Prefs.StripMetadata;
+        Queue.Jobs.CollectionChanged += OnJobsChanged;
+        Queue.PropertyChanged += OnQueueChanged;
+        Closed += (_, _) =>
+        {
+            Queue.Jobs.CollectionChanged -= OnJobsChanged;
+            Queue.PropertyChanged -= OnQueueChanged;
+        };
+        DragEnter += OnDragOver;
+        DragOver += OnDragOver;
+        DragLeave += (_, _) => { DropHighlight.Visibility = Visibility.Collapsed; DropTitle.Text = "Drop anything here"; };
+        Drop += OnDrop;
+        Activated += (_, _) => RefreshTip();
+        Loaded += (_, _) => StartAnimations();
+        Refresh();
+    }
+
+    // The look: the drop zone's orbit and pulse, the sliding tab highlight.
+
+    static readonly (string Label, FileKind Kind)[] OrbitChips =
+    [
+        ("JPG", FileKind.Image), ("MP4", FileKind.Video), ("PDF", FileKind.Pdf), ("MP3", FileKind.Audio),
+        ("DOCX", FileKind.Document), ("PNG", FileKind.Image), ("ZIP", FileKind.Archive), ("MOV", FileKind.Video),
+    ];
+    readonly List<FrameworkElement> chips = [];
+    double orbitAngle;
+
+    void StartAnimations()
+    {
+        foreach (var (label, kind) in OrbitChips)
+        {
+            var chip = new Border
+            {
+                Background = Theme.TintBrush(kind),
+                CornerRadius = new CornerRadius(4),
+                Padding = new Thickness(7, 2, 7, 3),
+                Child = new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 10, FontWeight = FontWeights.SemiBold },
+                SnapsToDevicePixels = true,
+            };
+            Orbit.Children.Add(chip);
+            chips.Add(chip);
+        }
+        CompositionTarget.Rendering += OnFrame;
+        Closed += (_, _) => CompositionTarget.Rendering -= OnFrame;
+
+        foreach (var (ring, delay) in Theme.Motion ? new[] { (RingA, 0.0), (RingB, 1.6) } : [])
+        {
+            var scale = (ScaleTransform)ring.RenderTransform;
+            foreach (var axis in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+                scale.BeginAnimation(axis, new DoubleAnimation(1, 1.8, TimeSpan.FromSeconds(3.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+            ring.BeginAnimation(OpacityProperty, new DoubleAnimation(0.6, 0, TimeSpan.FromSeconds(3.2)) { RepeatBehavior = RepeatBehavior.Forever, BeginTime = TimeSpan.FromSeconds(delay) });
+        }
+        var core = (ScaleTransform)Core.RenderTransform;
+        Theme.Wave(core, ScaleTransform.ScaleXProperty, 0.99, 1.02, 2.6);
+        Theme.Wave(core, ScaleTransform.ScaleYProperty, 0.99, 1.02, 2.6);
+        // The Spinform mark spins into place once when the window opens.
+        Theme.To((RotateTransform)HeaderMark.RenderTransform, RotateTransform.AngleProperty, 0, 0.9, Theme.Spring, from: -90);
+        MoveSegmentHighlight(false);
+    }
+
+    /// Moves the format chips around the drop zone, a little each frame.
+    void OnFrame(object? sender, EventArgs e)
+    {
+        if (EmptyState.Visibility != Visibility.Visible || chips.Count == 0) return;
+        orbitAngle += 0.0035;
+        var wide = DropHighlight.Visibility == Visibility.Visible;
+        double cx = Orbit.Width / 2, cy = Orbit.Height / 2, r = wide ? 104 : 94;
+        for (var i = 0; i < chips.Count; i++)
+        {
+            var a = orbitAngle + i * 2 * Math.PI / chips.Count;
+            var chip = chips[i];
+            if (chip.ActualWidth == 0) chip.UpdateLayout();
+            Canvas.SetLeft(chip, cx + Math.Cos(a) * r - chip.ActualWidth / 2);
+            Canvas.SetTop(chip, cy + Math.Sin(a) * r * 0.72 - chip.ActualHeight / 2);
+        }
+    }
+
+    /// Slides the gradient highlight under the chosen tab.
+    void MoveSegmentHighlight(bool animate)
+    {
+        var tab = ConvertTab.IsChecked == true ? ConvertTab : CompressTab.IsChecked == true ? CompressTab : ToolsTab.IsChecked == true ? ToolsTab : CaptureTab;
+        if (tab.ActualWidth == 0) return;
+        var x = tab.TranslatePoint(new Point(0, 0), Segments).X;
+        var width = tab.ActualWidth - 4;
+        SegmentHighlight.Height = tab.ActualHeight - 4;
+        if (!animate)
+        {
+            SegmentHighlight.Width = width;
+            SegmentShift.X = x;
+            return;
+        }
+        Theme.To(SegmentShift, TranslateTransform.XProperty, x, 0.32, Theme.Spring);
+        Theme.To(SegmentHighlight, WidthProperty, width, 0.32, Theme.Spring);
+    }
+
+    void OnJobsChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Job states change while converting; watch them so the buttons stay right.
+        if (e.NewItems is not null) foreach (Job job in e.NewItems) job.PropertyChanged += OnJobChanged;
+        if (e.OldItems is not null) foreach (Job job in e.OldItems) job.PropertyChanged -= OnJobChanged;
+        Refresh();
+    }
+
+    void OnJobChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Job.Status)) RefreshButtons();
+    }
+
+    void OnQueueChanged(object? sender, PropertyChangedEventArgs e) => RefreshButtons();
+
+    void Refresh()
+    {
+        var any = Queue.Jobs.Count > 0;
+        if (IsLoaded && any != (FileList.Visibility == Visibility.Visible))
+            Theme.To(any ? FileList : EmptyState, OpacityProperty, 1, 0.3, from: 0);
+        EmptyState.Visibility = any ? Visibility.Collapsed : Visibility.Visible;
+        FileList.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
+        BuildFormatPickers();
+        RefreshTip();
+        RefreshButtons();
+    }
+
+    void RefreshTip()
+    {
+        var key = Prefs.ConvertKey;
+        WheelTip.Text = Prefs.WheelEnabled && key != WheelKey.Off
+            ? $"Tip: hold {key.Label()} while dragging files anywhere to convert them on the spot. You can also right-click files in File Explorer and choose Send to › Spinform."
+            : "Tip: right-click files in File Explorer and choose Send to › Spinform.";
+    }
+
+    void RefreshButtons()
+    {
+        var jobs = Queue.Jobs;
+        var done = jobs.Count(j => j.Status == JobStatus.Done);
+        Summary.Text = jobs.Count == 0 ? "Drop. Pick a format. Done."
+            : Queue.IsRunning ? $"Working… {done} of {jobs.Count} done"
+            : done > 0 ? $"{done} of {jobs.Count} done" : $"{jobs.Count} file{(jobs.Count == 1 ? "" : "s")} ready";
+        var busy = Queue.IsRunning;
+        var pdfs = jobs.Count(j => j.Kind == FileKind.Pdf);
+        var images = jobs.Count(j => j.Kind == FileKind.Image);
+        var videos = jobs.Count(j => j.Kind == FileKind.Video);
+        ClearButton.IsEnabled = jobs.Count > 0;
+        ConvertButton.IsEnabled = CompressButton.IsEnabled = jobs.Count > 0 && !busy;
+        foreach (var cancel in new[] { CancelConvert, CancelCompress, CancelTools })
+            cancel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        MergeButton.IsEnabled = pdfs >= 2 && !busy;
+        ImagesPdfButton.IsEnabled = images > 0 && !busy;
+        SplitButton.IsEnabled = pdfs > 0 && !busy;
+        JoinButton.IsEnabled = videos >= 2 && !busy;
+        ZipButton.IsEnabled = jobs.Count > 0 && !busy;
+        CleanButton.IsEnabled = jobs.Any(j => j.Kind.CanStripMetadata()) && !busy;
+        QrButton.IsEnabled = images > 0 && !busy;
+        RemoveBackgroundButton.IsEnabled = ChangeBackgroundButton.IsEnabled = images > 0 && !busy;
+        FloatButton.IsEnabled = jobs.Count > 0;
+        var kinds = Queue.KindsPresent.ToList();
+        QualityRow.Visibility = kinds.Contains(FileKind.Image) || kinds.Contains(FileKind.Pdf) ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // Format pickers: one per kind of file in the list.
+
+    readonly Dictionary<FileKind, ComboBox> pickers = [];
+
+    void BuildFormatPickers()
+    {
+        var kinds = Queue.KindsPresent.ToList();
+        NoFormats.Visibility = kinds.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (kinds.SequenceEqual(pickers.Keys)) return;
+        FormatPickers.Children.Clear();
+        pickers.Clear();
+        foreach (var kind in kinds)
+        {
+            var targets = kind.ConvertTargets();
+            if (targets.Length == 0) continue;
+            var row = new DockPanel { Margin = new Thickness(0, 0, 0, 6) };
+            row.Children.Add(new TextBlock { Text = kind.Title(), Width = 120, VerticalAlignment = VerticalAlignment.Center });
+            var box = new ComboBox { Width = 200, HorizontalAlignment = HorizontalAlignment.Left };
+            foreach (var format in targets) box.Items.Add(new ComboBoxItem { Content = format.Label(), Tag = format });
+            var saved = Prefs.Choices.GetValueOrDefault(kind.ToString());
+            var index = Array.FindIndex(targets, f => f.ToString() == saved);
+            box.SelectedIndex = Math.Max(0, index);
+            box.SelectionChanged += (_, _) =>
+            {
+                if (box.SelectedItem is ComboBoxItem { Tag: OutputFormat f }) { Prefs.Choices[kind.ToString()] = f.ToString(); Prefs.Save(); }
+            };
+            row.Children.Add(box);
+            FormatPickers.Children.Add(row);
+            pickers[kind] = box;
+        }
+    }
+
+    OutputFormat FormatFor(FileKind kind) =>
+        pickers.TryGetValue(kind, out var box) && box.SelectedItem is ComboBoxItem { Tag: OutputFormat f } ? f : kind.ConvertTargets().FirstOrDefault();
+
+    // Adding files
+
+    void OnDragOver(object sender, DragEventArgs e)
+    {
+        var files = e.Data.GetDataPresent(DataFormats.FileDrop);
+        e.Effects = files ? DragDropEffects.Copy : DragDropEffects.None;
+        if (files && DropHighlight.Visibility != Visibility.Visible)
+        {
+            DropHighlight.Visibility = Visibility.Visible;
+            Theme.To(DropHighlight, OpacityProperty, 1, 0.18, from: 0);
+        }
+        else if (!files) DropHighlight.Visibility = Visibility.Collapsed;
+        DropTitle.Text = files ? "Let go to add" : "Drop anything here";
+        e.Handled = true;
+    }
+
+    void OnDrop(object sender, DragEventArgs e)
+    {
+        DropHighlight.Visibility = Visibility.Collapsed;
+        DropTitle.Text = "Drop anything here";
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] paths) Queue.Add(paths);
+    }
+
+    void OnAddFiles(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Multiselect = true, Title = "Add files to Spinform" };
+        if (dialog.ShowDialog(this) == true) Queue.Add(dialog.FileNames);
+    }
+
+    void OnAddFolder(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Multiselect = true, Title = "Add folders to Spinform" };
+        if (dialog.ShowDialog(this) == true) Queue.Add(dialog.FolderNames);
+    }
+
+    void OnClear(object sender, RoutedEventArgs e) => Queue.Clear();
+    void OnSettings(object sender, RoutedEventArgs e) => SettingsWindow.Open(this);
+    void OnFeedback(object sender, RoutedEventArgs e) => Feedback.OpenForm();
+
+    void OnListKey(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Delete) return;
+        foreach (var job in FileList.SelectedItems.Cast<Job>().ToList()) Queue.Remove(job);
+    }
+
+    // Row buttons
+
+    static Job JobOf(object sender) => (Job)((FrameworkElement)sender).DataContext;
+
+    void OnRemove(object sender, RoutedEventArgs e) => Queue.Remove(JobOf(sender));
+
+    void OnShow(object sender, RoutedEventArgs e)
+    {
+        if (JobOf(sender).Result is { } result) Native.RevealInExplorer(result.Outputs);
+    }
+
+    void OnEdit(object sender, RoutedEventArgs e)
+    {
+        var job = JobOf(sender);
+        if (job.IsRunning) return;
+        Editors.Open(job, this);
+    }
+
+    void OnInfo(object sender, RoutedEventArgs e)
+    {
+        var job = JobOf(sender);
+        if (job.IsRunning) return;
+        new MetadataWindow(job) { Owner = this }.Show();
+    }
+
+    // Mode tabs
+
+    void OnMode(object sender, RoutedEventArgs e)
+    {
+        if (ConvertPanel is null) return;
+        ConvertPanel.Visibility = ConvertTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CompressPanel.Visibility = CompressTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        ToolsPanel.Visibility = ToolsTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CapturePanel.Visibility = CaptureTab.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        if (CaptureTab.IsChecked == true) BuildCapturePanel();
+        MoveSegmentHighlight(IsLoaded);
+        if (IsLoaded)
+        {
+            Theme.To(Panels, OpacityProperty, 1, 0.25, from: 0);
+            Theme.To((TranslateTransform)Panels.RenderTransform, TranslateTransform.YProperty, 0, 0.28, Theme.Spring, from: 6);
+        }
+    }
+
+    void OnQuality(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (QualityLabel is null) return; // still loading
+        QualityLabel.Text = $"{(int)Math.Round(e.NewValue * 100)}%";
+        if (!IsLoaded) return;
+        Prefs.ImageQuality = Math.Round(e.NewValue, 2);
+        Prefs.Save();
+    }
+
+    void OnStripToggle(object sender, RoutedEventArgs e)
+    {
+        Prefs.StripMetadata = StripBox.IsChecked == true;
+        Prefs.Save();
+    }
+
+    void OnCompressBy(object sender, RoutedEventArgs e)
+    {
+        if (PercentRow is null) return;
+        PercentRow.Visibility = ByPercent.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        SizeRow.Visibility = BySize.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    void OnPercent(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (PercentLabel is not null) PercentLabel.Text = $"to {(int)e.NewValue}% of original";
+    }
+
+    // Actions
+
+    static bool Reveal => Prefs.RevealWhenDone;
+
+    void OnConvert(object sender, RoutedEventArgs e)
+    {
+        var plan = Queue.Jobs.Where(j => j.Kind.ConvertTargets().Length > 0)
+            .Select(j => (j, (JobOperation)new JobOperation.Convert(FormatFor(j.Kind)))).ToList();
+        _ = Queue.Start(plan, Reveal);
+    }
+
+    void OnCompress(object sender, RoutedEventArgs e)
+    {
+        CompressionTarget target;
+        if (ByPercent.IsChecked == true) target = new CompressionTarget.Percent(PercentSlider.Value / 100);
+        else
+        {
+            var text = TargetMB.Text.Trim().Replace(',', '.');
+            var mb = double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) && double.IsFinite(v) ? v : 5;
+            target = new CompressionTarget.Bytes((long)(Math.Clamp(mb, 0.01, 1_000_000) * 1_000_000));
+        }
+        var plan = Queue.Jobs.Where(j => j.Kind.CanCompress()).Select(j => (j, (JobOperation)new JobOperation.Compress(target))).ToList();
+        _ = Queue.Start(plan, Reveal);
+    }
+
+    void OnCancel(object sender, RoutedEventArgs e) => Queue.CancelAll();
+
+    List<Job> Of(FileKind kind) => Queue.Jobs.Where(j => j.Kind == kind).ToList();
+
+    void OnMerge(object sender, RoutedEventArgs e) => _ = Queue.RunBatch(new BatchTool.MergePdfs(), Of(FileKind.Pdf), Reveal);
+    void OnImagesToPdf(object sender, RoutedEventArgs e) => _ = Queue.RunBatch(new BatchTool.ImagesToPdf(), Of(FileKind.Image), Reveal);
+    void OnJoin(object sender, RoutedEventArgs e) => _ = Queue.RunBatch(new BatchTool.JoinVideos(), Of(FileKind.Video), Reveal);
+    void OnZip(object sender, RoutedEventArgs e) => _ = Queue.RunBatch(new BatchTool.Archive(OutputFormat.Zip), Queue.Jobs.ToList(), Reveal);
+
+    void OnSplit(object sender, RoutedEventArgs e) =>
+        _ = Queue.Start(Of(FileKind.Pdf).Select(j => (j, (JobOperation)new JobOperation.SplitPdf())).ToList(), Reveal);
+
+    void OnClean(object sender, RoutedEventArgs e) =>
+        _ = Queue.Start(Queue.Jobs.Where(j => j.Kind.CanStripMetadata()).Select(j => (j, (JobOperation)new JobOperation.StripMetadata())).ToList(), Reveal);
+
+    void OnQr(object sender, RoutedEventArgs e) =>
+        _ = Queue.Start(Of(FileKind.Image).Select(j => (j, (JobOperation)new JobOperation.ReadQr())).ToList(), false);
+
+    void OnRemoveBackground(object sender, RoutedEventArgs e) =>
+        _ = Queue.Start(Of(FileKind.Image).Select(j => (j, (JobOperation)new JobOperation.Background(new BackgroundEdit { Mode = BackgroundMode.Remove }))).ToList(), Reveal);
+
+    void OnChangeBackground(object sender, RoutedEventArgs e)
+    {
+        var pictures = Of(FileKind.Image);
+        if (pictures.Count > 0) BackgroundWindow.Open(pictures, this);
+    }
+
+    void OnFloat(object sender, RoutedEventArgs e) => Shelf.Shared.Add(Queue.Jobs.Select(j => j.Path));
+}
