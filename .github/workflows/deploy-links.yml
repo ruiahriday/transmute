@@ -41,13 +41,30 @@ jobs:
             echo "::notice title=Link service::Cloudflare isn't set up yet (see server/links/README.md), so nothing was deployed."
             exit 0
           fi
+          # Each step's output is also sent as an annotation when it fails (raw logs need a download).
+          run() {
+            local title="$1"; shift
+            if ! "$@" > "$RUNNER_TEMP/step.log" 2>&1; then
+              cat "$RUNNER_TEMP/step.log"
+              msg=$(grep -v '^\s*$' "$RUNNER_TEMP/step.log" | grep -vi 'proxy\|update available\|^ *⛅\|^─' | tail -25 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+              echo "::error title=$title::$msg"
+              return 1
+            fi
+            cat "$RUNNER_TEMP/step.log"
+          }
           W="npx -y wrangler@4.153.0"
           # The bucket and its clean-up rules; "already exists" is fine on later runs.
-          $W r2 bucket create spinform-links || true
-          $W r2 bucket lifecycle add spinform-links backstop links/ --expire-days 8 --abort-multipart-days 2 -y || true
-          $W r2 bucket lifecycle add spinform-links quotas quota/ --expire-days 3 -y || true
-          $W deploy 2>&1 | tee "$RUNNER_TEMP/deploy.log"
-          printf '%s' "$LINK_TOKEN" | $W secret put UPLOAD_TOKENS
+          $W r2 bucket create spinform-links > "$RUNNER_TEMP/bucket.log" 2>&1 || {
+            cat "$RUNNER_TEMP/bucket.log"
+            grep -qi "already exists" "$RUNNER_TEMP/bucket.log" || run "Create the R2 bucket" $W r2 bucket create spinform-links
+          }
+          run "Bucket clean-up rule (links)" $W r2 bucket lifecycle add spinform-links backstop links/ --expire-days 8 --abort-multipart-days 2 -y || true
+          run "Bucket clean-up rule (quotas)" $W r2 bucket lifecycle add spinform-links quotas quota/ --expire-days 3 -y || true
+          run "Deploy" $W deploy
+          cp "$RUNNER_TEMP/step.log" "$RUNNER_TEMP/deploy.log"
+          printf '%s' "$LINK_TOKEN" > "$RUNNER_TEMP/token"
+          run "App token" sh -c "$W secret put UPLOAD_TOKENS < '$RUNNER_TEMP/token'"
+          rm -f "$RUNNER_TEMP/token"
           url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' "$RUNNER_TEMP/deploy.log" | head -1 || true)
           echo "::notice title=Link service address::${url:-see the Deploy step log}"
           echo "### Link service address: ${url:-see the Deploy step log}" >> "$GITHUB_STEP_SUMMARY"
